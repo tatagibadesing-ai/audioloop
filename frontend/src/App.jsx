@@ -422,18 +422,23 @@ function HomePage({ user }) {
                                     disabled={isLoading}
                                     style={{
                                         display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px',
-                                        background: 'transparent', border: '1px solid #40403F',
-                                        borderRadius: '20px', color: '#FCFBF8', fontSize: '14px', fontWeight: '600',
+                                        background: 'transparent',
+                                        border: `1px solid ${isVoiceModalOpen ? '#40403F' : '#333332'}`,
+                                        borderRadius: '20px',
+                                        color: isVoiceModalOpen ? '#FCFBF8' : '#91918E',
+                                        fontSize: '14px', fontWeight: '600',
                                         cursor: 'pointer', fontFamily: "'Figtree', sans-serif", transition: 'all 0.2s'
                                     }}
                                     onMouseEnter={e => {
-                                        e.currentTarget.style.borderColor = '#FCFBF8';
+                                        e.currentTarget.style.borderColor = '#40403F';
+                                        e.currentTarget.style.color = '#FCFBF8';
                                         const arrow = e.currentTarget.querySelector('.select-arrow');
                                         if (arrow) arrow.style.color = '#FCFBF8';
                                     }}
                                     onMouseLeave={e => {
                                         if (!isVoiceModalOpen) {
-                                            e.currentTarget.style.borderColor = '#40403F';
+                                            e.currentTarget.style.borderColor = '#333332';
+                                            e.currentTarget.style.color = '#91918E';
                                             const arrow = e.currentTarget.querySelector('.select-arrow');
                                             if (arrow) arrow.style.color = '#91918E';
                                         }
@@ -454,12 +459,12 @@ function HomePage({ user }) {
                                 <AnimatePresence>
                                     {isVoiceModalOpen && (
                                         <motion.div
-                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
                                             animate={{ opacity: 1, y: 0, scale: 1 }}
-                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
                                             transition={{ duration: 0.2, ease: "easeOut" }}
                                             style={{
-                                                position: 'absolute', bottom: 'calc(100% + 12px)', left: 0,
+                                                position: 'absolute', top: 'calc(100% + 12px)', left: 0,
                                                 minWidth: '220px', background: '#1a1a1a',
                                                 border: '1px solid #333332', borderRadius: '16px',
                                                 boxShadow: '0 20px 25px -5px rgba(0,0,0,0.5)',
