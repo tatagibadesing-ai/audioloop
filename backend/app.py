@@ -1,6 +1,6 @@
 """
-Backend API para geração de Audiobooks usando edge-tts
-Gera arquivos MP3 com vozes neurais da Microsoft
+Backend API para geração de Audiobooks usando edge-tts e Google Cloud TTS
+Gera arquivos MP3 com vozes neurais da Microsoft e Google
 Integração com Supabase para autenticação e banco de dados
 """
 
@@ -10,10 +10,20 @@ import asyncio
 import time
 import io
 import jwt
+import base64
 from functools import wraps
 from flask import Flask, request, jsonify, send_file, after_this_request
 from flask_cors import CORS
 import edge_tts
+
+# Google Cloud TTS
+try:
+    from google.cloud import texttospeech
+    GOOGLE_TTS_ENABLED = True
+    print("✅ Google Cloud TTS disponível!")
+except ImportError:
+    GOOGLE_TTS_ENABLED = False
+    print("⚠️ Google Cloud TTS não instalado.")
 
 # Supabase Client
 try:
@@ -58,20 +68,34 @@ TEMP_DIR = os.path.join(os.path.dirname(__file__), 'temp_audio')
 os.makedirs(TEMP_DIR, exist_ok=True)
 
 
-# Mapeamento de vozes disponíveis (IDs REAIS da API Microsoft Edge-TTS)
-# Fonte: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list
-AVAILABLE_VOICES = {
-    # Português Brasil (pt-BR) - APENAS ESTAS 3 EXISTEM
-    'pt-BR-AntonioNeural': 'Antônio (Masculino)',
-    'pt-BR-FranciscaNeural': 'Francisca (Feminino)',
-    'pt-BR-ThalitaMultilingualNeural': 'Thalita (Feminino)',
-    # Português Portugal (pt-PT)
-    'pt-PT-DuarteNeural': 'Duarte (PT-PT Masculino)',
-    'pt-PT-RaquelNeural': 'Raquel (PT-PT Feminino)',
-    # Inglês Estados Unidos (en-US)
-    'en-US-GuyNeural': 'Guy (EN-US)',
-    'en-US-JennyNeural': 'Jenny (EN-US)',
+# ==================== VOZES DISPONÍVEIS ====================
+
+# Vozes Edge-TTS (Microsoft) - Gratuito e Ilimitado
+EDGE_VOICES = {
+    'pt-BR-AntonioNeural': {'label': 'Antônio (Masculino)', 'provider': 'edge'},
+    'pt-BR-FranciscaNeural': {'label': 'Francisca (Feminino)', 'provider': 'edge'},
+    'pt-BR-ThalitaMultilingualNeural': {'label': 'Thalita (Feminino)', 'provider': 'edge'},
+    'pt-PT-DuarteNeural': {'label': 'Duarte (PT-PT Masculino)', 'provider': 'edge'},
+    'pt-PT-RaquelNeural': {'label': 'Raquel (PT-PT Feminino)', 'provider': 'edge'},
+    'en-US-GuyNeural': {'label': 'Guy (EN-US)', 'provider': 'edge'},
+    'en-US-JennyNeural': {'label': 'Jenny (EN-US)', 'provider': 'edge'},
 }
+
+# Vozes Google Cloud TTS - 1M chars/mês grátis
+GOOGLE_VOICES = {
+    'pt-BR-Wavenet-B': {'label': 'Ricardo (Google Masculino)', 'provider': 'google', 'ssml_gender': 'MALE'},
+    'pt-BR-Neural2-B': {'label': 'Carlos (Google Masculino)', 'provider': 'google', 'ssml_gender': 'MALE'},
+    'pt-BR-Wavenet-A': {'label': 'Camila (Google Feminino)', 'provider': 'google', 'ssml_gender': 'FEMALE'},
+    'pt-BR-Neural2-A': {'label': 'Julia (Google Feminino)', 'provider': 'google', 'ssml_gender': 'FEMALE'},
+    'pt-BR-Wavenet-C': {'label': 'Fernanda (Google Feminino)', 'provider': 'google', 'ssml_gender': 'FEMALE'},
+    'pt-BR-Neural2-C': {'label': 'Beatriz (Google Feminino)', 'provider': 'google', 'ssml_gender': 'FEMALE'},
+}
+
+# Combina todas as vozes
+AVAILABLE_VOICES = {**EDGE_VOICES}
+if GOOGLE_TTS_ENABLED and os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'):
+    AVAILABLE_VOICES.update(GOOGLE_VOICES)
+    print("✅ Vozes Google Cloud TTS habilitadas!")
 
 # Textos de preview para cada idioma
 PREVIEW_TEXTS = {
@@ -81,16 +105,65 @@ PREVIEW_TEXTS = {
 }
 
 
-async def generate_audio(text: str, voice: str, output_path: str):
-    """
-    Gera o arquivo de áudio usando edge-tts de forma assíncrona
-    """
+# ==================== FUNÇÕES DE GERAÇÃO DE ÁUDIO ====================
+
+async def generate_audio_edge(text: str, voice: str, output_path: str):
+    """Gera áudio usando Edge-TTS (Microsoft)"""
     try:
         communicate = edge_tts.Communicate(text, voice)
         await communicate.save(output_path)
     except Exception as e:
         print(f"❌ Erro no edge-tts: {str(e)}")
         raise e
+
+
+def generate_audio_google(text: str, voice_name: str, output_path: str):
+    """Gera áudio usando Google Cloud TTS"""
+    try:
+        client = texttospeech.TextToSpeechClient()
+        
+        # Configuração da voz
+        voice_config = GOOGLE_VOICES.get(voice_name, {})
+        language_code = voice_name.split('-')[0] + '-' + voice_name.split('-')[1]  # ex: pt-BR
+        
+        voice = texttospeech.VoiceSelectionParams(
+            language_code=language_code,
+            name=voice_name,
+        )
+        
+        # Configuração do áudio
+        audio_config = texttospeech.AudioConfig(
+            audio_encoding=texttospeech.AudioEncoding.MP3,
+            speaking_rate=1.0,
+            pitch=0.0,
+        )
+        
+        # Sintetiza
+        synthesis_input = texttospeech.SynthesisInput(text=text)
+        response = client.synthesize_speech(
+            input=synthesis_input, voice=voice, audio_config=audio_config
+        )
+        
+        # Salva o arquivo
+        with open(output_path, "wb") as out:
+            out.write(response.audio_content)
+            
+        print(f"✅ Áudio Google gerado: {voice_name}")
+        
+    except Exception as e:
+        print(f"❌ Erro no Google TTS: {str(e)}")
+        raise e
+
+
+def generate_audio(text: str, voice: str, output_path: str):
+    """Função principal que escolhe o provedor correto"""
+    voice_config = AVAILABLE_VOICES.get(voice, {})
+    provider = voice_config.get('provider', 'edge') if isinstance(voice_config, dict) else 'edge'
+    
+    if provider == 'google' and GOOGLE_TTS_ENABLED:
+        generate_audio_google(text, voice, output_path)
+    else:
+        run_async(generate_audio_edge(text, voice, output_path))
 
 
 def run_async(coro):
@@ -106,10 +179,15 @@ def run_async(coro):
 @app.route('/api/voices', methods=['GET'])
 def get_voices():
     """Retorna a lista de vozes disponíveis"""
-    voices = [
-        {'value': key, 'label': label}
-        for key, label in AVAILABLE_VOICES.items()
-    ]
+    voices = []
+    for key, config in AVAILABLE_VOICES.items():
+        label = config.get('label', key) if isinstance(config, dict) else config
+        provider = config.get('provider', 'edge') if isinstance(config, dict) else 'edge'
+        voices.append({
+            'value': key, 
+            'label': label,
+            'provider': provider
+        })
     return jsonify({'voices': voices})
 
 

@@ -35,16 +35,21 @@ const API_URL = import.meta.env.VITE_API_URL ||
 const ADMIN_EMAIL = '2closett@gmail.com'
 
 const VOICES = [
-    // Português Brasil (pt-BR) - APENAS ESTAS 3 EXISTEM NA API
-    { value: 'pt-BR-AntonioNeural', label: 'Antônio (Masculino)' },
-    { value: 'pt-BR-FranciscaNeural', label: 'Francisca (Feminino)' },
-    { value: 'pt-BR-ThalitaMultilingualNeural', label: 'Thalita (Feminino)' },
-    // Português Portugal (pt-PT)
-    { value: 'pt-PT-DuarteNeural', label: 'Duarte (PT-PT Masculino)' },
-    { value: 'pt-PT-RaquelNeural', label: 'Raquel (PT-PT Feminino)' },
-    // Inglês Estados Unidos (en-US)
-    { value: 'en-US-GuyNeural', label: 'Guy (EN-US)' },
-    { value: 'en-US-JennyNeural', label: 'Jenny (EN-US)' }
+    // === EDGE-TTS (Microsoft) - Gratuito Ilimitado ===
+    { value: 'pt-BR-AntonioNeural', label: 'Antônio (Masculino)', provider: 'edge' },
+    { value: 'pt-BR-FranciscaNeural', label: 'Francisca (Feminino)', provider: 'edge' },
+    { value: 'pt-BR-ThalitaMultilingualNeural', label: 'Thalita (Feminino)', provider: 'edge' },
+    { value: 'pt-PT-DuarteNeural', label: 'Duarte (PT-PT Masculino)', provider: 'edge' },
+    { value: 'pt-PT-RaquelNeural', label: 'Raquel (PT-PT Feminino)', provider: 'edge' },
+    { value: 'en-US-GuyNeural', label: 'Guy (EN-US)', provider: 'edge' },
+    { value: 'en-US-JennyNeural', label: 'Jenny (EN-US)', provider: 'edge' },
+    // === GOOGLE CLOUD TTS - 1M chars/mês grátis ===
+    { value: 'pt-BR-Wavenet-B', label: '🌐 Ricardo (Google Masculino)', provider: 'google' },
+    { value: 'pt-BR-Neural2-B', label: '🌐 Carlos (Google Masculino)', provider: 'google' },
+    { value: 'pt-BR-Wavenet-A', label: '🌐 Camila (Google Feminino)', provider: 'google' },
+    { value: 'pt-BR-Neural2-A', label: '🌐 Julia (Google Feminino)', provider: 'google' },
+    { value: 'pt-BR-Wavenet-C', label: '🌐 Fernanda (Google Feminino)', provider: 'google' },
+    { value: 'pt-BR-Neural2-C', label: '🌐 Beatriz (Google Feminino)', provider: 'google' },
 ]
 
 const formatTime = (seconds) => {
