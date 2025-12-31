@@ -56,8 +56,32 @@ ON admins FOR SELECT
 USING (true);
 
 -- =============================================
--- 4. CRIAR BUCKETS NO STORAGE
--- Vá em Storage > Create Bucket:
--- - Nome: "audios" | Público: SIM
--- - Nome: "covers" | Público: SIM
+-- 4. CONFIGURAÇÃO DE BUCKETS (STORAGE)
 -- =============================================
+
+-- Criar buckets se não existirem (via SQL se permitido, senão faça manualmente no painel)
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('audios', 'audios', true), ('covers', 'covers', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Políticas para o Bucket "audios"
+DROP POLICY IF EXISTS "Qualquer um pode ler audios" ON storage.objects;
+CREATE POLICY "Qualquer um pode ler audios" ON storage.objects
+FOR SELECT USING (bucket_id = 'audios');
+
+DROP POLICY IF EXISTS "Usuários autenticados podem subir audios" ON storage.objects;
+CREATE POLICY "Usuários autenticados podem subir audios" ON storage.objects
+FOR INSERT WITH CHECK (bucket_id = 'audios' AND auth.role() = 'authenticated');
+
+-- Políticas para o Bucket "covers"
+DROP POLICY IF EXISTS "Qualquer um pode ler capas" ON storage.objects;
+CREATE POLICY "Qualquer um pode ler capas" ON storage.objects
+FOR SELECT USING (bucket_id = 'covers');
+
+DROP POLICY IF EXISTS "Usuários autenticados podem subir capas" ON storage.objects;
+CREATE POLICY "Usuários autenticados podem subir capas" ON storage.objects
+FOR INSERT WITH CHECK (bucket_id = 'covers' AND auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Usuários autenticados podem atualizar capas" ON storage.objects;
+CREATE POLICY "Usuários autenticados podem atualizar capas" ON storage.objects
+FOR UPDATE WITH CHECK (bucket_id = 'covers' AND auth.role() = 'authenticated');

@@ -586,6 +586,41 @@ def delete_audiobook(audiobook_id):
         return jsonify({'error': f'Erro ao deletar: {str(e)}'}), 500
 
 
+@app.route('/api/audiobooks/<audiobook_id>', methods=['PUT'])
+@require_admin
+def update_audiobook(audiobook_id):
+    """
+    Atualiza um audiobook existente (apenas admin)
+    Recebe: { title, description, audio_url?, cover_url?, duration_seconds? }
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'Dados não fornecidos'}), 400
+        
+        # Filtra apenas os campos permitidos e que foram enviados
+        updates = {}
+        allowed_fields = ['title', 'description', 'audio_url', 'cover_url', 'duration_seconds']
+        for field in allowed_fields:
+            if field in data:
+                updates[field] = data[field]
+        
+        if not updates:
+            return jsonify({'error': 'Nenhum campo para atualizar'}), 400
+        
+        updates['updated_at'] = 'now()' # Ou deixa o Supabase lidar com isso
+        
+        result = supabase.table('audiobooks').update(updates).eq('id', audiobook_id).execute()
+        
+        return jsonify({
+            'success': True,
+            'audiobook': result.data[0] if result.data else {}
+        })
+    except Exception as e:
+        print(f"Erro ao atualizar audiobook: {e}")
+        return jsonify({'error': f'Erro ao atualizar: {str(e)}'}), 500
+
+
 @app.route('/api/upload/cover', methods=['POST'])
 @require_admin
 def upload_cover():

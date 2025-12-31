@@ -522,6 +522,9 @@ function AdminPage({ user, isAdmin, setShowLoginModal }) {
     const [audioFile, setAudioFile] = useState(null)
     const [coverFile, setCoverFile] = useState(null)
     const [saving, setSaving] = useState(false)
+    const [editingId, setEditingId] = useState(null)
+    const [existingAudioUrl, setExistingAudioUrl] = useState('')
+    const [existingCoverUrl, setExistingCoverUrl] = useState('')
 
     useEffect(() => {
         if (isAdmin) loadAudiobooks()
@@ -541,7 +544,8 @@ function AdminPage({ user, isAdmin, setShowLoginModal }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        if (!title || !audioFile) return alert('Título e áudio são obrigatórios')
+        if (!title) return alert('Título é obrigatório')
+        if (!editingId && !audioFile) return alert('O arquivo de áudio é obrigatório para novos audiobooks')
 
         setSaving(true)
         try {
@@ -549,42 +553,63 @@ function AdminPage({ user, isAdmin, setShowLoginModal }) {
             const token = session.data.session?.access_token
             if (!token) throw new Error('Não autenticado')
 
-            // Upload do áudio para Supabase Storage
-            const audioName = `${Date.now()}-${audioFile.name}`
-            const { error: audioError } = await supabase.storage.from('audios').upload(audioName, audioFile)
-            if (audioError) throw audioError
-            const audioUrl = `${SUPABASE_URL}/storage/v1/object/public/audios/${audioName}`
+            let audioUrl = existingAudioUrl
+            let coverUrl = existingCoverUrl
 
-            // Upload da capa (opcional)
-            let coverUrl = ''
+            // Upload do áudio se um novo arquivo for selecionado
+            if (audioFile) {
+                const audioName = `${Date.now()}-${audioFile.name}`
+                const { error: audioError } = await supabase.storage.from('audios').upload(audioName, audioFile, { upsert: true })
+                if (audioError) throw audioError
+                audioUrl = `${SUPABASE_URL}/storage/v1/object/public/audios/${audioName}`
+            }
+
+            // Upload da capa se um novo arquivo for selecionado
             if (coverFile) {
                 const coverName = `${Date.now()}-${coverFile.name}`
-                const { error: coverError } = await supabase.storage.from('covers').upload(coverName, coverFile)
+                const { error: coverError } = await supabase.storage.from('covers').upload(coverName, coverFile, { upsert: true })
                 if (!coverError) {
                     coverUrl = `${SUPABASE_URL}/storage/v1/object/public/covers/${coverName}`
                 }
             }
 
-            // Salvar no banco
-            const res = await fetch(`${API_URL}/api/audiobooks`, {
-                method: 'POST',
+            const body = { title, description, audio_url: audioUrl, cover_url: coverUrl }
+
+            const res = await fetch(`${API_URL}/api/audiobooks${editingId ? `/${editingId}` : ''}`, {
+                method: editingId ? 'PUT' : 'POST',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, description, audio_url: audioUrl, cover_url: coverUrl })
+                body: JSON.stringify(body)
             })
 
             if (!res.ok) throw new Error((await res.json()).error || 'Erro ao salvar')
 
-            alert('Audiobook publicado!')
-            setTitle('')
-            setDescription('')
-            setAudioFile(null)
-            setCoverFile(null)
+            alert(editingId ? 'Audiobook atualizado!' : 'Audiobook publicado!')
+            resetForm()
             loadAudiobooks()
         } catch (e) {
             alert(`Erro: ${e.message}`)
         } finally {
             setSaving(false)
         }
+    }
+
+    const resetForm = () => {
+        setTitle('')
+        setDescription('')
+        setAudioFile(null)
+        setCoverFile(null)
+        setEditingId(null)
+        setExistingAudioUrl('')
+        setExistingCoverUrl('')
+    }
+
+    const startEdit = (book) => {
+        setTitle(book.title)
+        setDescription(book.description || '')
+        setEditingId(book.id)
+        setExistingAudioUrl(book.audio_url)
+        setExistingCoverUrl(book.cover_url || '')
+        window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
     const handleDelete = async (id) => {
@@ -642,7 +667,7 @@ function AdminPage({ user, isAdmin, setShowLoginModal }) {
                 padding: '24px', marginBottom: '48px'
             }}>
                 <h2 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '24px' }}>
-                    Publicar Novo Audiobook
+                    {editingId ? 'Editar Audiobook' : 'Publicar Novo Audiobook'}
                 </h2>
 
                 <form onSubmit={handleSubmit}>
@@ -678,9 +703,10 @@ function AdminPage({ user, isAdmin, setShowLoginModal }) {
                                 Arquivo de Áudio (MP3) *
                             </label>
                             <input
-                                type="file" accept="audio/*" onChange={e => setAudioFile(e.target.files?.[0])} required
+                                type="file" accept="audio/*" onChange={e => setAudioFile(e.target.files?.[0])} required={!editingId}
                                 style={{ fontSize: '14px' }}
                             />
+                            {editingId && <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Deixe vazio para manter o atual</p>}
                         </div>
                         <div>
                             <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500' }}>
@@ -693,13 +719,25 @@ function AdminPage({ user, isAdmin, setShowLoginModal }) {
                         </div>
                     </div>
 
-                    <button type="submit" disabled={saving} style={{
-                        background: '#2546C7', color: '#fff', padding: '12px 24px',
-                        border: 'none', borderRadius: '8px', fontSize: '16px',
-                        fontWeight: '500', cursor: saving ? 'not-allowed' : 'pointer'
-                    }}>
-                        {saving ? 'Publicando...' : 'Publicar Audiobook'}
-                    </button>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                        <button type="submit" disabled={saving} style={{
+                            background: '#2546C7', color: '#fff', padding: '12px 24px',
+                            border: 'none', borderRadius: '8px', fontSize: '16px',
+                            fontWeight: '500', cursor: saving ? 'not-allowed' : 'pointer'
+                        }}>
+                            {saving ? 'Salvando...' : (editingId ? 'Salvar Alterações' : 'Publicar Audiobook')}
+                        </button>
+
+                        {editingId && (
+                            <button type="button" onClick={resetForm} style={{
+                                background: 'transparent', color: '#64748b', padding: '12px 24px',
+                                border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '16px',
+                                cursor: 'pointer'
+                            }}>
+                                Cancelar
+                            </button>
+                        )}
+                    </div>
                 </form>
             </div>
 
@@ -732,12 +770,20 @@ function AdminPage({ user, isAdmin, setShowLoginModal }) {
                                     {book.description?.slice(0, 80) || 'Sem descrição'}
                                 </p>
                             </div>
-                            <button onClick={() => handleDelete(book.id)} style={{
-                                background: '#fee2e2', color: '#dc2626', border: 'none',
-                                padding: '8px 16px', borderRadius: '6px', fontSize: '14px', cursor: 'pointer'
-                            }}>
-                                Excluir
-                            </button>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <button onClick={() => startEdit(book)} style={{
+                                    background: '#f1f5f9', color: '#475569', border: 'none',
+                                    padding: '8px 16px', borderRadius: '6px', fontSize: '14px', cursor: 'pointer'
+                                }}>
+                                    Editar
+                                </button>
+                                <button onClick={() => handleDelete(book.id)} style={{
+                                    background: '#fee2e2', color: '#dc2626', border: 'none',
+                                    padding: '8px 16px', borderRadius: '6px', fontSize: '14px', cursor: 'pointer'
+                                }}>
+                                    Excluir
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>
