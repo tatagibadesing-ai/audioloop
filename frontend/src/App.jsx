@@ -429,52 +429,66 @@ function HomePage({ user }) {
             `}</style>
             </div>
 
-            {/* ========== SEÇÃO AUDIOBOOKS - FUNDO BRANCO ========== */}
+            {/* ========== SEÇÃO AUDIOBOOKS - DARK THEME ========== */}
             <div style={{
                 width: '100%',
-                background: '#ffffff',
-                padding: '64px 24px'
+                background: '#02020A',
+                padding: '64px 24px',
+                borderTop: '1px solid rgba(255,255,255,0.05)'
             }}>
                 <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-                    <h2 style={{ fontSize: '28px', fontWeight: '600', marginBottom: '32px', color: '#0f172a' }}>
+                    <h2 style={{ fontSize: '28px', fontWeight: '600', marginBottom: '32px', color: '#ffffff' }}>
                         Audiobooks Disponíveis
                     </h2>
 
                     {loadingBooks ? (
-                        <p style={{ color: '#64748b' }}>Carregando...</p>
+                        <p style={{ color: 'rgba(255,255,255,0.5)' }}>Carregando...</p>
                     ) : audiobooks.length === 0 ? (
-                        <p style={{ color: '#64748b' }}>Nenhum audiobook publicado ainda.</p>
+                        <p style={{ color: 'rgba(255,255,255,0.5)' }}>Nenhum audiobook publicado ainda.</p>
                     ) : (
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
                             {audiobooks.map((book) => (
                                 <div key={book.id} style={{
-                                    background: '#fff',
-                                    borderRadius: '12px',
-                                    border: '1px solid #e2e8f0',
+                                    background: 'rgba(255,255,255,0.03)',
+                                    borderRadius: '16px',
+                                    border: '1px solid rgba(255,255,255,0.08)',
                                     overflow: 'hidden',
-                                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-                                    transition: 'transform 0.2s, box-shadow 0.2s'
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                                    transition: 'transform 0.2s, box-shadow 0.2s, background 0.2s'
                                 }}
-                                    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)'; }}
-                                    onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)'; }}
+                                    onMouseEnter={e => {
+                                        e.currentTarget.style.transform = 'translateY(-6px)';
+                                        e.currentTarget.style.boxShadow = '0 12px 30px rgba(0,0,0,0.5)';
+                                        e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                                    }}
+                                    onMouseLeave={e => {
+                                        e.currentTarget.style.transform = 'translateY(0)';
+                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+                                        e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+                                    }}
                                 >
                                     {book.cover_url ? (
-                                        <img src={book.cover_url} alt={book.title} style={{ width: '100%', height: '180px', objectFit: 'cover' }} />
+                                        <img src={book.cover_url} alt={book.title} style={{ width: '100%', height: '200px', objectFit: 'cover' }} />
                                     ) : (
-                                        <div style={{ width: '100%', height: '180px', background: 'linear-gradient(135deg, #2546C7 0%, #1a3399 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <div style={{ width: '100%', height: '200px', background: 'linear-gradient(135deg, #2546C7 0%, #1a3399 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             <span style={{ fontSize: '48px' }}>🎧</span>
                                         </div>
                                     )}
-                                    <div style={{ padding: '20px' }}>
-                                        <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px', color: '#0f172a' }}>{book.title}</h3>
+                                    <div style={{ padding: '24px' }}>
+                                        <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px', color: '#ffffff' }}>{book.title}</h3>
                                         {book.description && (
-                                            <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '16px', lineHeight: '1.5' }}>
+                                            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', marginBottom: '20px', lineHeight: '1.6' }}>
                                                 {book.description.slice(0, 100)}{book.description.length > 100 ? '...' : ''}
                                             </p>
                                         )}
                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                             {book.duration_seconds ? (
-                                                <span style={{ fontSize: '13px', color: '#94a3b8' }}>⏱️ {formatTime(book.duration_seconds)}</span>
+                                                <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    {formatTime(book.duration_seconds)}
+                                                </span>
                                             ) : <span />}
                                             {book.audio_url && (
                                                 <a href={book.audio_url} target="_blank" rel="noopener noreferrer"
