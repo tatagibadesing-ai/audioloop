@@ -13,10 +13,7 @@
 body {
   font-family: 'Figtree', sans-serif;
   min-height: 100vh;
-  background-image: url('/background.jpg');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
+  background-color: #ffffff;
   color: #1a1a2e;
   -webkit-font-smoothing: antialiased;
 }
