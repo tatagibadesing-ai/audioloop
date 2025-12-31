@@ -1,7 +1,6 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # dependencies
-/node_modules
+node_modules/
+**/node_modules/
 
 # next.js
 /.next/
@@ -9,6 +8,7 @@
 
 # production
 /build
+dist/
 
 # debug
 npm-debug.log*
@@ -18,6 +18,7 @@ yarn-error.log*
 
 # env files
 .env*
+.env.local
 
 # vercel
 .vercel
@@ -25,3 +26,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+temp_audio/
+
+# Lock files (to avoid pnpm/npm conflicts)
+pnpm-lock.yaml
