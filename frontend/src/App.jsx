@@ -361,14 +361,26 @@ function HomePage({ user }) {
                             <button onClick={() => fileInputRef.current?.click()} disabled={isLoading}
                                 style={{
                                     display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px',
-                                    background: 'transparent', border: '1px solid #40403F',
-                                    borderRadius: '20px', color: '#FCFBF8', cursor: 'pointer', fontSize: '14px', fontWeight: '600',
-                                    fontFamily: "'Figtree', sans-serif", transition: 'border-color 0.2s, background 0.2s'
+                                    background: 'transparent', border: '1px solid #333332',
+                                    borderRadius: '20px', color: '#91918E', cursor: 'pointer', fontSize: '14px', fontWeight: '600',
+                                    fontFamily: "'Figtree', sans-serif", transition: 'all 0.2s'
                                 }}
-                                onMouseEnter={e => { e.currentTarget.style.borderColor = '#FCFBF8'; e.currentTarget.style.background = 'rgba(252, 251, 248, 0.05)'; }}
-                                onMouseLeave={e => { e.currentTarget.style.borderColor = '#40403F'; e.currentTarget.style.background = 'transparent'; }}
+                                onMouseEnter={e => {
+                                    e.currentTarget.style.borderColor = '#40403F';
+                                    e.currentTarget.style.color = '#FCFBF8';
+                                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                                    const svg = e.currentTarget.querySelector('svg');
+                                    if (svg) svg.style.stroke = '#FCFBF8';
+                                }}
+                                onMouseLeave={e => {
+                                    e.currentTarget.style.borderColor = '#333332';
+                                    e.currentTarget.style.color = '#91918E';
+                                    e.currentTarget.style.background = 'transparent';
+                                    const svg = e.currentTarget.querySelector('svg');
+                                    if (svg) svg.style.stroke = '#91918E';
+                                }}
                             >
-                                <svg width="18" height="18" fill="none" stroke="#FCFBF8" strokeWidth="2.5" viewBox="0 0 24 24">
+                                <svg width="18" height="18" fill="none" stroke="#91918E" strokeWidth="2.5" viewBox="0 0 24 24" style={{ transition: 'stroke 0.2s' }}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                                 </svg>
                                 Anexar
@@ -377,13 +389,26 @@ function HomePage({ user }) {
                             <div style={{ position: 'relative' }}>
                                 <select value={voice} onChange={(e) => setVoice(e.target.value)} disabled={isLoading}
                                     style={{
-                                        padding: '8px 14px', background: 'transparent', border: '1px solid #40403F',
-                                        borderRadius: '20px', color: '#FCFBF8', fontSize: '14px', cursor: 'pointer', appearance: 'none',
-                                        paddingRight: '30px', outline: 'none', fontFamily: "'Figtree', sans-serif", fontWeight: '600'
+                                        padding: '8px 14px', background: 'transparent', border: '1px solid #333332',
+                                        borderRadius: '20px', color: '#91918E', fontSize: '14px', cursor: 'pointer', appearance: 'none',
+                                        paddingRight: '30px', outline: 'none', fontFamily: "'Figtree', sans-serif", fontWeight: '600',
+                                        transition: 'all 0.2s'
+                                    }}
+                                    onMouseEnter={e => {
+                                        e.currentTarget.style.borderColor = '#40403F';
+                                        e.currentTarget.style.color = '#FCFBF8';
+                                        const arrow = e.currentTarget.parentElement.querySelector('.select-arrow');
+                                        if (arrow) arrow.style.color = '#FCFBF8';
+                                    }}
+                                    onMouseLeave={e => {
+                                        e.currentTarget.style.borderColor = '#333332';
+                                        e.currentTarget.style.color = '#91918E';
+                                        const arrow = e.currentTarget.parentElement.querySelector('.select-arrow');
+                                        if (arrow) arrow.style.color = '#91918E';
                                     }}>
                                     {VOICES.map((v) => <option key={v.value} value={v.value} style={{ background: '#1a1a1a' }}>{v.label}</option>)}
                                 </select>
-                                <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#FCFBF8', fontSize: '14px', fontWeight: 'bold' }}>▾</span>
+                                <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#91918E', fontSize: '14px', fontWeight: 'bold', transition: 'color 0.2s' }} className="select-arrow">▾</span>
                             </div>
                         </div>
 
