@@ -319,7 +319,7 @@ function HomePage({ user }) {
                 padding: '80px 24px 64px',
                 backgroundImage: "url('/background.jpg')",
                 backgroundSize: 'cover',
-                backgroundPosition: 'top',
+                backgroundPosition: 'bottom',
                 boxSizing: 'border-box'
             }}>
                 {/* Título */}
