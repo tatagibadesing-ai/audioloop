@@ -1,5 +1,20 @@
 import { useState, useRef, useEffect } from "react"
 import { createClient } from '@supabase/supabase-js'
+import {
+    CaretDown,
+    Paperclip,
+    ArrowUp,
+    DownloadSimple,
+    Clock,
+    PencilSimple,
+    Trash,
+    X,
+    Play,
+    SignOut,
+    House,
+    Layout,
+    UserCircle
+} from "@phosphor-icons/react"
 
 // Configuração
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || ''
@@ -109,34 +124,41 @@ function Header({ user, isAdmin, setShowLoginModal }) {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 {isAdmin && (
-                    <a href="#admin" style={{
-                        background: '#2546C7', color: '#fff', padding: '6px 14px',
-                        borderRadius: '8px', fontSize: '13px', fontWeight: '500', textDecoration: 'none'
+                    <button onClick={() => window.location.hash = '#admin'} style={{
+                        background: 'transparent', border: 'none', color: '#64748b',
+                        cursor: 'pointer', fontSize: '14px', fontWeight: '500',
+                        display: 'flex', alignItems: 'center', gap: '6px'
                     }}>
-                        Painel Admin
-                    </a>
+                        <Layout size={18} /> Painel Admin
+                    </button>
                 )}
-
+                <button onClick={() => window.location.hash = '#'} style={{
+                    background: 'transparent', border: 'none', color: '#64748b',
+                    cursor: 'pointer', fontSize: '14px', fontWeight: '500',
+                    display: 'flex', alignItems: 'center', gap: '6px'
+                }}>
+                    <House size={18} /> Home
+                </button>
+                <div style={{ width: '1px', height: '20px', background: '#e2e8f0', margin: '0 8px' }} />
                 {user ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <span style={{ fontSize: '14px', color: '#64748b' }}>{user.email}</span>
+                        <span style={{ fontSize: '14px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <UserCircle size={20} /> {user.email?.split('@')[0]}
+                        </span>
                         <button onClick={handleLogout} style={{
-                            background: 'transparent', border: '1px solid #e2e8f0',
-                            borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', fontSize: '14px'
+                            background: 'transparent', color: '#ef4444', border: 'none',
+                            fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px'
                         }}>
-                            Sair
+                            <SignOut size={18} /> Sair
                         </button>
                     </div>
                 ) : (
                     <button onClick={() => setShowLoginModal(true)} style={{
-                        display: 'flex', alignItems: 'center', gap: '8px',
-                        background: '#f1f5f9', border: 'none', borderRadius: '8px',
-                        padding: '8px 16px', cursor: 'pointer', fontSize: '14px', color: '#475569'
+                        background: '#2546C7', color: '#fff', border: 'none',
+                        padding: '8px 20px', borderRadius: '8px', fontSize: '14px',
+                        fontWeight: '500', cursor: 'pointer'
                     }}>
-                        <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        Entrar
+                        Login
                     </button>
                 )}
             </div>
@@ -369,28 +391,22 @@ function HomePage({ user }) {
                                     e.currentTarget.style.borderColor = '#40403F';
                                     e.currentTarget.style.color = '#FCFBF8';
                                     e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
-                                    const svg = e.currentTarget.querySelector('svg');
-                                    if (svg) svg.style.stroke = '#FCFBF8';
                                 }}
                                 onMouseLeave={e => {
                                     e.currentTarget.style.borderColor = '#333332';
                                     e.currentTarget.style.color = '#91918E';
                                     e.currentTarget.style.background = 'transparent';
-                                    const svg = e.currentTarget.querySelector('svg');
-                                    if (svg) svg.style.stroke = '#91918E';
                                 }}
                             >
-                                <svg width="18" height="18" fill="none" stroke="#91918E" strokeWidth="2.5" viewBox="0 0 24 24" style={{ transition: 'stroke 0.2s' }}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
+                                <Paperclip size={18} weight="bold" />
                                 Anexar
                             </button>
 
                             <div style={{ position: 'relative' }}>
                                 <select value={voice} onChange={(e) => setVoice(e.target.value)} disabled={isLoading}
                                     style={{
-                                        padding: '8px 14px', background: 'transparent', border: '1px solid #333332',
-                                        borderRadius: '20px', color: '#91918E', fontSize: '14px', cursor: 'pointer', appearance: 'none',
+                                        padding: '8px 14px', background: 'transparent', border: '1px solid #40403F',
+                                        borderRadius: '20px', color: '#FCFBF8', fontSize: '14px', cursor: 'pointer', appearance: 'none',
                                         paddingRight: '30px', outline: 'none', fontFamily: "'Figtree', sans-serif", fontWeight: '600',
                                         transition: 'all 0.2s'
                                     }}
@@ -408,7 +424,7 @@ function HomePage({ user }) {
                                     }}>
                                     {VOICES.map((v) => <option key={v.value} value={v.value} style={{ background: '#1a1a1a' }}>{v.label}</option>)}
                                 </select>
-                                <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#91918E', fontSize: '14px', fontWeight: 'bold', transition: 'color 0.2s' }} className="select-arrow">▾</span>
+                                <CaretDown size={14} weight="bold" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#91918E', transition: 'color 0.2s' }} className="select-arrow" />
                             </div>
                         </div>
 
@@ -436,9 +452,7 @@ function HomePage({ user }) {
                                         <path opacity="1" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                                     </svg>
                                 ) : (
-                                    <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                                    </svg>
+                                    <ArrowUp size={24} weight="bold" />
                                 )}
                             </button>
                         </div>
@@ -458,9 +472,7 @@ function HomePage({ user }) {
                             alignItems: 'center', justifyContent: 'center', background: '#f1f5f9',
                             border: '1px solid #e2e8f0', borderRadius: '50%', color: '#64748b', cursor: 'pointer'
                         }}>
-                            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
+                            <DownloadSimple size={20} weight="bold" />
                         </button>
                     </div>
                 )}
@@ -526,22 +538,20 @@ function HomePage({ user }) {
                                         )}
                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                             {book.duration_seconds ? (
-                                                <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                    <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                    </svg>
-                                                    {formatTime(book.duration_seconds)}
-                                                </span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'rgba(255,255,255,0.7)', fontWeight: '500' }}>
+                                                    <Clock size={16} weight="bold" />
+                                                    {formatTime(book.duration_seconds || 0)}
+                                                </div>
                                             ) : <span />}
                                             {book.audio_url && (
-                                                <a href={book.audio_url} target="_blank" rel="noopener noreferrer"
+                                                <button onClick={() => window.open(book.audio_url, '_blank')}
                                                     style={{
-                                                        background: '#2546C7', color: '#fff',
-                                                        padding: '8px 16px', borderRadius: '8px', fontSize: '14px',
-                                                        textDecoration: 'none', fontWeight: '500'
+                                                        background: '#2546C7', color: '#fff', border: 'none', padding: '8px 16px',
+                                                        borderRadius: '8px', fontSize: '14px', fontWeight: '500', cursor: 'pointer',
+                                                        display: 'flex', alignItems: 'center', gap: '6px'
                                                     }}>
-                                                    ▶ Ouvir
-                                                </a>
+                                                    <Play size={16} weight="fill" /> Ouvir
+                                                </button>
                                             )}
                                         </div>
                                     </div>
@@ -817,15 +827,17 @@ function AdminPage({ user, isAdmin, setShowLoginModal }) {
                             <div style={{ display: 'flex', gap: '8px' }}>
                                 <button onClick={() => startEdit(book)} style={{
                                     background: '#f1f5f9', color: '#475569', border: 'none',
-                                    padding: '8px 16px', borderRadius: '6px', fontSize: '14px', cursor: 'pointer'
+                                    padding: '8px 16px', borderRadius: '6px', fontSize: '14px', cursor: 'pointer',
+                                    display: 'flex', alignItems: 'center', gap: '4px'
                                 }}>
-                                    Editar
+                                    <PencilSimple size={14} /> Editar
                                 </button>
                                 <button onClick={() => handleDelete(book.id)} style={{
                                     background: '#fee2e2', color: '#dc2626', border: 'none',
-                                    padding: '8px 16px', borderRadius: '6px', fontSize: '14px', cursor: 'pointer'
+                                    padding: '8px 16px', borderRadius: '6px', fontSize: '14px', cursor: 'pointer',
+                                    display: 'flex', alignItems: 'center', gap: '4px'
                                 }}>
-                                    Excluir
+                                    <Trash size={14} /> Excluir
                                 </button>
                             </div>
                         </div>
