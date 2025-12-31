@@ -15,7 +15,9 @@ import {
     House,
     Layout,
     UserCircle,
-    CheckCircle
+    CheckCircle,
+    SpeakerHigh,
+    CircleNotch
 } from "@phosphor-icons/react"
 
 // Configuração
@@ -269,7 +271,37 @@ function HomePage({ user }) {
     const [isLoading, setIsLoading] = useState(false)
     const [audioUrl, setAudioUrl] = useState(null)
     const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false)
+    const [previewVoice, setPreviewVoice] = useState(null) // Voz sendo testada
     const voiceSelectRef = useRef(null)
+    const previewAudioRef = useRef(new Audio())
+
+    const playVoicePreview = async (voiceId) => {
+        try {
+            setPreviewVoice(voiceId)
+            const isEnglish = voiceId.startsWith('en-US')
+            const previewText = isEnglish ? "Hello, this is my voice." : "Olá, esta é a minha voz."
+
+            const response = await fetch(`${API_URL}/api/generate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: previewText, voice: voiceId })
+            })
+
+            if (!response.ok) throw new Error('Falha na prévia')
+
+            const blob = await response.blob()
+            const url = URL.createObjectURL(blob)
+
+            if (previewAudioRef.current) {
+                previewAudioRef.current.src = url
+                previewAudioRef.current.play()
+            }
+        } catch (error) {
+            console.error("Erro na prévia:", error)
+        } finally {
+            setPreviewVoice(null)
+        }
+    }
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -480,7 +512,7 @@ function HomePage({ user }) {
                                                     whileHover={{ background: 'rgba(252, 251, 248, 0.05)' }}
                                                     onClick={() => {
                                                         setVoice(v.value);
-                                                        setIsVoiceModalOpen(false);
+                                                        playVoicePreview(v.value);
                                                     }}
                                                     style={{
                                                         padding: '10px 12px', borderRadius: '10px',
@@ -490,7 +522,14 @@ function HomePage({ user }) {
                                                         transition: 'color 0.2s'
                                                     }}
                                                 >
-                                                    {v.label}
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        {v.label}
+                                                        {previewVoice === v.value ? (
+                                                            <CircleNotch size={14} className="animate-spin" />
+                                                        ) : (
+                                                            <SpeakerHigh size={14} style={{ opacity: voice === v.value ? 1 : 0.4 }} />
+                                                        )}
+                                                    </div>
                                                     {voice === v.value && <CheckCircle size={18} weight="fill" color="#FCFBF8" />}
                                                 </motion.div>
                                             ))}
