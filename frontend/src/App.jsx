@@ -346,7 +346,7 @@ function HomePage({ user }) {
                             disabled={isLoading}
                             style={{
                                 width: '100%', minHeight: '60px', background: 'transparent', border: 'none',
-                                outline: 'none', resize: 'none', fontSize: '18px', lineHeight: '1.6', color: '#ffffff',
+                                outline: 'none', resize: 'none', fontSize: '18px', lineHeight: '1.6', color: '#FCFBF8',
                                 fontFamily: "'Figtree', sans-serif", boxSizing: 'border-box'
                             }}
                         />
@@ -361,8 +361,8 @@ function HomePage({ user }) {
                             <button onClick={() => fileInputRef.current?.click()} disabled={isLoading}
                                 style={{
                                     display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px',
-                                    background: 'transparent', border: '1px solid rgba(255,255,255,0.2)',
-                                    borderRadius: '20px', color: '#ffffff', cursor: 'pointer', fontSize: '14px', fontWeight: '600',
+                                    background: 'transparent', border: '1px solid #40403F',
+                                    borderRadius: '20px', color: '#FCFBF8', cursor: 'pointer', fontSize: '14px', fontWeight: '600',
                                     fontFamily: "'Figtree', sans-serif", transition: 'border-color 0.2s, background 0.2s'
                                 }}
                                 onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
@@ -377,13 +377,13 @@ function HomePage({ user }) {
                             <div style={{ position: 'relative' }}>
                                 <select value={voice} onChange={(e) => setVoice(e.target.value)} disabled={isLoading}
                                     style={{
-                                        padding: '8px 14px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)',
-                                        borderRadius: '20px', color: '#ffffff', fontSize: '14px', cursor: 'pointer', appearance: 'none',
+                                        padding: '8px 14px', background: 'transparent', border: '1px solid #40403F',
+                                        borderRadius: '20px', color: '#FCFBF8', fontSize: '14px', cursor: 'pointer', appearance: 'none',
                                         paddingRight: '30px', outline: 'none', fontFamily: "'Figtree', sans-serif", fontWeight: '600'
                                     }}>
                                     {VOICES.map((v) => <option key={v.value} value={v.value} style={{ background: '#1a1a1a' }}>{v.label}</option>)}
                                 </select>
-                                <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#ffffff', fontSize: '10px' }}>▼</span>
+                                <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#FCFBF8', fontSize: '10px' }}>▼</span>
                             </div>
                         </div>
 
@@ -395,9 +395,9 @@ function HomePage({ user }) {
                             <button onClick={handleGenerate} disabled={isLoading || !text.trim()}
                                 style={{
                                     width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    background: isLoading || !text.trim() ? '#334155' : '#f8fafc',
+                                    background: isLoading || !text.trim() ? '#91918e' : '#FCFBF8',
                                     border: 'none', borderRadius: '50%',
-                                    color: isLoading || !text.trim() ? '#64748b' : '#03030D',
+                                    color: isLoading || !text.trim() ? 'rgba(255,255,255,0.6)' : '#03030D',
                                     cursor: isLoading || !text.trim() ? 'not-allowed' : 'pointer',
                                     transition: 'transform 0.1s, background 0.2s',
                                     boxShadow: text.trim() ? '0 4px 12px rgba(255,255,255,0.1)' : 'none'
