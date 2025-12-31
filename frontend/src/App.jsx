@@ -332,72 +332,91 @@ function HomePage({ user }) {
                     </p>
                 </div>
 
-                {/* Card Gerador */}
+                {/* Card Gerador Estilo Moderno/Dark */}
                 <div style={{
-                    maxWidth: '900px', width: '100%', margin: '0 auto 24px',
-                    background: 'rgba(255,255,255,0.75)', borderRadius: '24px', backdropFilter: 'blur(12px)',
-                    border: '1px solid rgba(255,255,255,0.3)', boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
-                    overflow: 'hidden'
+                    maxWidth: '850px', width: '100%', margin: '0 auto 24px',
+                    background: '#1a1a1a', borderRadius: '32px',
+                    boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
+                    padding: '12px', boxSizing: 'border-box'
                 }}>
-                    <div style={{ padding: '24px', position: 'relative' }}>
+                    <div style={{ padding: '16px 20px 8px' }}>
                         <textarea
                             value={text} onChange={(e) => { setText(e.target.value); setAudioUrl(null); }}
-                            placeholder="Cole ou digite seu texto aqui..."
+                            placeholder="Peça para gerar um audiobook de..."
                             disabled={isLoading}
                             style={{
-                                width: '100%', minHeight: '220px', background: 'transparent', border: 'none',
-                                outline: 'none', resize: 'none', fontSize: '18px', lineHeight: '1.6', color: '#1e293b',
+                                width: '100%', minHeight: '100px', background: 'transparent', border: 'none',
+                                outline: 'none', resize: 'none', fontSize: '18px', lineHeight: '1.6', color: '#e2e8f0',
                                 fontFamily: 'inherit', boxSizing: 'border-box'
                             }}
                         />
+                    </div>
 
-                        <div style={{ position: 'absolute', right: '24px', top: '24px', display: 'flex', gap: '8px' }}>
+                    <div style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '8px 12px', gap: '8px'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <input ref={fileInputRef} type="file" accept=".pdf,.docx,.txt" onChange={handleFileUpload} style={{ display: 'none' }} />
                             <button onClick={() => fileInputRef.current?.click()} disabled={isLoading}
-                                title="Upload" style={{
-                                    width: '40px', height: '40px', display: 'flex', alignItems: 'center',
-                                    justifyContent: 'center', background: '#f1f5f9', border: 'none', borderRadius: '50%',
-                                    color: '#64748b', cursor: 'pointer'
-                                }}>
+                                style={{
+                                    display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px',
+                                    background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)',
+                                    borderRadius: '20px', color: '#94a3b8', cursor: 'pointer', fontSize: '14px', fontWeight: '500',
+                                    transition: 'background 0.2s'
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
+                                onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                            >
                                 <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                                 </svg>
+                                Anexar
                             </button>
+
+                            <div style={{ position: 'relative' }}>
+                                <select value={voice} onChange={(e) => setVoice(e.target.value)} disabled={isLoading}
+                                    style={{
+                                        padding: '10px 16px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)',
+                                        borderRadius: '20px', color: '#94a3b8', fontSize: '14px', cursor: 'pointer', appearance: 'none',
+                                        paddingRight: '30px', outline: 'none'
+                                    }}>
+                                    {VOICES.map((v) => <option key={v.value} value={v.value} style={{ background: '#1a1a1a' }}>{v.label}</option>)}
+                                </select>
+                                <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#64748b', fontSize: '10px' }}>▼</span>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            {text && <span style={{ fontSize: '13px', color: '#64748b' }}>
+                                ~{estimateAudioDuration(text)}
+                            </span>}
+
                             <button onClick={handleGenerate} disabled={isLoading || !text.trim()}
-                                title="Gerar áudio" style={{
-                                    width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    background: isLoading || !text.trim() ? '#94a3b8' : '#2546C7', border: 'none', borderRadius: '50%',
-                                    color: '#fff', cursor: isLoading || !text.trim() ? 'not-allowed' : 'pointer'
-                                }}>
+                                style={{
+                                    width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    background: isLoading || !text.trim() ? '#334155' : '#f8fafc',
+                                    border: 'none', borderRadius: '50%',
+                                    color: isLoading || !text.trim() ? '#64748b' : '#03030D',
+                                    cursor: isLoading || !text.trim() ? 'not-allowed' : 'pointer',
+                                    transition: 'transform 0.1s, background 0.2s',
+                                    boxShadow: text.trim() ? '0 4px 12px rgba(255,255,255,0.1)' : 'none'
+                                }}
+                                onMouseEnter={e => { if (!isLoading && text.trim()) e.currentTarget.style.transform = 'scale(1.05)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+                            >
                                 {isLoading ? (
-                                    <svg style={{ animation: 'spin 1s linear infinite' }} width="18" height="18" fill="none" viewBox="0 0 24 24">
-                                        <circle opacity="0.25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                        <path opacity="0.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                    <svg style={{ animation: 'spin 1s linear infinite' }} width="20" height="20" fill="none" viewBox="0 0 24 24">
+                                        <circle opacity="0.1" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                        <path opacity="1" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                                     </svg>
                                 ) : (
-                                    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                    <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
                                     </svg>
                                 )}
                             </button>
                         </div>
-                    </div>
-
-                    <div style={{
-                        display: 'flex', alignItems: 'center', gap: '16px', padding: '12px 24px',
-                        borderTop: '1px solid rgba(0,0,0,0.08)', background: 'rgba(248,250,252,0.9)'
-                    }}>
-                        <span style={{ fontSize: '14px', color: '#64748b' }}>Voz:</span>
-                        <select value={voice} onChange={(e) => setVoice(e.target.value)} disabled={isLoading}
-                            style={{
-                                padding: '8px 12px', background: '#fff', border: '1px solid #e2e8f0',
-                                borderRadius: '8px', color: '#475569', fontSize: '14px'
-                            }}>
-                            {VOICES.map((v) => <option key={v.value} value={v.value}>{v.label}</option>)}
-                        </select>
-                        {text && <span style={{ fontSize: '13px', color: '#94a3b8', marginLeft: 'auto' }}>
-                            ~{estimateAudioDuration(text)} de áudio
-                        </span>}
                     </div>
                 </div>
 
