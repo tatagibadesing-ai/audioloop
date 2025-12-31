@@ -310,7 +310,19 @@ function HomePage({ user }) {
 
     return (
         <>
-            <div style={{ paddingTop: '80px', padding: '80px 24px 48px' }}>
+            <div style={{
+                minHeight: '100vh',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                padding: '80px 24px 64px',
+                backgroundImage: "url('/background.jpg')",
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundAttachment: 'fixed',
+                boxSizing: 'border-box'
+            }}>
                 {/* Título */}
                 <div style={{ textAlign: 'center', marginBottom: '48px', maxWidth: '900px', margin: '0 auto 48px' }}>
                     <h1 style={{ fontSize: '42px', fontWeight: '600', marginBottom: '16px', color: '#0f172a' }}>
@@ -421,8 +433,7 @@ function HomePage({ user }) {
             <div style={{
                 width: '100%',
                 background: '#ffffff',
-                padding: '64px 24px',
-                marginTop: '48px'
+                padding: '64px 24px'
             }}>
                 <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
                     <h2 style={{ fontSize: '28px', fontWeight: '600', marginBottom: '32px', color: '#0f172a' }}>
