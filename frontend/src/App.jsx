@@ -98,13 +98,13 @@ function Header({ user, isAdmin, setShowLoginModal }) {
     return (
         <header style={{
             position: 'fixed', top: 0, left: 0, right: 0, height: '60px',
-            background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)',
-            borderBottom: '1px solid rgba(0,0,0,0.1)',
+            background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(15px)',
+            borderBottom: '1px solid rgba(255,255,255,0.3)',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '0 24px', zIndex: 100
         }}>
             <a href="#" style={{ fontWeight: '600', fontSize: '18px', color: '#0f172a', textDecoration: 'none' }}>
-                🎧 AudioLoop
+                AudioLoop
             </a>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -438,7 +438,7 @@ function HomePage({ user }) {
             }}>
                 <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
                     <h2 style={{ fontSize: '28px', fontWeight: '600', marginBottom: '32px', color: '#0f172a' }}>
-                        📚 Audiobooks Disponíveis
+                        Audiobooks Disponíveis
                     </h2>
 
                     {loadingBooks ? (
