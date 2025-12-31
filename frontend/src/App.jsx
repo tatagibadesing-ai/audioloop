@@ -351,12 +351,21 @@ function HomePage({ user }) {
                             </svg>
                         </button>
                         <button onClick={handleGenerate} disabled={isLoading || !text.trim()}
-                            style={{
+                            title="Gerar áudio" style={{
                                 width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 background: isLoading || !text.trim() ? '#94a3b8' : '#6366f1', border: 'none', borderRadius: '50%',
                                 color: '#fff', cursor: isLoading || !text.trim() ? 'not-allowed' : 'pointer'
                             }}>
-                            {isLoading ? '...' : '→'}
+                            {isLoading ? (
+                                <svg style={{ animation: 'spin 1s linear infinite' }} width="18" height="18" fill="none" viewBox="0 0 24 24">
+                                    <circle opacity="0.25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path opacity="0.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                </svg>
+                            ) : (
+                                <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                </svg>
+                            )}
                         </button>
                     </div>
                 </div>
@@ -387,18 +396,25 @@ function HomePage({ user }) {
                     display: 'flex', alignItems: 'center', gap: '16px'
                 }}>
                     <audio controls src={audioUrl} style={{ flex: 1, height: '40px' }} />
-                    <button onClick={handleDownload} style={{
+                    <button onClick={handleDownload} title="Baixar MP3" style={{
                         width: '40px', height: '40px', display: 'flex',
                         alignItems: 'center', justifyContent: 'center', background: '#f1f5f9',
                         border: '1px solid #e2e8f0', borderRadius: '50%', color: '#64748b', cursor: 'pointer'
                     }}>
-                        ↓
+                        <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
                     </button>
                 </div>
             )}
 
-            {/* Lista de Audiobooks */}
-            <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+            {/* Card de Audiobooks Disponíveis */}
+            <div style={{
+                maxWidth: '900px',
+                margin: '48px auto 0',
+                padding: '24px',
+                background: 'transparent'
+            }}>
                 <h2 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '24px', color: '#0f172a' }}>
                     📚 Audiobooks Disponíveis
                 </h2>
@@ -411,16 +427,20 @@ function HomePage({ user }) {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
                         {audiobooks.map((book) => (
                             <div key={book.id} style={{
-                                background: '#fff', borderRadius: '12px',
-                                border: '1px solid rgba(0,0,0,0.1)', overflow: 'hidden'
+                                background: 'rgba(255,255,255,0.85)',
+                                backdropFilter: 'blur(10px)',
+                                borderRadius: '12px',
+                                border: '1px solid rgba(255,255,255,0.5)',
+                                overflow: 'hidden',
+                                boxShadow: '0 4px 15px rgba(0,0,0,0.08)'
                             }}>
                                 {book.cover_url && (
                                     <img src={book.cover_url} alt={book.title} style={{ width: '100%', height: '160px', objectFit: 'cover' }} />
                                 )}
                                 <div style={{ padding: '16px' }}>
-                                    <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>{book.title}</h3>
+                                    <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px', color: '#0f172a' }}>{book.title}</h3>
                                     {book.description && (
-                                        <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '12px' }}>
+                                        <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '12px', lineHeight: '1.5' }}>
                                             {book.description.slice(0, 100)}{book.description.length > 100 ? '...' : ''}
                                         </p>
                                     )}
@@ -432,7 +452,8 @@ function HomePage({ user }) {
                                             <a href={book.audio_url} target="_blank" rel="noopener noreferrer"
                                                 style={{
                                                     marginLeft: 'auto', background: '#6366f1', color: '#fff',
-                                                    padding: '6px 12px', borderRadius: '6px', fontSize: '12px', textDecoration: 'none'
+                                                    padding: '6px 12px', borderRadius: '6px', fontSize: '12px',
+                                                    textDecoration: 'none', fontWeight: '500'
                                                 }}>
                                                 Ouvir
                                             </a>
@@ -444,6 +465,13 @@ function HomePage({ user }) {
                     </div>
                 )}
             </div>
+
+            <style>{`
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+            `}</style>
         </div>
     )
 }
