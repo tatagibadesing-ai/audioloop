@@ -76,6 +76,7 @@ AVAILABLE_VOICES = {
 # Textos de preview para cada idioma
 PREVIEW_TEXTS = {
     'pt-BR': 'Olá! Ouça como soa a minha voz no AudioLoop.',
+    'pt-PT': 'Olá! Ouça como soa a minha voz no AudioLoop.',
     'en-US': 'Hello! This is a sample of my voice.',
 }
 
