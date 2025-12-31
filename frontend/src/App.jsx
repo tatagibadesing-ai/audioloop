@@ -324,7 +324,7 @@ function HomePage({ user }) {
                 boxSizing: 'border-box'
             }}>
                 {/* Título */}
-                <div style={{ textAlign: 'center', marginBottom: '48px', maxWidth: '900px', margin: '0 auto 48px' }}>
+                <div style={{ textAlign: 'center', marginBottom: '48px', maxWidth: '900px', width: '100%', margin: '0 auto 48px' }}>
                     <h1 style={{ fontSize: '42px', fontWeight: '600', marginBottom: '16px', color: '#0f172a' }}>
                         Gerador de Audiobook Profissional
                     </h1>
@@ -335,7 +335,7 @@ function HomePage({ user }) {
 
                 {/* Card Gerador */}
                 <div style={{
-                    maxWidth: '900px', margin: '0 auto 24px',
+                    maxWidth: '900px', width: '100%', margin: '0 auto 24px',
                     background: 'rgba(255,255,255,0.9)', borderRadius: '16px',
                     border: '1px solid rgba(0,0,0,0.1)', boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
                 }}>
@@ -404,7 +404,7 @@ function HomePage({ user }) {
                 {/* Player */}
                 {audioUrl && (
                     <div style={{
-                        maxWidth: '900px', margin: '0 auto 48px', background: 'rgba(255,255,255,0.9)',
+                        maxWidth: '900px', width: '100%', margin: '0 auto 48px', background: 'rgba(255,255,255,0.9)',
                         borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '16px 20px',
                         display: 'flex', alignItems: 'center', gap: '16px'
                     }}>
