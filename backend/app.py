@@ -58,29 +58,24 @@ TEMP_DIR = os.path.join(os.path.dirname(__file__), 'temp_audio')
 os.makedirs(TEMP_DIR, exist_ok=True)
 
 
-# Mapeamento de vozes disponíveis
+# Mapeamento de vozes disponíveis (IDs Reais da Microsoft/Edge-TTS)
 AVAILABLE_VOICES = {
-    'pt-BR-AntonioNeural': 'Antônio Neural (Masculina PT-BR)',
-    'pt-BR-FranciscaNeural': 'Francisca Neural (Feminina PT-BR)',
-    'pt-BR-ThalitaNeural': 'Thalita Neural (Feminina PT-BR)',
-    'pt-BR-DonatoNeural': 'Donato Neural (Masculina PT-BR)',
-    'pt-BR-HumbertoNeural': 'Humberto Neural (Masculina PT-BR)',
-    'pt-BR-ManoelNeural': 'Manoel Neural (Masculina PT-BR)',
-    'pt-BR-NicolauNeural': 'Nicolau Neural (Masculina PT-BR)',
-    'pt-BR-BrendaNeural': 'Brenda Neural (Feminina PT-BR)',
-    'pt-BR-YaraNeural': 'Yara Neural (Feminina PT-BR)',
-    'pt-BR-LeilaNeural': 'Leila Neural (Feminina PT-BR)',
-    'en-US-GuyNeural': 'Guy Neural (Masculina EN-US)',
-    'en-US-JennyNeural': 'Jenny Neural (Feminina EN-US)',
-    'es-ES-AlvaroNeural': 'Álvaro Neural (Masculina ES-ES)',
-    'es-ES-ElviraNeural': 'Elvira Neural (Feminina ES-ES)',
+    'pt-BR-AntonioNeural': 'Antônio (Masculino)',
+    'pt-BR-FranciscaNeural': 'Francisca (Feminino)',
+    'pt-BR-ThalitaNeural': 'Thalita (Feminino)',
+    'pt-BR-DonatoNeural': 'Donato (Masculino)',
+    'pt-BR-HumbertoNeural': 'Humberto (Masculino)',
+    'pt-BR-FabioNeural': 'Fábio (Masculino)',
+    'pt-BR-LeilaNeural': 'Leila (Feminino)',
+    'pt-BR-YaraNeural': 'Yara (Feminino)',
+    'en-US-GuyNeural': 'Guy (EN-US)',
+    'en-US-JennyNeural': 'Jenny (EN-US)',
 }
 
 # Textos de preview para cada idioma
 PREVIEW_TEXTS = {
-    'pt-BR': 'Olá! Esta é uma prévia da minha voz. Eu sou uma voz neural da Microsoft, capaz de narrar seus audiobooks com qualidade profissional e muito realismo.',
-    'en-US': 'Hello! This is a preview of my voice. I am a Microsoft neural voice, capable of narrating your audiobooks with professional quality and great realism.',
-    'es-ES': 'Hola! Esta es una vista previa de mi voz. Soy una voz neuronal de Microsoft, capaz de narrar tus audiolibros con calidad profesional y gran realismo.',
+    'pt-BR': 'Olá! Ouça como soa a minha voz no AudioLoop.',
+    'en-US': 'Hello! This is a sample of my voice.',
 }
 
 
@@ -88,8 +83,12 @@ async def generate_audio(text: str, voice: str, output_path: str):
     """
     Gera o arquivo de áudio usando edge-tts de forma assíncrona
     """
-    communicate = edge_tts.Communicate(text, voice)
-    await communicate.save(output_path)
+    try:
+        communicate = edge_tts.Communicate(text, voice)
+        await communicate.save(output_path)
+    except Exception as e:
+        print(f"❌ Erro no edge-tts: {str(e)}")
+        raise e
 
 
 def run_async(coro):
@@ -143,6 +142,7 @@ def estimate_time():
         })
         
     except Exception as e:
+        print(f"❌ Erro em estimate: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 
@@ -159,7 +159,7 @@ def generate_preview():
         voice = data.get('voice', 'pt-BR-AntonioNeural')
         
         if voice not in AVAILABLE_VOICES:
-            return jsonify({'error': 'Voz não suportada'}), 400
+            return jsonify({'error': f'Voz {voice} não suportada'}), 400
         
         # Determina o idioma da voz
         lang = voice.split('-')[0] + '-' + voice.split('-')[1]
@@ -201,7 +201,7 @@ def generate_preview():
         )
         
     except Exception as e:
-        print(f'Erro ao gerar preview: {e}')
+        print(f'❌ Erro ao gerar preview: {e}')
         return jsonify({'error': f'Erro interno: {str(e)}'}), 500
 
 
@@ -225,7 +225,7 @@ def generate_audiobook():
             return jsonify({'error': 'Texto não pode estar vazio'}), 400
         
         if voice not in AVAILABLE_VOICES:
-            return jsonify({'error': 'Voz não suportada'}), 400
+            return jsonify({'error': f'Voz {voice} não suportada'}), 400
         
         # Gera um nome único para o arquivo
         file_id = str(uuid.uuid4())
@@ -239,7 +239,7 @@ def generate_audiobook():
         run_async(generate_audio(text, voice, output_path))
         
         processing_time = time.time() - start_time
-        print(f'Audiobook gerado em {processing_time:.2f}s - {len(text)} caracteres')
+        print(f'✅ Audiobook gerado em {processing_time:.2f}s - {len(text)} caracteres - Voz: {voice}')
         
         # Verifica se o arquivo foi criado
         if not os.path.exists(output_path):
@@ -275,7 +275,7 @@ def generate_audiobook():
         )
         
     except Exception as e:
-        print(f'Erro ao gerar audiobook: {e}')
+        print(f'❌ Erro ao gerar audiobook: {e}')
         return jsonify({'error': f'Erro interno: {str(e)}'}), 500
 
 
