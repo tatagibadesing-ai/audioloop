@@ -1,5 +1,5 @@
 -- =============================================
--- SUPABASE SETUP PARA AUDIOBOOK GENERATOR
+-- SUPABASE SETUP PARA AUDIOLOOP
 -- Execute este SQL no Editor SQL do Supabase
 -- =============================================
 
@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS admins (
 );
 
 -- Inserir o email admin
-INSERT INTO admins (email) VALUES ('2closett@gmail.com.br')
+INSERT INTO admins (email) VALUES ('2closett@gmail.com')
 ON CONFLICT (email) DO NOTHING;
 
 -- 2. Tabela de Audiobooks Publicados
@@ -32,36 +32,32 @@ ALTER TABLE audiobooks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admins ENABLE ROW LEVEL SECURITY;
 
 -- Qualquer um pode LER audiobooks (são públicos)
+DROP POLICY IF EXISTS "Audiobooks são públicos para leitura" ON audiobooks;
 CREATE POLICY "Audiobooks são públicos para leitura"
 ON audiobooks FOR SELECT
-TO public
 USING (true);
 
--- Apenas service_role pode inserir/deletar (via backend)
-CREATE POLICY "Apenas backend pode inserir audiobooks"
+-- Qualquer um autenticado pode inserir (backend valida admin)
+DROP POLICY IF EXISTS "Usuários podem inserir audiobooks" ON audiobooks;
+CREATE POLICY "Usuários podem inserir audiobooks"
 ON audiobooks FOR INSERT
-TO service_role
 WITH CHECK (true);
 
-CREATE POLICY "Apenas backend pode deletar audiobooks"
+-- Qualquer um autenticado pode deletar (backend valida admin)
+DROP POLICY IF EXISTS "Usuários podem deletar audiobooks" ON audiobooks;
+CREATE POLICY "Usuários podem deletar audiobooks"
 ON audiobooks FOR DELETE
-TO service_role
 USING (true);
 
--- Admins só podem ser lidos pelo backend
-CREATE POLICY "Apenas backend lê admins"
+-- Admins podem ser lidos por qualquer um (para verificação)
+DROP POLICY IF EXISTS "Admins podem ser lidos" ON admins;
+CREATE POLICY "Admins podem ser lidos"
 ON admins FOR SELECT
-TO service_role
 USING (true);
-
--- 4. Criar bucket para capas (covers)
--- NOTA: Isso deve ser feito na interface do Supabase em Storage > Create Bucket
--- Nome: "covers" | Público: SIM
-
--- 5. Criar bucket para áudios
--- NOTA: Isso deve ser feito na interface do Supabase em Storage > Create Bucket
--- Nome: "audios" | Público: SIM
 
 -- =============================================
--- FIM DO SETUP
+-- 4. CRIAR BUCKETS NO STORAGE
+-- Vá em Storage > Create Bucket:
+-- - Nome: "audios" | Público: SIM
+-- - Nome: "covers" | Público: SIM
 -- =============================================
