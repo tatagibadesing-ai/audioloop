@@ -110,7 +110,7 @@ function Header({ user, isAdmin, setShowLoginModal }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 {isAdmin && (
                     <a href="#admin" style={{
-                        background: '#6366f1', color: '#fff', padding: '6px 14px',
+                        background: '#2546C7', color: '#fff', padding: '6px 14px',
                         borderRadius: '8px', fontSize: '13px', fontWeight: '500', textDecoration: 'none'
                     }}>
                         Painel Admin
@@ -217,7 +217,7 @@ function LoginModal({ onClose }) {
                     )}
 
                     <button type="submit" disabled={loading} style={{
-                        width: '100%', padding: '12px', background: '#6366f1',
+                        width: '100%', padding: '12px', background: '#2546C7',
                         color: '#fff', border: 'none', borderRadius: '8px',
                         fontSize: '16px', fontWeight: '500', cursor: 'pointer', marginBottom: '12px'
                     }}>
@@ -227,7 +227,7 @@ function LoginModal({ onClose }) {
                     <button type="button" onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
                         style={{
                             width: '100%', padding: '12px', background: 'transparent',
-                            color: '#6366f1', border: '1px solid #6366f1', borderRadius: '8px',
+                            color: '#2546C7', border: '1px solid #2546C7', borderRadius: '8px',
                             fontSize: '14px', cursor: 'pointer'
                         }}>
                         {mode === 'login' ? 'Não tem conta? Cadastre-se' : 'Já tem conta? Entre'}
@@ -366,7 +366,7 @@ function HomePage({ user }) {
                             <button onClick={handleGenerate} disabled={isLoading || !text.trim()}
                                 title="Gerar áudio" style={{
                                     width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    background: isLoading || !text.trim() ? '#94a3b8' : '#6366f1', border: 'none', borderRadius: '50%',
+                                    background: isLoading || !text.trim() ? '#94a3b8' : '#2546C7', border: 'none', borderRadius: '50%',
                                     color: '#fff', cursor: isLoading || !text.trim() ? 'not-allowed' : 'pointer'
                                 }}>
                                 {isLoading ? (
@@ -461,7 +461,7 @@ function HomePage({ user }) {
                                     {book.cover_url ? (
                                         <img src={book.cover_url} alt={book.title} style={{ width: '100%', height: '180px', objectFit: 'cover' }} />
                                     ) : (
-                                        <div style={{ width: '100%', height: '180px', background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <div style={{ width: '100%', height: '180px', background: 'linear-gradient(135deg, #2546C7 0%, #1a3399 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             <span style={{ fontSize: '48px' }}>🎧</span>
                                         </div>
                                     )}
@@ -479,7 +479,7 @@ function HomePage({ user }) {
                                             {book.audio_url && (
                                                 <a href={book.audio_url} target="_blank" rel="noopener noreferrer"
                                                     style={{
-                                                        background: '#6366f1', color: '#fff',
+                                                        background: '#2546C7', color: '#fff',
                                                         padding: '8px 16px', borderRadius: '8px', fontSize: '14px',
                                                         textDecoration: 'none', fontWeight: '500'
                                                     }}>
@@ -596,7 +596,7 @@ function AdminPage({ user, isAdmin, setShowLoginModal }) {
                 <h1 style={{ fontSize: '32px', marginBottom: '16px' }}>Área Restrita</h1>
                 <p style={{ color: '#64748b', marginBottom: '24px' }}>Faça login para acessar o painel admin.</p>
                 <button onClick={() => setShowLoginModal(true)} style={{
-                    background: '#6366f1', color: '#fff', padding: '12px 24px',
+                    background: '#2546C7', color: '#fff', padding: '12px 24px',
                     border: 'none', borderRadius: '8px', fontSize: '16px', cursor: 'pointer'
                 }}>
                     Fazer Login
@@ -611,7 +611,7 @@ function AdminPage({ user, isAdmin, setShowLoginModal }) {
             <div style={{ paddingTop: '100px', textAlign: 'center' }}>
                 <h1 style={{ fontSize: '32px', marginBottom: '16px' }}>Acesso Negado</h1>
                 <p style={{ color: '#64748b' }}>Você não tem permissão para acessar esta página.</p>
-                <a href="#" style={{ color: '#6366f1', marginTop: '16px', display: 'inline-block' }}>Voltar para Home</a>
+                <a href="#" style={{ color: '#2546C7', marginTop: '16px', display: 'inline-block' }}>Voltar para Home</a>
             </div>
         )
     }
@@ -681,7 +681,7 @@ function AdminPage({ user, isAdmin, setShowLoginModal }) {
                     </div>
 
                     <button type="submit" disabled={saving} style={{
-                        background: '#6366f1', color: '#fff', padding: '12px 24px',
+                        background: '#2546C7', color: '#fff', padding: '12px 24px',
                         border: 'none', borderRadius: '8px', fontSize: '16px',
                         fontWeight: '500', cursor: saving ? 'not-allowed' : 'pointer'
                     }}>
