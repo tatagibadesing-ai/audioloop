@@ -325,10 +325,10 @@ function HomePage({ user }) {
             }}>
                 {/* Título */}
                 <div style={{ textAlign: 'center', marginBottom: '48px', maxWidth: '900px', width: '100%', margin: '0 auto 48px' }}>
-                    <h1 style={{ fontSize: '42px', fontWeight: '600', marginBottom: '16px', color: '#0f172a' }}>
+                    <h1 style={{ fontSize: '56px', fontWeight: '700', marginBottom: '16px', color: '#0f172a', letterSpacing: '-0.02em' }}>
                         Gerador de Audiobook Profissional
                     </h1>
-                    <p style={{ fontSize: '18px', color: 'rgba(15,23,42,0.7)' }}>
+                    <p style={{ fontSize: '22px', color: 'rgba(15,23,42,0.7)', fontWeight: '400' }}>
                         Transforme qualquer texto em audiobook com vozes neurais da Microsoft.
                     </p>
                 </div>
@@ -336,8 +336,9 @@ function HomePage({ user }) {
                 {/* Card Gerador */}
                 <div style={{
                     maxWidth: '900px', width: '100%', margin: '0 auto 24px',
-                    background: 'rgba(255,255,255,0.9)', borderRadius: '16px',
-                    border: '1px solid rgba(0,0,0,0.1)', boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
+                    background: 'rgba(255,255,255,0.75)', borderRadius: '24px', backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255,255,255,0.3)', boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+                    overflow: 'hidden'
                 }}>
                     <div style={{ padding: '24px', position: 'relative' }}>
                         <textarea
@@ -345,8 +346,8 @@ function HomePage({ user }) {
                             placeholder="Cole ou digite seu texto aqui..."
                             disabled={isLoading}
                             style={{
-                                width: '100%', minHeight: '180px', background: 'transparent', border: 'none',
-                                outline: 'none', resize: 'vertical', fontSize: '16px', lineHeight: '1.6', color: '#1e293b',
+                                width: '100%', minHeight: '220px', background: 'transparent', border: 'none',
+                                outline: 'none', resize: 'none', fontSize: '18px', lineHeight: '1.6', color: '#1e293b',
                                 fontFamily: 'inherit', boxSizing: 'border-box'
                             }}
                         />
