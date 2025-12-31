@@ -325,7 +325,7 @@ function HomePage({ user }) {
             }}>
                 {/* Título */}
                 <div style={{ textAlign: 'center', marginBottom: '48px', maxWidth: '900px', width: '100%', margin: '0 auto 48px' }}>
-                    <h1 style={{ fontSize: '56px', fontWeight: '700', marginBottom: '16px', color: '#0f172a', letterSpacing: '-0.02em' }}>
+                    <h1 style={{ fontSize: '48px', fontWeight: '600', marginBottom: '16px', color: '#0f172a', letterSpacing: '-0.02em' }}>
                         Gerador de Audiobook Profissional
                     </h1>
                     <p style={{ fontSize: '22px', color: 'rgba(15,23,42,0.7)', fontWeight: '400' }}>
