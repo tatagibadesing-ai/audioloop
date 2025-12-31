@@ -365,10 +365,10 @@ function HomePage({ user }) {
                                     borderRadius: '20px', color: '#FCFBF8', cursor: 'pointer', fontSize: '14px', fontWeight: '600',
                                     fontFamily: "'Figtree', sans-serif", transition: 'border-color 0.2s, background 0.2s'
                                 }}
-                                onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
-                                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; e.currentTarget.style.background = 'transparent'; }}
+                                onMouseEnter={e => { e.currentTarget.style.borderColor = '#FCFBF8'; e.currentTarget.style.background = 'rgba(252, 251, 248, 0.05)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.borderColor = '#40403F'; e.currentTarget.style.background = 'transparent'; }}
                             >
-                                <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <svg width="18" height="18" fill="none" stroke="#FCFBF8" strokeWidth="2.5" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                                 </svg>
                                 Anexar
@@ -383,7 +383,7 @@ function HomePage({ user }) {
                                     }}>
                                     {VOICES.map((v) => <option key={v.value} value={v.value} style={{ background: '#1a1a1a' }}>{v.label}</option>)}
                                 </select>
-                                <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#FCFBF8', fontSize: '12px' }}>▾</span>
+                                <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#FCFBF8', fontSize: '14px', fontWeight: 'bold' }}>▾</span>
                             </div>
                         </div>
 
