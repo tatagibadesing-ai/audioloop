@@ -320,7 +320,6 @@ function HomePage({ user }) {
                 backgroundImage: "url('/background.jpg')",
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
-                backgroundAttachment: 'fixed',
                 boxSizing: 'border-box'
             }}>
                 {/* Título */}
