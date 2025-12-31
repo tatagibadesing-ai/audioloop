@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react"
 import { createClient } from '@supabase/supabase-js'
+import { motion, AnimatePresence } from "framer-motion"
 import {
     CaretDown,
     Paperclip,
@@ -13,7 +14,8 @@ import {
     SignOut,
     House,
     Layout,
-    UserCircle
+    UserCircle,
+    CheckCircle
 } from "@phosphor-icons/react"
 
 // Configuração
@@ -266,6 +268,18 @@ function HomePage({ user }) {
     const [voice, setVoice] = useState("pt-BR-AntonioNeural")
     const [isLoading, setIsLoading] = useState(false)
     const [audioUrl, setAudioUrl] = useState(null)
+    const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false)
+    const voiceSelectRef = useRef(null)
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (voiceSelectRef.current && !voiceSelectRef.current.contains(event.target)) {
+                setIsVoiceModalOpen(false)
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside)
+        return () => document.removeEventListener("mousedown", handleClickOutside)
+    }, [])
     const [audiobooks, setAudiobooks] = useState([])
     const [loadingBooks, setLoadingBooks] = useState(true)
     const fileInputRef = useRef(null)
@@ -402,29 +416,82 @@ function HomePage({ user }) {
                                 Anexar
                             </button>
 
-                            <div style={{ position: 'relative' }}>
-                                <select value={voice} onChange={(e) => setVoice(e.target.value)} disabled={isLoading}
+                            <div style={{ position: 'relative' }} ref={voiceSelectRef}>
+                                <button
+                                    onClick={() => setIsVoiceModalOpen(!isVoiceModalOpen)}
+                                    disabled={isLoading}
                                     style={{
-                                        padding: '8px 14px', background: 'transparent', border: '1px solid #40403F',
-                                        borderRadius: '20px', color: '#FCFBF8', fontSize: '14px', cursor: 'pointer', appearance: 'none',
-                                        paddingRight: '30px', outline: 'none', fontFamily: "'Figtree', sans-serif", fontWeight: '600',
-                                        transition: 'all 0.2s'
+                                        display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px',
+                                        background: 'transparent', border: '1px solid #40403F',
+                                        borderRadius: '20px', color: '#FCFBF8', fontSize: '14px', fontWeight: '600',
+                                        cursor: 'pointer', fontFamily: "'Figtree', sans-serif", transition: 'all 0.2s'
                                     }}
                                     onMouseEnter={e => {
-                                        e.currentTarget.style.borderColor = '#40403F';
-                                        e.currentTarget.style.color = '#FCFBF8';
-                                        const arrow = e.currentTarget.parentElement.querySelector('.select-arrow');
+                                        e.currentTarget.style.borderColor = '#FCFBF8';
+                                        const arrow = e.currentTarget.querySelector('.select-arrow');
                                         if (arrow) arrow.style.color = '#FCFBF8';
                                     }}
                                     onMouseLeave={e => {
-                                        e.currentTarget.style.borderColor = '#333332';
-                                        e.currentTarget.style.color = '#91918E';
-                                        const arrow = e.currentTarget.parentElement.querySelector('.select-arrow');
-                                        if (arrow) arrow.style.color = '#91918E';
-                                    }}>
-                                    {VOICES.map((v) => <option key={v.value} value={v.value} style={{ background: '#1a1a1a' }}>{v.label}</option>)}
-                                </select>
-                                <CaretDown size={14} weight="bold" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#91918E', transition: 'color 0.2s' }} className="select-arrow" />
+                                        if (!isVoiceModalOpen) {
+                                            e.currentTarget.style.borderColor = '#40403F';
+                                            const arrow = e.currentTarget.querySelector('.select-arrow');
+                                            if (arrow) arrow.style.color = '#91918E';
+                                        }
+                                    }}
+                                >
+                                    {VOICES.find(v => v.value === voice)?.label}
+                                    <CaretDown
+                                        size={14} weight="bold"
+                                        style={{
+                                            color: isVoiceModalOpen ? '#FCFBF8' : '#91918E',
+                                            transition: 'transform 0.3s, color 0.2s',
+                                            transform: isVoiceModalOpen ? 'rotate(180deg)' : 'rotate(0)'
+                                        }}
+                                        className="select-arrow"
+                                    />
+                                </button>
+
+                                <AnimatePresence>
+                                    {isVoiceModalOpen && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            transition={{ duration: 0.2, ease: "easeOut" }}
+                                            style={{
+                                                position: 'absolute', bottom: 'calc(100% + 12px)', left: 0,
+                                                minWidth: '220px', background: '#1a1a1a',
+                                                border: '1px solid #333332', borderRadius: '16px',
+                                                boxShadow: '0 20px 25px -5px rgba(0,0,0,0.5)',
+                                                padding: '8px', zIndex: 1000, overflow: 'hidden'
+                                            }}
+                                        >
+                                            <div style={{ padding: '8px 12px 12px', fontSize: '12px', color: '#91918E', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                Selecione a Voz
+                                            </div>
+                                            {VOICES.map((v) => (
+                                                <motion.div
+                                                    key={v.value}
+                                                    whileHover={{ background: 'rgba(252, 251, 248, 0.05)' }}
+                                                    onClick={() => {
+                                                        setVoice(v.value);
+                                                        setIsVoiceModalOpen(false);
+                                                    }}
+                                                    style={{
+                                                        padding: '10px 12px', borderRadius: '10px',
+                                                        color: voice === v.value ? '#FCFBF8' : '#91918E',
+                                                        fontSize: '14px', fontWeight: '500', cursor: 'pointer',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                                        transition: 'color 0.2s'
+                                                    }}
+                                                >
+                                                    {v.label}
+                                                    {voice === v.value && <CheckCircle size={18} weight="fill" color="#FCFBF8" />}
+                                                </motion.div>
+                                            ))}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
                         </div>
 
