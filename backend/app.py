@@ -58,16 +58,17 @@ TEMP_DIR = os.path.join(os.path.dirname(__file__), 'temp_audio')
 os.makedirs(TEMP_DIR, exist_ok=True)
 
 
-# Mapeamento de vozes disponíveis (IDs Reais da Microsoft/Edge-TTS)
+# Mapeamento de vozes disponíveis (IDs REAIS da API Microsoft Edge-TTS)
+# Fonte: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list
 AVAILABLE_VOICES = {
+    # Português Brasil (pt-BR) - APENAS ESTAS 3 EXISTEM
     'pt-BR-AntonioNeural': 'Antônio (Masculino)',
     'pt-BR-FranciscaNeural': 'Francisca (Feminino)',
-    'pt-BR-ThalitaNeural': 'Thalita (Feminino)',
-    'pt-BR-DonatoNeural': 'Donato (Masculino)',
-    'pt-BR-HumbertoNeural': 'Humberto (Masculino)',
-    'pt-BR-FabioNeural': 'Fábio (Masculino)',
-    'pt-BR-LeilaNeural': 'Leila (Feminino)',
-    'pt-BR-YaraNeural': 'Yara (Feminino)',
+    'pt-BR-ThalitaMultilingualNeural': 'Thalita (Feminino)',
+    # Português Portugal (pt-PT)
+    'pt-PT-DuarteNeural': 'Duarte (PT-PT Masculino)',
+    'pt-PT-RaquelNeural': 'Raquel (PT-PT Feminino)',
+    # Inglês Estados Unidos (en-US)
     'en-US-GuyNeural': 'Guy (EN-US)',
     'en-US-JennyNeural': 'Jenny (EN-US)',
 }
