@@ -38,9 +38,13 @@ const VOICES = [
     { value: 'pt-BR-AntonioNeural', label: 'Antônio (Masculino)' },
     { value: 'pt-BR-DonatoNeural', label: 'Donato (Masculino)' },
     { value: 'pt-BR-HumbertoNeural', label: 'Humberto (Masculino)' },
+    { value: 'pt-BR-ManoelNeural', label: 'Manoel (Masculino)' },
+    { value: 'pt-BR-NicolauNeural', label: 'Nicolau (Masculino)' },
     { value: 'pt-BR-FranciscaNeural', label: 'Francisca (Feminino)' },
     { value: 'pt-BR-ThalitaNeural', label: 'Thalita (Feminino)' },
     { value: 'pt-BR-BrendaNeural', label: 'Brenda (Feminino)' },
+    { value: 'pt-BR-YaraNeural', label: 'Yara (Feminino)' },
+    { value: 'pt-BR-LeilaNeural', label: 'Leila (Feminino)' },
     { value: 'en-US-GuyNeural', label: 'Guy (EN-US)' },
     { value: 'en-US-JennyNeural', label: 'Jenny (EN-US)' }
 ]
