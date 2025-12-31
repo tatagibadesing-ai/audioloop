@@ -309,170 +309,181 @@ function HomePage({ user }) {
     }
 
     return (
-        <div style={{ paddingTop: '80px', padding: '80px 24px 48px' }}>
-            {/* Título */}
-            <div style={{ textAlign: 'center', marginBottom: '48px', maxWidth: '900px', margin: '0 auto 48px' }}>
-                <h1 style={{ fontSize: '42px', fontWeight: '600', marginBottom: '16px', color: '#0f172a' }}>
-                    Gerador de Audiobook Profissional
-                </h1>
-                <p style={{ fontSize: '18px', color: 'rgba(15,23,42,0.7)' }}>
-                    Transforme qualquer texto em audiobook com vozes neurais da Microsoft.
-                </p>
-            </div>
+        <>
+            <div style={{ paddingTop: '80px', padding: '80px 24px 48px' }}>
+                {/* Título */}
+                <div style={{ textAlign: 'center', marginBottom: '48px', maxWidth: '900px', margin: '0 auto 48px' }}>
+                    <h1 style={{ fontSize: '42px', fontWeight: '600', marginBottom: '16px', color: '#0f172a' }}>
+                        Gerador de Audiobook Profissional
+                    </h1>
+                    <p style={{ fontSize: '18px', color: 'rgba(15,23,42,0.7)' }}>
+                        Transforme qualquer texto em audiobook com vozes neurais da Microsoft.
+                    </p>
+                </div>
 
-            {/* Card Gerador */}
-            <div style={{
-                maxWidth: '900px', margin: '0 auto 24px',
-                background: 'rgba(255,255,255,0.9)', borderRadius: '16px',
-                border: '1px solid rgba(0,0,0,0.1)', boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
-            }}>
-                <div style={{ padding: '24px', position: 'relative' }}>
-                    <textarea
-                        value={text} onChange={(e) => { setText(e.target.value); setAudioUrl(null); }}
-                        placeholder="Cole ou digite seu texto aqui..."
-                        disabled={isLoading}
-                        style={{
-                            width: '100%', minHeight: '180px', background: 'transparent', border: 'none',
-                            outline: 'none', resize: 'vertical', fontSize: '16px', lineHeight: '1.6', color: '#1e293b',
-                            fontFamily: 'inherit', boxSizing: 'border-box'
-                        }}
-                    />
+                {/* Card Gerador */}
+                <div style={{
+                    maxWidth: '900px', margin: '0 auto 24px',
+                    background: 'rgba(255,255,255,0.9)', borderRadius: '16px',
+                    border: '1px solid rgba(0,0,0,0.1)', boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
+                }}>
+                    <div style={{ padding: '24px', position: 'relative' }}>
+                        <textarea
+                            value={text} onChange={(e) => { setText(e.target.value); setAudioUrl(null); }}
+                            placeholder="Cole ou digite seu texto aqui..."
+                            disabled={isLoading}
+                            style={{
+                                width: '100%', minHeight: '180px', background: 'transparent', border: 'none',
+                                outline: 'none', resize: 'vertical', fontSize: '16px', lineHeight: '1.6', color: '#1e293b',
+                                fontFamily: 'inherit', boxSizing: 'border-box'
+                            }}
+                        />
 
-                    <div style={{ position: 'absolute', right: '24px', top: '24px', display: 'flex', gap: '8px' }}>
-                        <input ref={fileInputRef} type="file" accept=".pdf,.docx,.txt" onChange={handleFileUpload} style={{ display: 'none' }} />
-                        <button onClick={() => fileInputRef.current?.click()} disabled={isLoading}
-                            title="Upload" style={{
-                                width: '40px', height: '40px', display: 'flex', alignItems: 'center',
-                                justifyContent: 'center', background: '#f1f5f9', border: 'none', borderRadius: '50%',
-                                color: '#64748b', cursor: 'pointer'
+                        <div style={{ position: 'absolute', right: '24px', top: '24px', display: 'flex', gap: '8px' }}>
+                            <input ref={fileInputRef} type="file" accept=".pdf,.docx,.txt" onChange={handleFileUpload} style={{ display: 'none' }} />
+                            <button onClick={() => fileInputRef.current?.click()} disabled={isLoading}
+                                title="Upload" style={{
+                                    width: '40px', height: '40px', display: 'flex', alignItems: 'center',
+                                    justifyContent: 'center', background: '#f1f5f9', border: 'none', borderRadius: '50%',
+                                    color: '#64748b', cursor: 'pointer'
+                                }}>
+                                <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                </svg>
+                            </button>
+                            <button onClick={handleGenerate} disabled={isLoading || !text.trim()}
+                                title="Gerar áudio" style={{
+                                    width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    background: isLoading || !text.trim() ? '#94a3b8' : '#6366f1', border: 'none', borderRadius: '50%',
+                                    color: '#fff', cursor: isLoading || !text.trim() ? 'not-allowed' : 'pointer'
+                                }}>
+                                {isLoading ? (
+                                    <svg style={{ animation: 'spin 1s linear infinite' }} width="18" height="18" fill="none" viewBox="0 0 24 24">
+                                        <circle opacity="0.25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                        <path opacity="0.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                    </svg>
+                                ) : (
+                                    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                    </svg>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style={{
+                        display: 'flex', alignItems: 'center', gap: '16px', padding: '12px 24px',
+                        borderTop: '1px solid rgba(0,0,0,0.08)', background: 'rgba(248,250,252,0.9)'
+                    }}>
+                        <span style={{ fontSize: '14px', color: '#64748b' }}>Voz:</span>
+                        <select value={voice} onChange={(e) => setVoice(e.target.value)} disabled={isLoading}
+                            style={{
+                                padding: '8px 12px', background: '#fff', border: '1px solid #e2e8f0',
+                                borderRadius: '8px', color: '#475569', fontSize: '14px'
                             }}>
+                            {VOICES.map((v) => <option key={v.value} value={v.value}>{v.label}</option>)}
+                        </select>
+                        {text && <span style={{ fontSize: '13px', color: '#94a3b8', marginLeft: 'auto' }}>
+                            ~{estimateAudioDuration(text)} de áudio
+                        </span>}
+                    </div>
+                </div>
+
+                {/* Player */}
+                {audioUrl && (
+                    <div style={{
+                        maxWidth: '900px', margin: '0 auto 48px', background: 'rgba(255,255,255,0.9)',
+                        borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '16px 20px',
+                        display: 'flex', alignItems: 'center', gap: '16px'
+                    }}>
+                        <audio controls src={audioUrl} style={{ flex: 1, height: '40px' }} />
+                        <button onClick={handleDownload} title="Baixar MP3" style={{
+                            width: '40px', height: '40px', display: 'flex',
+                            alignItems: 'center', justifyContent: 'center', background: '#f1f5f9',
+                            border: '1px solid #e2e8f0', borderRadius: '50%', color: '#64748b', cursor: 'pointer'
+                        }}>
                             <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
                         </button>
-                        <button onClick={handleGenerate} disabled={isLoading || !text.trim()}
-                            title="Gerar áudio" style={{
-                                width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                background: isLoading || !text.trim() ? '#94a3b8' : '#6366f1', border: 'none', borderRadius: '50%',
-                                color: '#fff', cursor: isLoading || !text.trim() ? 'not-allowed' : 'pointer'
-                            }}>
-                            {isLoading ? (
-                                <svg style={{ animation: 'spin 1s linear infinite' }} width="18" height="18" fill="none" viewBox="0 0 24 24">
-                                    <circle opacity="0.25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                    <path opacity="0.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                </svg>
-                            ) : (
-                                <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                </svg>
-                            )}
-                        </button>
-                    </div>
-                </div>
-
-                <div style={{
-                    display: 'flex', alignItems: 'center', gap: '16px', padding: '12px 24px',
-                    borderTop: '1px solid rgba(0,0,0,0.08)', background: 'rgba(248,250,252,0.9)'
-                }}>
-                    <span style={{ fontSize: '14px', color: '#64748b' }}>Voz:</span>
-                    <select value={voice} onChange={(e) => setVoice(e.target.value)} disabled={isLoading}
-                        style={{
-                            padding: '8px 12px', background: '#fff', border: '1px solid #e2e8f0',
-                            borderRadius: '8px', color: '#475569', fontSize: '14px'
-                        }}>
-                        {VOICES.map((v) => <option key={v.value} value={v.value}>{v.label}</option>)}
-                    </select>
-                    {text && <span style={{ fontSize: '13px', color: '#94a3b8', marginLeft: 'auto' }}>
-                        ~{estimateAudioDuration(text)} de áudio
-                    </span>}
-                </div>
-            </div>
-
-            {/* Player */}
-            {audioUrl && (
-                <div style={{
-                    maxWidth: '900px', margin: '0 auto 48px', background: 'rgba(255,255,255,0.9)',
-                    borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '16px 20px',
-                    display: 'flex', alignItems: 'center', gap: '16px'
-                }}>
-                    <audio controls src={audioUrl} style={{ flex: 1, height: '40px' }} />
-                    <button onClick={handleDownload} title="Baixar MP3" style={{
-                        width: '40px', height: '40px', display: 'flex',
-                        alignItems: 'center', justifyContent: 'center', background: '#f1f5f9',
-                        border: '1px solid #e2e8f0', borderRadius: '50%', color: '#64748b', cursor: 'pointer'
-                    }}>
-                        <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                    </button>
-                </div>
-            )}
-
-            {/* Card de Audiobooks Disponíveis */}
-            <div style={{
-                maxWidth: '900px',
-                margin: '48px auto 0',
-                padding: '24px',
-                background: 'transparent'
-            }}>
-                <h2 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '24px', color: '#0f172a' }}>
-                    📚 Audiobooks Disponíveis
-                </h2>
-
-                {loadingBooks ? (
-                    <p style={{ color: '#64748b' }}>Carregando...</p>
-                ) : audiobooks.length === 0 ? (
-                    <p style={{ color: '#64748b' }}>Nenhum audiobook publicado ainda.</p>
-                ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
-                        {audiobooks.map((book) => (
-                            <div key={book.id} style={{
-                                background: 'rgba(255,255,255,0.85)',
-                                backdropFilter: 'blur(10px)',
-                                borderRadius: '12px',
-                                border: '1px solid rgba(255,255,255,0.5)',
-                                overflow: 'hidden',
-                                boxShadow: '0 4px 15px rgba(0,0,0,0.08)'
-                            }}>
-                                {book.cover_url && (
-                                    <img src={book.cover_url} alt={book.title} style={{ width: '100%', height: '160px', objectFit: 'cover' }} />
-                                )}
-                                <div style={{ padding: '16px' }}>
-                                    <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px', color: '#0f172a' }}>{book.title}</h3>
-                                    {book.description && (
-                                        <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '12px', lineHeight: '1.5' }}>
-                                            {book.description.slice(0, 100)}{book.description.length > 100 ? '...' : ''}
-                                        </p>
-                                    )}
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        {book.duration_seconds && (
-                                            <span style={{ fontSize: '12px', color: '#94a3b8' }}>{formatTime(book.duration_seconds)}</span>
-                                        )}
-                                        {book.audio_url && (
-                                            <a href={book.audio_url} target="_blank" rel="noopener noreferrer"
-                                                style={{
-                                                    marginLeft: 'auto', background: '#6366f1', color: '#fff',
-                                                    padding: '6px 12px', borderRadius: '6px', fontSize: '12px',
-                                                    textDecoration: 'none', fontWeight: '500'
-                                                }}>
-                                                Ouvir
-                                            </a>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
                     </div>
                 )}
-            </div>
 
-            <style>{`
+                <style>{`
                 @keyframes spin {
                     from { transform: rotate(0deg); }
                     to { transform: rotate(360deg); }
                 }
             `}</style>
-        </div>
+            </div>
+
+            {/* ========== SEÇÃO AUDIOBOOKS - FUNDO BRANCO ========== */}
+            <div style={{
+                width: '100%',
+                background: '#ffffff',
+                padding: '64px 24px',
+                marginTop: '48px'
+            }}>
+                <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+                    <h2 style={{ fontSize: '28px', fontWeight: '600', marginBottom: '32px', color: '#0f172a' }}>
+                        📚 Audiobooks Disponíveis
+                    </h2>
+
+                    {loadingBooks ? (
+                        <p style={{ color: '#64748b' }}>Carregando...</p>
+                    ) : audiobooks.length === 0 ? (
+                        <p style={{ color: '#64748b' }}>Nenhum audiobook publicado ainda.</p>
+                    ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
+                            {audiobooks.map((book) => (
+                                <div key={book.id} style={{
+                                    background: '#fff',
+                                    borderRadius: '12px',
+                                    border: '1px solid #e2e8f0',
+                                    overflow: 'hidden',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                                    transition: 'transform 0.2s, box-shadow 0.2s'
+                                }}
+                                    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)'; }}
+                                    onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)'; }}
+                                >
+                                    {book.cover_url ? (
+                                        <img src={book.cover_url} alt={book.title} style={{ width: '100%', height: '180px', objectFit: 'cover' }} />
+                                    ) : (
+                                        <div style={{ width: '100%', height: '180px', background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <span style={{ fontSize: '48px' }}>🎧</span>
+                                        </div>
+                                    )}
+                                    <div style={{ padding: '20px' }}>
+                                        <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px', color: '#0f172a' }}>{book.title}</h3>
+                                        {book.description && (
+                                            <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '16px', lineHeight: '1.5' }}>
+                                                {book.description.slice(0, 100)}{book.description.length > 100 ? '...' : ''}
+                                            </p>
+                                        )}
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                            {book.duration_seconds ? (
+                                                <span style={{ fontSize: '13px', color: '#94a3b8' }}>⏱️ {formatTime(book.duration_seconds)}</span>
+                                            ) : <span />}
+                                            {book.audio_url && (
+                                                <a href={book.audio_url} target="_blank" rel="noopener noreferrer"
+                                                    style={{
+                                                        background: '#6366f1', color: '#fff',
+                                                        padding: '8px 16px', borderRadius: '8px', fontSize: '14px',
+                                                        textDecoration: 'none', fontWeight: '500'
+                                                    }}>
+                                                    ▶ Ouvir
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </>
     )
 }
 
