@@ -432,9 +432,8 @@ function HomePage({ user }) {
             {/* ========== SEÇÃO AUDIOBOOKS - DARK THEME ========== */}
             <div style={{
                 width: '100%',
-                background: '#02020A',
-                padding: '64px 24px',
-                borderTop: '1px solid rgba(255,255,255,0.05)'
+                background: '#03030D',
+                padding: '64px 24px'
             }}>
                 <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
                     <h2 style={{ fontSize: '28px', fontWeight: '600', marginBottom: '32px', color: '#ffffff' }}>
@@ -451,7 +450,7 @@ function HomePage({ user }) {
                                 <div key={book.id} style={{
                                     background: 'rgba(255,255,255,0.03)',
                                     borderRadius: '16px',
-                                    border: '1px solid rgba(255,255,255,0.08)',
+                                    border: 'none',
                                     overflow: 'hidden',
                                     boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
                                     transition: 'transform 0.2s, box-shadow 0.2s, background 0.2s'
