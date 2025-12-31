@@ -345,9 +345,9 @@ function HomePage({ user }) {
                             placeholder="Peça para gerar um audiobook de..."
                             disabled={isLoading}
                             style={{
-                                width: '100%', minHeight: '100px', background: 'transparent', border: 'none',
+                                width: '100%', minHeight: '60px', background: 'transparent', border: 'none',
                                 outline: 'none', resize: 'none', fontSize: '18px', lineHeight: '1.6', color: '#e2e8f0',
-                                fontFamily: 'inherit', boxSizing: 'border-box'
+                                fontFamily: "'Figtree', sans-serif", boxSizing: 'border-box'
                             }}
                         />
                     </div>
@@ -360,13 +360,13 @@ function HomePage({ user }) {
                             <input ref={fileInputRef} type="file" accept=".pdf,.docx,.txt" onChange={handleFileUpload} style={{ display: 'none' }} />
                             <button onClick={() => fileInputRef.current?.click()} disabled={isLoading}
                                 style={{
-                                    display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px',
-                                    background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)',
+                                    display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px',
+                                    background: 'transparent', border: '1px solid rgba(255,255,255,0.15)',
                                     borderRadius: '20px', color: '#94a3b8', cursor: 'pointer', fontSize: '14px', fontWeight: '500',
-                                    transition: 'background 0.2s'
+                                    fontFamily: "'Figtree', sans-serif", transition: 'border-color 0.2s, background 0.2s'
                                 }}
-                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
-                                onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                                onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; e.currentTarget.style.background = 'transparent'; }}
                             >
                                 <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -377,9 +377,9 @@ function HomePage({ user }) {
                             <div style={{ position: 'relative' }}>
                                 <select value={voice} onChange={(e) => setVoice(e.target.value)} disabled={isLoading}
                                     style={{
-                                        padding: '10px 16px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)',
+                                        padding: '8px 14px', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)',
                                         borderRadius: '20px', color: '#94a3b8', fontSize: '14px', cursor: 'pointer', appearance: 'none',
-                                        paddingRight: '30px', outline: 'none'
+                                        paddingRight: '30px', outline: 'none', fontFamily: "'Figtree', sans-serif"
                                     }}>
                                     {VOICES.map((v) => <option key={v.value} value={v.value} style={{ background: '#1a1a1a' }}>{v.label}</option>)}
                                 </select>
