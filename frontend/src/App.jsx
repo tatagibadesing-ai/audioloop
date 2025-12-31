@@ -467,7 +467,7 @@ function HomePage({ user }) {
                                     }}
                                 >
                                     {book.cover_url ? (
-                                        <img src={book.cover_url} alt={book.title} style={{ width: '100%', height: '200px', objectFit: 'cover' }} />
+                                        <img src={book.cover_url} alt={book.title} style={{ width: '100%', height: '200px', objectFit: 'contain', background: 'rgba(255,255,255,0.02)' }} />
                                     ) : (
                                         <div style={{ width: '100%', height: '200px', background: 'linear-gradient(135deg, #2546C7 0%, #1a3399 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             <span style={{ fontSize: '48px' }}>🎧</span>
@@ -761,7 +761,7 @@ function AdminPage({ user, isAdmin, setShowLoginModal }) {
                             {book.cover_url && (
                                 <img src={book.cover_url} alt="" style={{
                                     width: '60px', height: '60px',
-                                    objectFit: 'cover', borderRadius: '8px'
+                                    objectFit: 'contain', borderRadius: '8px', background: '#f8fafc'
                                 }} />
                             )}
                             <div style={{ flex: 1 }}>
