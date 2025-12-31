@@ -346,7 +346,7 @@ function HomePage({ user }) {
                             disabled={isLoading}
                             style={{
                                 width: '100%', minHeight: '60px', background: 'transparent', border: 'none',
-                                outline: 'none', resize: 'none', fontSize: '18px', lineHeight: '1.6', color: '#e2e8f0',
+                                outline: 'none', resize: 'none', fontSize: '18px', lineHeight: '1.6', color: '#ffffff',
                                 fontFamily: "'Figtree', sans-serif", boxSizing: 'border-box'
                             }}
                         />
@@ -361,8 +361,8 @@ function HomePage({ user }) {
                             <button onClick={() => fileInputRef.current?.click()} disabled={isLoading}
                                 style={{
                                     display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px',
-                                    background: 'transparent', border: '1px solid rgba(255,255,255,0.15)',
-                                    borderRadius: '20px', color: '#94a3b8', cursor: 'pointer', fontSize: '14px', fontWeight: '500',
+                                    background: 'transparent', border: '1px solid rgba(255,255,255,0.2)',
+                                    borderRadius: '20px', color: '#ffffff', cursor: 'pointer', fontSize: '14px', fontWeight: '600',
                                     fontFamily: "'Figtree', sans-serif", transition: 'border-color 0.2s, background 0.2s'
                                 }}
                                 onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
@@ -377,18 +377,18 @@ function HomePage({ user }) {
                             <div style={{ position: 'relative' }}>
                                 <select value={voice} onChange={(e) => setVoice(e.target.value)} disabled={isLoading}
                                     style={{
-                                        padding: '8px 14px', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)',
-                                        borderRadius: '20px', color: '#94a3b8', fontSize: '14px', cursor: 'pointer', appearance: 'none',
-                                        paddingRight: '30px', outline: 'none', fontFamily: "'Figtree', sans-serif"
+                                        padding: '8px 14px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)',
+                                        borderRadius: '20px', color: '#ffffff', fontSize: '14px', cursor: 'pointer', appearance: 'none',
+                                        paddingRight: '30px', outline: 'none', fontFamily: "'Figtree', sans-serif", fontWeight: '600'
                                     }}>
                                     {VOICES.map((v) => <option key={v.value} value={v.value} style={{ background: '#1a1a1a' }}>{v.label}</option>)}
                                 </select>
-                                <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#64748b', fontSize: '10px' }}>▼</span>
+                                <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#ffffff', fontSize: '10px' }}>▼</span>
                             </div>
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            {text && <span style={{ fontSize: '13px', color: '#64748b' }}>
+                            {text && <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>
                                 ~{estimateAudioDuration(text)}
                             </span>}
 
