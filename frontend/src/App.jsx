@@ -35,9 +35,12 @@ const API_URL = import.meta.env.VITE_API_URL ||
 const ADMIN_EMAIL = '2closett@gmail.com'
 
 const VOICES = [
-    { value: 'pt-BR-AntonioNeural', label: 'Antônio (PT-BR)' },
-    { value: 'pt-BR-FranciscaNeural', label: 'Francisca (PT-BR)' },
-    { value: 'pt-BR-ThalitaNeural', label: 'Thalita (PT-BR)' },
+    { value: 'pt-BR-AntonioNeural', label: 'Antônio (Masculino)' },
+    { value: 'pt-BR-DonatoNeural', label: 'Donato (Masculino)' },
+    { value: 'pt-BR-HumbertoNeural', label: 'Humberto (Masculino)' },
+    { value: 'pt-BR-FranciscaNeural', label: 'Francisca (Feminino)' },
+    { value: 'pt-BR-ThalitaNeural', label: 'Thalita (Feminino)' },
+    { value: 'pt-BR-BrendaNeural', label: 'Brenda (Feminino)' },
     { value: 'en-US-GuyNeural', label: 'Guy (EN-US)' },
     { value: 'en-US-JennyNeural', label: 'Jenny (EN-US)' }
 ]
