@@ -383,7 +383,7 @@ function HomePage({ user }) {
                                     }}>
                                     {VOICES.map((v) => <option key={v.value} value={v.value} style={{ background: '#1a1a1a' }}>{v.label}</option>)}
                                 </select>
-                                <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#FCFBF8', fontSize: '10px' }}>▼</span>
+                                <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#FCFBF8', fontSize: '12px' }}>▾</span>
                             </div>
                         </div>
 
@@ -397,7 +397,7 @@ function HomePage({ user }) {
                                     width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center',
                                     background: isLoading || !text.trim() ? '#91918e' : '#FCFBF8',
                                     border: 'none', borderRadius: '50%',
-                                    color: isLoading || !text.trim() ? 'rgba(255,255,255,0.6)' : '#03030D',
+                                    color: '#03030D', // Cor escura em ambos os estados conforme pedido
                                     cursor: isLoading || !text.trim() ? 'not-allowed' : 'pointer',
                                     transition: 'transform 0.1s, background 0.2s',
                                     boxShadow: text.trim() ? '0 4px 12px rgba(255,255,255,0.1)' : 'none'
