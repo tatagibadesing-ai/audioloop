@@ -4,9 +4,18 @@ import { createClient } from '@supabase/supabase-js'
 // Configuração Supabase (ANON KEY - segura para frontend)
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || ''
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+
+// Debug: verificar se as variáveis estão chegando
+console.log('Supabase URL:', SUPABASE_URL ? 'Configurado' : 'NÃO CONFIGURADO')
+console.log('Supabase Key:', SUPABASE_ANON_KEY ? 'Configurado' : 'NÃO CONFIGURADO')
+
 const supabase = SUPABASE_URL && SUPABASE_ANON_KEY
     ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
     : null
+
+if (!supabase) {
+    console.warn('⚠️ Supabase não configurado. Login desabilitado.')
+}
 
 const API_URL = import.meta.env.VITE_API_URL ||
     (window.location.hostname === 'localhost' ? 'http://localhost:5000' :
