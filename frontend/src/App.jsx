@@ -271,35 +271,55 @@ function HomePage({ user }) {
     const [isLoading, setIsLoading] = useState(false)
     const [audioUrl, setAudioUrl] = useState(null)
     const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false)
-    const [previewVoice, setPreviewVoice] = useState(null) // Voz sendo testada
+    const [previewVoice, setPreviewVoice] = useState(null) // Voz sendo tocada
+    const [preloadedPreviews, setPreloadedPreviews] = useState({}) // Cache de URLs das prévias
     const voiceSelectRef = useRef(null)
     const previewAudioRef = useRef(new Audio())
 
-    const playVoicePreview = async (voiceId) => {
-        try {
-            setPreviewVoice(voiceId)
-            const isEnglish = voiceId.startsWith('en-US')
-            const previewText = isEnglish ? "Hello, this is my voice." : "Olá, esta é a minha voz."
+    // Pré-carrega as vozes para que o clique seja instantâneo
+    useEffect(() => {
+        const preloadVoices = async () => {
+            const cache = {}
+            for (const v of VOICES) {
+                try {
+                    const isEnglish = v.value.startsWith('en-US')
+                    // Texto alterado para evitar problemas fonéticos com "esta"
+                    const previewText = isEnglish
+                        ? "Hello! This is a sample of my voice."
+                        : "Olá! Ouça como soa a minha voz no AudioLoop."
 
-            const response = await fetch(`${API_URL}/api/generate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: previewText, voice: voiceId })
-            })
+                    const response = await fetch(`${API_URL}/api/generate`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text: previewText, voice: v.value })
+                    })
 
-            if (!response.ok) throw new Error('Falha na prévia')
-
-            const blob = await response.blob()
-            const url = URL.createObjectURL(blob)
-
-            if (previewAudioRef.current) {
-                previewAudioRef.current.src = url
-                previewAudioRef.current.play()
+                    if (response.ok) {
+                        const blob = await response.blob()
+                        cache[v.value] = URL.createObjectURL(blob)
+                    }
+                } catch (e) {
+                    console.error(`Erro ao pré-carregar ${v.value}:`, e)
+                }
             }
-        } catch (error) {
-            console.error("Erro na prévia:", error)
-        } finally {
-            setPreviewVoice(null)
+            setPreloadedPreviews(cache)
+        }
+        preloadVoices()
+    }, [])
+
+    const playVoicePreview = (voiceId) => {
+        const cachedUrl = preloadedPreviews[voiceId]
+        if (!cachedUrl) return
+
+        if (previewAudioRef.current) {
+            // Se já estiver tocando, para antes de começar de novo
+            previewAudioRef.current.pause()
+            previewAudioRef.current.currentTime = 0
+
+            setPreviewVoice(voiceId)
+            previewAudioRef.current.src = cachedUrl
+            previewAudioRef.current.onended = () => setPreviewVoice(null)
+            previewAudioRef.current.play()
         }
     }
 
@@ -525,9 +545,14 @@ function HomePage({ user }) {
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                         {v.label}
                                                         {previewVoice === v.value ? (
-                                                            <CircleNotch size={14} className="animate-spin" />
+                                                            <motion.div
+                                                                animate={{ scale: [1, 1.2, 1] }}
+                                                                transition={{ repeat: Infinity, duration: 1 }}
+                                                            >
+                                                                <SpeakerHigh size={14} color="#FCFBF8" />
+                                                            </motion.div>
                                                         ) : (
-                                                            <SpeakerHigh size={14} style={{ opacity: voice === v.value ? 1 : 0.4 }} />
+                                                            <SpeakerHigh size={14} style={{ opacity: preloadedPreviews[v.value] ? 0.4 : 0.1 }} />
                                                         )}
                                                     </div>
                                                     {voice === v.value && <CheckCircle size={18} weight="fill" color="#FCFBF8" />}
