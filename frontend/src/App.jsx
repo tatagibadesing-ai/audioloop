@@ -609,7 +609,7 @@ function HomePage({ user }) {
                             exit={{ opacity: 0, y: -10, scale: 0.95 }}
                             transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
                             style={{
-                                maxWidth: '780px', width: '100%', margin: '0 auto 48px',
+                                maxWidth: '850px', width: '100%', margin: '0 auto 48px',
                                 background: '#1a1a1a', borderRadius: '24px',
                                 boxShadow: '0 20px 40px -12px rgba(0,0,0,0.5)',
                                 padding: '20px 24px', boxSizing: 'border-box'
@@ -684,7 +684,7 @@ function HomePage({ user }) {
                                             id="audio-progress"
                                             style={{
                                                 width: '0%', height: '100%',
-                                                background: 'linear-gradient(90deg, #6366f1, #a855f7)',
+                                                background: '#FCFBF8',
                                                 borderRadius: '3px',
                                                 transition: 'width 0.1s linear'
                                             }}
@@ -699,26 +699,6 @@ function HomePage({ user }) {
                                         0:00 / 0:00
                                     </span>
                                 </div>
-
-                                {/* Volume Button */}
-                                <motion.button
-                                    whileHover={{ scale: 1.1, background: 'rgba(255,255,255,0.1)' }}
-                                    whileTap={{ scale: 0.95 }}
-                                    onClick={() => {
-                                        const audio = document.getElementById('audio-player');
-                                        audio.muted = !audio.muted;
-                                        setIsMuted(!isMuted);
-                                    }}
-                                    style={{
-                                        width: '40px', height: '40px',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        background: 'transparent', border: '1px solid #333332',
-                                        borderRadius: '50%', color: isMuted ? '#ef4444' : '#91918E', cursor: 'pointer',
-                                        transition: 'all 0.2s'
-                                    }}
-                                >
-                                    {isMuted ? <SpeakerSlash size={18} weight="bold" /> : <SpeakerHigh size={18} weight="bold" />}
-                                </motion.button>
 
                                 {/* Download Button */}
                                 <motion.button
