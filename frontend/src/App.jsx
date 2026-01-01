@@ -618,14 +618,22 @@ function HomePage({ user }) {
                             </div>
                         )}
                         <textarea
-                            value={text} onChange={(e) => { setText(e.target.value); setAudioUrl(null); }}
+                            value={text}
+                            onChange={(e) => {
+                                setText(e.target.value);
+                                setAudioUrl(null);
+                                e.target.style.height = 'auto';
+                                e.target.style.height = `${e.target.scrollHeight}px`;
+                            }}
+                            rows={1}
                             placeholder=""
                             disabled={isLoading}
                             style={{
-                                width: '100%', minHeight: '60px', background: 'transparent', border: 'none',
+                                width: '100%', minHeight: '120px', maxHeight: '480px',
+                                background: 'transparent', border: 'none',
                                 outline: 'none', resize: 'none', fontSize: '18px', lineHeight: '1.6', color: '#FCFBF8',
                                 fontFamily: "'Figtree', sans-serif", boxSizing: 'border-box',
-                                position: 'relative', zIndex: 1
+                                position: 'relative', zIndex: 1, overflowY: 'auto'
                             }}
                         />
                     </div>
