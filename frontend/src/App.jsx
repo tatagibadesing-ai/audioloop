@@ -600,22 +600,31 @@ function HomePage({ user }) {
                     </div>
                 </div>
 
-                {/* Player - Estilo Dark Premium */}
+                {/* Player - Menu Inferior Fixo */}
                 <AnimatePresence>
                     {audioUrl && (
                         <motion.div
-                            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                            initial={{ opacity: 0, y: 100 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 100 }}
                             transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
                             style={{
-                                maxWidth: '850px', width: '100%', margin: '0 auto 48px',
-                                background: '#1a1a1a', borderRadius: '24px',
-                                boxShadow: '0 20px 40px -12px rgba(0,0,0,0.5)',
-                                padding: '20px 24px', boxSizing: 'border-box'
+                                position: 'fixed',
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                background: '#1a1a1a',
+                                borderTop: '1px solid #333332',
+                                boxShadow: '0 -10px 40px rgba(0,0,0,0.5)',
+                                padding: '16px 24px',
+                                zIndex: 1000,
+                                boxSizing: 'border-box'
                             }}
                         >
                             <div style={{
+                                maxWidth: '850px',
+                                width: '100%',
+                                margin: '0 auto',
                                 display: 'flex', alignItems: 'center', gap: '16px'
                             }}>
                                 {/* Play/Pause Button */}
