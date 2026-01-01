@@ -32,7 +32,13 @@ import {
     CheckCircle,
     SpeakerHigh,
     SpeakerSlash,
-    CircleNotch
+    CircleNotch,
+    Microphone,
+    ClockCounterClockwise,
+    Books,
+    MagicWand,
+    Faders,
+    Playlist
 } from "@phosphor-icons/react"
 
 // Configuração
@@ -239,18 +245,20 @@ function Sidebar({ user, isAdmin, setShowLoginModal }) {
 
             {/* Main Menu */}
             <nav style={{ flex: 1, overflowY: 'auto' }}>
-                <MenuItem icon={House} label="Início" isActive={true} onClick={() => window.location.hash = '#'} />
-                <MenuItem icon={MagnifyingGlass} label="Buscar" isComingSoon />
+                <SectionTitle label="Estúdio" />
+                <MenuItem icon={House} label="Gerar Áudio" isActive={true} onClick={() => window.location.hash = '#'} />
+                <MenuItem icon={Faders} label="Editor de Áudio" isComingSoon />
+                <MenuItem icon={MagicWand} label="Clonagem de Voz" isComingSoon />
 
-                <SectionTitle label="Projetos" />
-                <MenuItem icon={SquaresFour} label="Todos os projetos" />
-                <MenuItem icon={Star} label="Favoritos" />
-                <MenuItem icon={Users} label="Compartilhados" />
+                <SectionTitle label="Biblioteca" />
+                <MenuItem icon={ClockCounterClockwise} label="Histórico" isComingSoon />
+                <MenuItem icon={Books} label="Meus Audiobooks" isComingSoon />
+                <MenuItem icon={Playlist} label="Playlists" isComingSoon />
+                <MenuItem icon={Star} label="Favoritos" isComingSoon />
 
-                <SectionTitle label="Recursos" />
-                <MenuItem icon={Compass} label="Descobrir" isComingSoon />
-                <MenuItem icon={Layout} label="Modelos" isComingSoon />
-                <MenuItem icon={BookOpen} label="Aprender" isComingSoon />
+                <SectionTitle label="Explorar" />
+                <MenuItem icon={Microphone} label="Galeria de Vozes" isComingSoon />
+                <MenuItem icon={BookOpen} label="Tutoriais" isComingSoon />
 
                 {isAdmin && (
                     <>
