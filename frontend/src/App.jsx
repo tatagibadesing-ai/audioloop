@@ -689,8 +689,8 @@ function HomePage({ user }) {
                                             customControlsSection={['MAIN_CONTROLS']}
                                             customVolumeControls={[]}
                                             customIcons={{
-                                                play: <Play size={22} weight="fill" color="#0a0a0a" />,
-                                                pause: <Pause size={22} weight="fill" color="#0a0a0a" />
+                                                play: <Play size={16} weight="fill" color="#0a0a0a" />,
+                                                pause: <Pause size={16} weight="fill" color="#0a0a0a" />
                                             }}
                                             onPlay={() => setIsPlaying(true)}
                                             onPause={() => setIsPlaying(false)}
