@@ -210,14 +210,11 @@ function Sidebar({ user, isAdmin, setShowLoginModal }) {
         }}>
             {/* Logo Area */}
             <div style={{ marginBottom: '24px', paddingLeft: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{
-                    width: '32px', height: '32px',
-                    background: 'linear-gradient(135deg, #FF512F 0%, #DD2476 100%)',
-                    borderRadius: '8px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}>
-                    <span style={{ fontWeight: 'bold', fontSize: '18px', color: '#fff' }}>A</span>
-                </div>
+                <img
+                    src="https://rlbaboiwngviskgsaomb.supabase.co/storage/v1/object/sign/imagens/audiolooplogo.webp?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8zMGJmN2E4Ny00MDc3LTQ5ZWItYjc1Ni1lNDk2M2Y5MmMzMTciLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZW5zL2F1ZGlvbG9vcGxvZ28ud2VicCIsImlhdCI6MTc2NzI5NzAwMywiZXhwIjoyNTczMzIyNjAzfQ.VQQrRWT3AqlUcUaWXToP7ZoGSvnKIqr3l-Q9HZp-FdI"
+                    alt="AudioLoop"
+                    style={{ width: '32px', height: '32px', borderRadius: '8px', objectFit: 'contain' }}
+                />
                 <span style={{ fontWeight: '600', fontSize: '16px' }}>AudioLoop</span>
             </div>
 
@@ -242,18 +239,18 @@ function Sidebar({ user, isAdmin, setShowLoginModal }) {
 
             {/* Main Menu */}
             <nav style={{ flex: 1, overflowY: 'auto' }}>
-                <MenuItem icon={House} label="Home" isActive={true} onClick={() => window.location.hash = '#'} />
-                <MenuItem icon={MagnifyingGlass} label="Search" isComingSoon />
+                <MenuItem icon={House} label="Início" isActive={true} onClick={() => window.location.hash = '#'} />
+                <MenuItem icon={MagnifyingGlass} label="Buscar" isComingSoon />
 
-                <SectionTitle label="Projects" />
-                <MenuItem icon={SquaresFour} label="All projects" />
-                <MenuItem icon={Star} label="Starred" />
-                <MenuItem icon={Users} label="Shared with me" />
+                <SectionTitle label="Projetos" />
+                <MenuItem icon={SquaresFour} label="Todos os projetos" />
+                <MenuItem icon={Star} label="Favoritos" />
+                <MenuItem icon={Users} label="Compartilhados" />
 
-                <SectionTitle label="Resources" />
-                <MenuItem icon={Compass} label="Discover" isComingSoon />
-                <MenuItem icon={Layout} label="Templates" isComingSoon />
-                <MenuItem icon={BookOpen} label="Learn" isComingSoon />
+                <SectionTitle label="Recursos" />
+                <MenuItem icon={Compass} label="Descobrir" isComingSoon />
+                <MenuItem icon={Layout} label="Modelos" isComingSoon />
+                <MenuItem icon={BookOpen} label="Aprender" isComingSoon />
 
                 {isAdmin && (
                     <>
@@ -265,7 +262,7 @@ function Sidebar({ user, isAdmin, setShowLoginModal }) {
 
             {/* Footer */}
             <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid #222' }}>
-                <MenuItem icon={Gift} label="Share AudioLoop" />
+                <MenuItem icon={Gift} label="Compartilhar" />
 
                 <div style={{
                     marginTop: '12px',
@@ -292,7 +289,7 @@ function Sidebar({ user, isAdmin, setShowLoginModal }) {
                                 <div style={{ fontSize: '13px', fontWeight: '500', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     {user.email?.split('@')[0]}
                                 </div>
-                                <div style={{ fontSize: '11px', color: '#666' }}>Free Plan</div>
+                                <div style={{ fontSize: '11px', color: '#666' }}>{isAdmin ? 'Plano Admin' : 'Plano Grátis'}</div>
                             </div>
                             <button onClick={handleLogout} title="Sair" style={{ background: 'transparent', border: 'none', color: '#666', cursor: 'pointer' }}>
                                 <SignOut size={16} />
