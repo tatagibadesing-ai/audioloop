@@ -11,12 +11,14 @@ import {
     Trash,
     X,
     Play,
+    Pause,
     SignOut,
     House,
     Layout,
     UserCircle,
     CheckCircle,
     SpeakerHigh,
+    SpeakerSlash,
     CircleNotch
 } from "@phosphor-icons/react"
 
@@ -273,8 +275,11 @@ function HomePage({ user }) {
     const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false)
     const [previewVoice, setPreviewVoice] = useState(null) // Voz sendo tocada
     const [preloadedPreviews, setPreloadedPreviews] = useState({}) // Cache de URLs das prévias
+    const [isPlaying, setIsPlaying] = useState(false) // Estado do player
+    const [isMuted, setIsMuted] = useState(false) // Estado mute do player
     const voiceSelectRef = useRef(null)
     const previewAudioRef = useRef(new Audio())
+
 
     // Pré-carrega as vozes para que o clique seja instantâneo
     useEffect(() => {
@@ -595,23 +600,146 @@ function HomePage({ user }) {
                     </div>
                 </div>
 
-                {/* Player */}
-                {audioUrl && (
-                    <div style={{
-                        maxWidth: '900px', width: '100%', margin: '0 auto 48px', background: 'rgba(255,255,255,0.9)',
-                        borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '16px 20px',
-                        display: 'flex', alignItems: 'center', gap: '16px'
-                    }}>
-                        <audio controls src={audioUrl} style={{ flex: 1, height: '40px' }} />
-                        <button onClick={handleDownload} title="Baixar MP3" style={{
-                            width: '40px', height: '40px', display: 'flex',
-                            alignItems: 'center', justifyContent: 'center', background: '#f1f5f9',
-                            border: '1px solid #e2e8f0', borderRadius: '50%', color: '#64748b', cursor: 'pointer'
-                        }}>
-                            <DownloadSimple size={20} weight="bold" />
-                        </button>
-                    </div>
-                )}
+                {/* Player - Estilo Dark Premium */}
+                <AnimatePresence>
+                    {audioUrl && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+                            style={{
+                                maxWidth: '780px', width: '100%', margin: '0 auto 48px',
+                                background: '#1a1a1a', borderRadius: '24px',
+                                boxShadow: '0 20px 40px -12px rgba(0,0,0,0.5)',
+                                padding: '20px 24px', boxSizing: 'border-box'
+                            }}
+                        >
+                            <div style={{
+                                display: 'flex', alignItems: 'center', gap: '16px'
+                            }}>
+                                {/* Play/Pause Button */}
+                                <motion.button
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => {
+                                        const audio = document.getElementById('audio-player');
+                                        if (audio.paused) {
+                                            audio.play();
+                                            setIsPlaying(true);
+                                        } else {
+                                            audio.pause();
+                                            setIsPlaying(false);
+                                        }
+                                    }}
+                                    style={{
+                                        width: '48px', height: '48px', minWidth: '48px',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        background: '#FCFBF8', border: 'none', borderRadius: '50%',
+                                        color: '#03030D', cursor: 'pointer',
+                                        boxShadow: '0 4px 12px rgba(255,255,255,0.1)'
+                                    }}
+                                >
+                                    {isPlaying ? <Pause size={22} weight="fill" /> : <Play size={22} weight="fill" />}
+                                </motion.button>
+
+                                {/* Audio Element & Progress */}
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <audio
+                                        id="audio-player"
+                                        src={audioUrl}
+                                        style={{ display: 'none' }}
+                                        onTimeUpdate={(e) => {
+                                            const progress = document.getElementById('audio-progress');
+                                            const timeDisplay = document.getElementById('audio-time');
+                                            if (progress && e.target.duration) {
+                                                progress.style.width = `${(e.target.currentTime / e.target.duration) * 100}%`;
+                                            }
+                                            if (timeDisplay) {
+                                                const curr = Math.floor(e.target.currentTime);
+                                                const dur = Math.floor(e.target.duration) || 0;
+                                                const formatSec = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+                                                timeDisplay.textContent = `${formatSec(curr)} / ${formatSec(dur)}`;
+                                            }
+                                        }}
+                                        onPlay={() => setIsPlaying(true)}
+                                        onPause={() => setIsPlaying(false)}
+                                        onEnded={() => setIsPlaying(false)}
+                                    />
+
+                                    {/* Progress Bar */}
+                                    <div
+                                        style={{
+                                            width: '100%', height: '6px', background: '#333332',
+                                            borderRadius: '3px', cursor: 'pointer', overflow: 'hidden'
+                                        }}
+                                        onClick={(e) => {
+                                            const audio = document.getElementById('audio-player');
+                                            const rect = e.currentTarget.getBoundingClientRect();
+                                            const percent = (e.clientX - rect.left) / rect.width;
+                                            if (audio.duration) audio.currentTime = percent * audio.duration;
+                                        }}
+                                    >
+                                        <div
+                                            id="audio-progress"
+                                            style={{
+                                                width: '0%', height: '100%',
+                                                background: 'linear-gradient(90deg, #6366f1, #a855f7)',
+                                                borderRadius: '3px',
+                                                transition: 'width 0.1s linear'
+                                            }}
+                                        />
+                                    </div>
+
+                                    {/* Time Display */}
+                                    <span
+                                        id="audio-time"
+                                        style={{ fontSize: '13px', color: '#91918E', fontWeight: '500' }}
+                                    >
+                                        0:00 / 0:00
+                                    </span>
+                                </div>
+
+                                {/* Volume Button */}
+                                <motion.button
+                                    whileHover={{ scale: 1.1, background: 'rgba(255,255,255,0.1)' }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => {
+                                        const audio = document.getElementById('audio-player');
+                                        audio.muted = !audio.muted;
+                                        setIsMuted(!isMuted);
+                                    }}
+                                    style={{
+                                        width: '40px', height: '40px',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        background: 'transparent', border: '1px solid #333332',
+                                        borderRadius: '50%', color: isMuted ? '#ef4444' : '#91918E', cursor: 'pointer',
+                                        transition: 'all 0.2s'
+                                    }}
+                                >
+                                    {isMuted ? <SpeakerSlash size={18} weight="bold" /> : <SpeakerHigh size={18} weight="bold" />}
+                                </motion.button>
+
+                                {/* Download Button */}
+                                <motion.button
+                                    whileHover={{ scale: 1.1, background: '#FCFBF8', color: '#03030D' }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={handleDownload}
+                                    title="Baixar MP3"
+                                    style={{
+                                        width: '40px', height: '40px',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        background: 'transparent', border: '1px solid #333332',
+                                        borderRadius: '50%', color: '#91918E', cursor: 'pointer',
+                                        transition: 'all 0.2s'
+                                    }}
+                                >
+                                    <DownloadSimple size={18} weight="bold" />
+                                </motion.button>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 <style>{`
                 @keyframes spin {
