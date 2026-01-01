@@ -660,12 +660,13 @@ function HomePage({ user }) {
                                     width: '100%',
                                     margin: '0 auto',
                                     display: 'flex',
-                                    alignItems: 'center'
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
                                 }}>
                                     {/* Progress Bar */}
                                     <div
                                         style={{
-                                            flex: 1, height: '4px', background: '#333',
+                                            width: '100%', height: '4px', background: '#333',
                                             borderRadius: '2px', overflow: 'hidden', cursor: 'pointer'
                                         }}
                                     >
@@ -683,25 +684,26 @@ function HomePage({ user }) {
                             ) : (
                                 /* Full View */
                                 <div style={{
-                                    maxWidth: '1200px',
+                                    maxWidth: '850px',
                                     width: '100%',
                                     margin: '0 auto',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '24px'
+                                    justifyContent: 'space-between',
+                                    gap: '32px'
                                 }}>
                                     {/* Left: Voice Info */}
-                                    <div style={{ minWidth: '200px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                        <span style={{ fontSize: '14px', color: '#FCFBF8', fontWeight: '500' }}>
+                                    <div style={{ width: '120px', display: 'flex', flexDirection: 'column', gap: '2px', flexShrink: 0 }}>
+                                        <span style={{ fontSize: '13px', color: '#FCFBF8', fontWeight: '500' }}>
                                             {VOICES.find(v => v.value === voice)?.label || 'Audio'}
                                         </span>
-                                        <span style={{ fontSize: '12px', color: '#666' }}>
+                                        <span style={{ fontSize: '11px', color: '#666' }}>
                                             Áudio gerado
                                         </span>
                                     </div>
 
                                     {/* Center: Play Button + Progress Bar */}
-                                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '12px' }}>
                                         {/* Play/Pause Button */}
                                         <motion.button
                                             whileHover={{ scale: 1.1 }}
@@ -728,7 +730,7 @@ function HomePage({ user }) {
                                         </motion.button>
 
                                         {/* Current Time */}
-                                        <span id="current-time" style={{ fontSize: '13px', color: '#888', fontWeight: '500', minWidth: '35px' }}>
+                                        <span id="current-time" style={{ fontSize: '12px', color: '#888', fontWeight: '500', minWidth: '32px' }}>
                                             0:00
                                         </span>
 
@@ -757,13 +759,13 @@ function HomePage({ user }) {
                                         </div>
 
                                         {/* Total Time */}
-                                        <span id="total-time" style={{ fontSize: '13px', color: '#888', fontWeight: '500', minWidth: '35px' }}>
+                                        <span id="total-time" style={{ fontSize: '12px', color: '#888', fontWeight: '500', minWidth: '32px' }}>
                                             0:00
                                         </span>
                                     </div>
 
                                     {/* Right: Download + Minimize Buttons */}
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <div style={{ width: '120px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px' }}>
                                         <motion.button
                                             whileHover={{ scale: 1.1, color: '#FCFBF8' }}
                                             whileTap={{ scale: 0.95 }}
