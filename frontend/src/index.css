@@ -88,3 +88,112 @@ body {
   height: 60px;
   cursor: pointer;
 }
+
+/* react-h5-audio-player Custom Dark Theme */
+.rhap_container {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.rhap_main {
+  flex-direction: row !important;
+  gap: 12px;
+}
+
+.rhap_controls-section {
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+}
+
+.rhap_main-controls-button {
+  color: #0a0a0a !important;
+  background: #FCFBF8 !important;
+  border-radius: 50% !important;
+  width: 36px !important;
+  height: 36px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1) !important;
+}
+
+.rhap_main-controls-button:hover {
+  transform: scale(1.1) !important;
+}
+
+.rhap_main-controls-button:active {
+  transform: scale(0.95) !important;
+}
+
+.rhap_main-controls-button svg {
+  width: 16px !important;
+  height: 16px !important;
+  fill: #0a0a0a !important;
+}
+
+.rhap_progress-section {
+  flex: 1 !important;
+  gap: 12px !important;
+}
+
+.rhap_time {
+  color: #888 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  min-width: 36px !important;
+}
+
+.rhap_progress-container {
+  height: 4px !important;
+  margin: 0 !important;
+}
+
+.rhap_progress-bar {
+  height: 4px !important;
+  background: #333 !important;
+  border-radius: 2px !important;
+}
+
+.rhap_progress-filled {
+  background: #FCFBF8 !important;
+  border-radius: 2px !important;
+  transition: none !important;
+}
+
+.rhap_progress-indicator {
+  width: 12px !important;
+  height: 12px !important;
+  background: #FCFBF8 !important;
+  border: none !important;
+  box-shadow: 0 0 8px rgba(252, 251, 248, 0.4) !important;
+  top: -4px !important;
+  margin-left: -6px !important;
+  opacity: 0 !important;
+  transition: opacity 0.2s ease, transform 0.2s ease !important;
+}
+
+.rhap_progress-container:hover .rhap_progress-indicator {
+  opacity: 1 !important;
+}
+
+.rhap_progress-indicator:hover {
+  transform: scale(1.3) !important;
+}
+
+.rhap_progress-indicator:active {
+  transform: scale(1.1) !important;
+}
+
+.rhap_download-progress {
+  display: none !important;
+}
+
+.rhap_volume-controls {
+  display: none !important;
+}
+
+.rhap_additional-controls {
+  display: none !important;
+}

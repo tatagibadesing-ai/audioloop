@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react"
 import { createClient } from '@supabase/supabase-js'
 import { motion, AnimatePresence } from "framer-motion"
+import AudioPlayer from 'react-h5-audio-player'
+import 'react-h5-audio-player/lib/styles.css'
 import {
     CaretDown,
     CaretUp,
@@ -277,15 +279,10 @@ function HomePage({ user }) {
     const [previewVoice, setPreviewVoice] = useState(null) // Voz sendo tocada
     const [preloadedPreviews, setPreloadedPreviews] = useState({}) // Cache de URLs das prévias
     const [isPlaying, setIsPlaying] = useState(false) // Estado do player
-    const [isMuted, setIsMuted] = useState(false) // Estado mute do player
     const [isPlayerMinimized, setIsPlayerMinimized] = useState(false) // Estado minimizado do player
-    const [isDragging, setIsDragging] = useState(false) // Estado de arrasto do progress
-    const [progressPercent, setProgressPercent] = useState(0) // Porcentagem do progresso
     const voiceSelectRef = useRef(null)
     const previewAudioRef = useRef(new Audio())
-    const audioRef = useRef(null)
-    const animationRef = useRef(null)
-    const progressBarRef = useRef(null)
+    const playerRef = useRef(null)
 
 
     // Pré-carrega as vozes para que o clique seja instantâneo
@@ -344,43 +341,6 @@ function HomePage({ user }) {
         document.addEventListener("mousedown", handleClickOutside)
         return () => document.removeEventListener("mousedown", handleClickOutside)
     }, [])
-
-    // Atualização suave da barra de progresso (60fps)
-    const updateProgress = () => {
-        const audio = audioRef.current
-        if (audio && audio.duration && !isDragging) {
-            const percent = (audio.currentTime / audio.duration) * 100
-            setProgressPercent(percent)
-
-            const currentTime = document.getElementById('current-time')
-            const totalTime = document.getElementById('total-time')
-
-            if (currentTime) {
-                const curr = Math.floor(audio.currentTime)
-                currentTime.textContent = `${Math.floor(curr / 60)}:${String(curr % 60).padStart(2, '0')}`
-            }
-            if (totalTime) {
-                const dur = Math.floor(audio.duration)
-                totalTime.textContent = `${Math.floor(dur / 60)}:${String(dur % 60).padStart(2, '0')}`
-            }
-        }
-        animationRef.current = requestAnimationFrame(updateProgress)
-    }
-
-    useEffect(() => {
-        if (isPlaying) {
-            animationRef.current = requestAnimationFrame(updateProgress)
-        } else {
-            if (animationRef.current) {
-                cancelAnimationFrame(animationRef.current)
-            }
-        }
-        return () => {
-            if (animationRef.current) {
-                cancelAnimationFrame(animationRef.current)
-            }
-        }
-    }, [isPlaying])
     const [audiobooks, setAudiobooks] = useState([])
     const [loadingBooks, setLoadingBooks] = useState(true)
     const fileInputRef = useRef(null)
@@ -660,24 +620,13 @@ function HomePage({ user }) {
                                 right: 0,
                                 background: '#0a0a0a',
                                 boxShadow: '0 -10px 40px rgba(0,0,0,0.6)',
-                                padding: isPlayerMinimized ? '8px 32px' : '12px 32px',
+                                padding: isPlayerMinimized ? '8px 32px' : '16px 32px',
                                 zIndex: 1000,
                                 boxSizing: 'border-box',
                                 transition: 'padding 0.3s ease',
                                 cursor: isPlayerMinimized ? 'pointer' : 'default'
                             }}
                         >
-                            {/* Hidden Audio Element */}
-                            <audio
-                                ref={audioRef}
-                                id="audio-player"
-                                src={audioUrl}
-                                style={{ display: 'none' }}
-                                onPlay={() => setIsPlaying(true)}
-                                onPause={() => setIsPlaying(false)}
-                                onEnded={() => setIsPlaying(false)}
-                            />
-
                             {/* Minimized View - Only Progress Bar */}
                             {isPlayerMinimized ? (
                                 <div style={{
@@ -688,7 +637,6 @@ function HomePage({ user }) {
                                     alignItems: 'center',
                                     justifyContent: 'center'
                                 }}>
-                                    {/* Progress Bar */}
                                     <div
                                         style={{
                                             width: '100%', height: '4px', background: '#333',
@@ -696,7 +644,7 @@ function HomePage({ user }) {
                                         }}
                                     >
                                         <div
-                                            id="audio-progress"
+                                            className="minimized-progress"
                                             style={{
                                                 width: '0%', height: '100%',
                                                 background: '#FCFBF8',
@@ -706,18 +654,17 @@ function HomePage({ user }) {
                                     </div>
                                 </div>
                             ) : (
-                                /* Full View */
+                                /* Full View with react-h5-audio-player */
                                 <div style={{
                                     maxWidth: '850px',
                                     width: '100%',
                                     margin: '0 auto',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    gap: '32px'
+                                    gap: '16px'
                                 }}>
                                     {/* Left: Voice Info */}
-                                    <div style={{ width: '120px', display: 'flex', flexDirection: 'column', gap: '2px', flexShrink: 0 }}>
+                                    <div style={{ width: '100px', display: 'flex', flexDirection: 'column', gap: '2px', flexShrink: 0 }}>
                                         <span style={{ fontSize: '13px', color: '#FCFBF8', fontWeight: '500' }}>
                                             {VOICES.find(v => v.value === voice)?.label || 'Audio'}
                                         </span>
@@ -726,118 +673,36 @@ function HomePage({ user }) {
                                         </span>
                                     </div>
 
-                                    {/* Center: Play Button + Progress Bar */}
-                                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                        {/* Play/Pause Button */}
-                                        <motion.button
-                                            whileHover={{ scale: 1.1 }}
-                                            whileTap={{ scale: 0.95 }}
-                                            onClick={() => {
-                                                const audio = document.getElementById('audio-player');
-                                                if (audio.paused) {
-                                                    audio.play();
-                                                    setIsPlaying(true);
-                                                } else {
-                                                    audio.pause();
-                                                    setIsPlaying(false);
+                                    {/* Center: Audio Player */}
+                                    <div style={{ flex: 1 }}>
+                                        <AudioPlayer
+                                            ref={playerRef}
+                                            src={audioUrl}
+                                            showJumpControls={false}
+                                            showDownloadProgress={false}
+                                            showFilledProgress={true}
+                                            showFilledVolume={true}
+                                            hasDefaultKeyBindings={false}
+                                            autoPlayAfterSrcChange={false}
+                                            layout="horizontal-reverse"
+                                            customProgressBarSection={['CURRENT_TIME', 'PROGRESS_BAR', 'DURATION']}
+                                            customControlsSection={['MAIN_CONTROLS']}
+                                            customVolumeControls={[]}
+                                            onPlay={() => setIsPlaying(true)}
+                                            onPause={() => setIsPlaying(false)}
+                                            onEnded={() => setIsPlaying(false)}
+                                            onListen={(e) => {
+                                                // Update minimized progress bar
+                                                const minProgress = document.querySelector('.minimized-progress');
+                                                if (minProgress && e.target.duration) {
+                                                    minProgress.style.width = `${(e.target.currentTime / e.target.duration) * 100}%`;
                                                 }
                                             }}
-                                            style={{
-                                                width: '36px', height: '36px', minWidth: '36px',
-                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                background: '#FCFBF8', border: 'none',
-                                                borderRadius: '50%', color: '#0a0a0a', cursor: 'pointer',
-                                                boxShadow: '0 2px 8px rgba(255,255,255,0.1)'
-                                            }}
-                                        >
-                                            {isPlaying ? <Pause size={16} weight="fill" /> : <Play size={16} weight="fill" />}
-                                        </motion.button>
-
-                                        {/* Current Time */}
-                                        <span id="current-time" style={{ fontSize: '12px', color: '#888', fontWeight: '500', minWidth: '32px' }}>
-                                            0:00
-                                        </span>
-
-                                        {/* Progress Bar with Draggable Thumb */}
-                                        <div
-                                            ref={progressBarRef}
-                                            style={{
-                                                flex: 1, height: '4px', background: '#333',
-                                                borderRadius: '2px', cursor: 'pointer',
-                                                position: 'relative'
-                                            }}
-                                            onClick={(e) => {
-                                                if (isDragging) return;
-                                                const audio = audioRef.current;
-                                                const rect = e.currentTarget.getBoundingClientRect();
-                                                const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                                                if (audio && audio.duration) {
-                                                    audio.currentTime = percent * audio.duration;
-                                                    setProgressPercent(percent * 100);
-                                                }
-                                            }}
-                                        >
-                                            {/* Progress Fill */}
-                                            <motion.div
-                                                id="audio-progress"
-                                                style={{
-                                                    width: `${progressPercent}%`,
-                                                    height: '100%',
-                                                    background: '#FCFBF8',
-                                                    borderRadius: '2px',
-                                                    position: 'absolute',
-                                                    top: 0,
-                                                    left: 0
-                                                }}
-                                            />
-
-                                            {/* Draggable Thumb */}
-                                            <motion.div
-                                                drag="x"
-                                                dragConstraints={progressBarRef}
-                                                dragElastic={0}
-                                                dragMomentum={false}
-                                                onDragStart={() => setIsDragging(true)}
-                                                onDrag={(e, info) => {
-                                                    const bar = progressBarRef.current;
-                                                    if (bar) {
-                                                        const rect = bar.getBoundingClientRect();
-                                                        const x = e.clientX - rect.left;
-                                                        const percent = Math.max(0, Math.min(1, x / rect.width));
-                                                        const audio = audioRef.current;
-                                                        if (audio && audio.duration) {
-                                                            audio.currentTime = percent * audio.duration;
-                                                            setProgressPercent(percent * 100);
-                                                        }
-                                                    }
-                                                }}
-                                                onDragEnd={() => setIsDragging(false)}
-                                                whileHover={{ scale: 1.3 }}
-                                                whileTap={{ scale: 1.1 }}
-                                                style={{
-                                                    width: '12px',
-                                                    height: '12px',
-                                                    background: '#FCFBF8',
-                                                    borderRadius: '50%',
-                                                    position: 'absolute',
-                                                    top: '50%',
-                                                    left: `${progressPercent}%`,
-                                                    transform: 'translate(-50%, -50%)',
-                                                    cursor: 'grab',
-                                                    boxShadow: '0 0 8px rgba(252, 251, 248, 0.4)',
-                                                    zIndex: 10
-                                                }}
-                                            />
-                                        </div>
-
-                                        {/* Total Time */}
-                                        <span id="total-time" style={{ fontSize: '12px', color: '#888', fontWeight: '500', minWidth: '32px' }}>
-                                            0:00
-                                        </span>
+                                        />
                                     </div>
 
                                     {/* Right: Download + Minimize Buttons */}
-                                    <div style={{ width: '120px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                                         <motion.button
                                             whileHover={{ scale: 1.1, color: '#FCFBF8' }}
                                             whileTap={{ scale: 0.95 }}
