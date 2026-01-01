@@ -104,14 +104,15 @@ body {
 .rhap_controls-section {
   flex: 0 0 auto !important;
   margin: 0 !important;
+  order: 1 !important;
 }
 
 .rhap_main-controls-button {
   color: #0a0a0a !important;
   background: #FCFBF8 !important;
   border-radius: 50% !important;
-  width: 36px !important;
-  height: 36px !important;
+  width: 40px !important;
+  height: 40px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -128,14 +129,15 @@ body {
 }
 
 .rhap_main-controls-button svg {
-  width: 16px !important;
-  height: 16px !important;
+  width: 22px !important;
+  height: 22px !important;
   fill: #0a0a0a !important;
 }
 
 .rhap_progress-section {
   flex: 1 !important;
   gap: 12px !important;
+  order: 2 !important;
 }
 
 .rhap_time {

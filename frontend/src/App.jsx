@@ -663,41 +663,17 @@ function HomePage({ user }) {
                                     alignItems: 'center',
                                     gap: '16px'
                                 }}>
-                                    {/* Left: Play Button + Voice Info */}
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-                                        <motion.button
-                                            whileHover={{ scale: 1.05 }}
-                                            whileTap={{ scale: 0.95 }}
-                                            onClick={() => {
-                                                if (playerRef.current?.audio?.current) {
-                                                    if (isPlaying) {
-                                                        playerRef.current.audio.current.pause();
-                                                    } else {
-                                                        playerRef.current.audio.current.play();
-                                                    }
-                                                }
-                                            }}
-                                            style={{
-                                                width: '40px', height: '40px', minWidth: '40px',
-                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                background: '#FCFBF8', border: 'none',
-                                                borderRadius: '50%', color: '#0a0a0a', cursor: 'pointer'
-                                            }}
-                                        >
-                                            {isPlaying ? <Pause size={20} weight="fill" /> : <Play size={20} weight="fill" />}
-                                        </motion.button>
-
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                            <span style={{ fontSize: '13px', color: '#FCFBF8', fontWeight: '500' }}>
-                                                {VOICES.find(v => v.value === voice)?.label || 'Audio'}
-                                            </span>
-                                            <span style={{ fontSize: '11px', color: '#666' }}>
-                                                Áudio gerado
-                                            </span>
-                                        </div>
+                                    {/* Left: Voice Info */}
+                                    <div style={{ width: '100px', display: 'flex', flexDirection: 'column', gap: '2px', flexShrink: 0 }}>
+                                        <span style={{ fontSize: '13px', color: '#FCFBF8', fontWeight: '500' }}>
+                                            {VOICES.find(v => v.value === voice)?.label || 'Audio'}
+                                        </span>
+                                        <span style={{ fontSize: '11px', color: '#666' }}>
+                                            Áudio gerado
+                                        </span>
                                     </div>
 
-                                    {/* Center: Audio Player (only progress bar) */}
+                                    {/* Center: Audio Player */}
                                     <div style={{ flex: 1 }}>
                                         <AudioPlayer
                                             ref={playerRef}
@@ -705,14 +681,13 @@ function HomePage({ user }) {
                                             showJumpControls={false}
                                             showDownloadProgress={false}
                                             showFilledProgress={true}
-                                            showFilledVolume={false}
+                                            showFilledVolume={true}
                                             hasDefaultKeyBindings={false}
                                             autoPlayAfterSrcChange={false}
-                                            layout="stacked"
+                                            layout="horizontal"
                                             customProgressBarSection={['CURRENT_TIME', 'PROGRESS_BAR', 'DURATION']}
-                                            customControlsSection={[]}
+                                            customControlsSection={['MAIN_CONTROLS']}
                                             customVolumeControls={[]}
-                                            customAdditionalControls={[]}
                                             onPlay={() => setIsPlaying(true)}
                                             onPause={() => setIsPlaying(false)}
                                             onEnded={() => setIsPlaying(false)}
