@@ -281,6 +281,8 @@ function HomePage({ user }) {
     const [isPlayerMinimized, setIsPlayerMinimized] = useState(false) // Estado minimizado do player
     const voiceSelectRef = useRef(null)
     const previewAudioRef = useRef(new Audio())
+    const audioRef = useRef(null)
+    const animationRef = useRef(null)
 
 
     // Pré-carrega as vozes para que o clique seja instantâneo
@@ -339,6 +341,44 @@ function HomePage({ user }) {
         document.addEventListener("mousedown", handleClickOutside)
         return () => document.removeEventListener("mousedown", handleClickOutside)
     }, [])
+
+    // Atualização suave da barra de progresso (60fps)
+    const updateProgress = () => {
+        const audio = audioRef.current
+        if (audio && audio.duration) {
+            const progress = document.getElementById('audio-progress')
+            const currentTime = document.getElementById('current-time')
+            const totalTime = document.getElementById('total-time')
+
+            if (progress) {
+                progress.style.width = `${(audio.currentTime / audio.duration) * 100}%`
+            }
+            if (currentTime) {
+                const curr = Math.floor(audio.currentTime)
+                currentTime.textContent = `${Math.floor(curr / 60)}:${String(curr % 60).padStart(2, '0')}`
+            }
+            if (totalTime) {
+                const dur = Math.floor(audio.duration)
+                totalTime.textContent = `${Math.floor(dur / 60)}:${String(dur % 60).padStart(2, '0')}`
+            }
+        }
+        animationRef.current = requestAnimationFrame(updateProgress)
+    }
+
+    useEffect(() => {
+        if (isPlaying) {
+            animationRef.current = requestAnimationFrame(updateProgress)
+        } else {
+            if (animationRef.current) {
+                cancelAnimationFrame(animationRef.current)
+            }
+        }
+        return () => {
+            if (animationRef.current) {
+                cancelAnimationFrame(animationRef.current)
+            }
+        }
+    }, [isPlaying])
     const [audiobooks, setAudiobooks] = useState([])
     const [loadingBooks, setLoadingBooks] = useState(true)
     const fileInputRef = useRef(null)
@@ -627,27 +667,10 @@ function HomePage({ user }) {
                         >
                             {/* Hidden Audio Element */}
                             <audio
+                                ref={audioRef}
                                 id="audio-player"
                                 src={audioUrl}
                                 style={{ display: 'none' }}
-                                onTimeUpdate={(e) => {
-                                    const progress = document.getElementById('audio-progress');
-                                    const currentTime = document.getElementById('current-time');
-                                    const totalTime = document.getElementById('total-time');
-                                    if (progress && e.target.duration) {
-                                        progress.style.width = `${(e.target.currentTime / e.target.duration) * 100}%`;
-                                    }
-                                    if (currentTime) {
-                                        const curr = Math.floor(e.target.currentTime);
-                                        const formatSec = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-                                        currentTime.textContent = formatSec(curr);
-                                    }
-                                    if (totalTime && e.target.duration) {
-                                        const dur = Math.floor(e.target.duration);
-                                        const formatSec = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-                                        totalTime.textContent = formatSec(dur);
-                                    }
-                                }}
                                 onPlay={() => setIsPlaying(true)}
                                 onPause={() => setIsPlaying(false)}
                                 onEnded={() => setIsPlaying(false)}
@@ -675,8 +698,7 @@ function HomePage({ user }) {
                                             style={{
                                                 width: '0%', height: '100%',
                                                 background: '#FCFBF8',
-                                                borderRadius: '2px',
-                                                transition: 'width 0.1s linear'
+                                                borderRadius: '2px'
                                             }}
                                         />
                                     </div>
@@ -752,8 +774,7 @@ function HomePage({ user }) {
                                                 style={{
                                                     width: '0%', height: '100%',
                                                     background: '#FCFBF8',
-                                                    borderRadius: '2px',
-                                                    transition: 'width 0.1s linear'
+                                                    borderRadius: '2px'
                                                 }}
                                             />
                                         </div>
