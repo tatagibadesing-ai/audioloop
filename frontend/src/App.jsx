@@ -830,13 +830,30 @@ function HomePage({ user }) {
                                 gap: '16px'
                             }}>
                                 {/* Left: Voice Info - Largura Ajustada para 180px */}
-                                <div style={{ width: '180px', display: 'flex', flexDirection: 'column', gap: '2px', flexShrink: 0 }}>
-                                    <span style={{ fontSize: '13px', color: '#FCFBF8', fontWeight: '500' }}>
-                                        {VOICES.find(v => v.value === voice)?.label || 'Audio'}
-                                    </span>
-                                    <span style={{ fontSize: '11px', color: '#666' }}>
-                                        Áudio gerado
-                                    </span>
+                                {/* Left: Voice Info - Largura Ajustada para 180px */}
+                                <div style={{ width: '180px', display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+                                    {(() => {
+                                        const selected = VOICES.find(v => v.value === voice)
+                                        return (
+                                            <>
+                                                {selected?.image && (
+                                                    <img
+                                                        src={selected.image}
+                                                        alt=""
+                                                        style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #1a1a1a' }}
+                                                    />
+                                                )}
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                    <span style={{ fontSize: '13px', color: '#FCFBF8', fontWeight: '500' }}>
+                                                        {selected?.label || 'Audio'}
+                                                    </span>
+                                                    <span style={{ fontSize: '11px', color: '#666' }}>
+                                                        Áudio gerado
+                                                    </span>
+                                                </div>
+                                            </>
+                                        )
+                                    })()}
                                 </div>
 
                                 {/* Center: Audio Player - Centralizado */}
