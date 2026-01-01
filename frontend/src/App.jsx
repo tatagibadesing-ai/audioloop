@@ -610,18 +610,19 @@ function HomePage({ user }) {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 100 }}
                             transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+                            onClick={isPlayerMinimized ? () => setIsPlayerMinimized(false) : undefined}
                             style={{
                                 position: 'fixed',
                                 bottom: 0,
                                 left: 0,
                                 right: 0,
                                 background: '#0a0a0a',
-                                borderTop: '1px solid #1f1f1f',
                                 boxShadow: '0 -10px 40px rgba(0,0,0,0.6)',
                                 padding: isPlayerMinimized ? '8px 32px' : '12px 32px',
                                 zIndex: 1000,
                                 boxSizing: 'border-box',
-                                transition: 'padding 0.3s ease'
+                                transition: 'padding 0.3s ease',
+                                cursor: isPlayerMinimized ? 'pointer' : 'default'
                             }}
                         >
                             {/* Hidden Audio Element */}
@@ -659,16 +660,16 @@ function HomePage({ user }) {
                                     width: '100%',
                                     margin: '0 auto',
                                     display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '16px'
+                                    alignItems: 'center'
                                 }}>
                                     {/* Progress Bar */}
                                     <div
                                         style={{
                                             flex: 1, height: '4px', background: '#333',
-                                            borderRadius: '2px', cursor: 'pointer', overflow: 'hidden'
+                                            borderRadius: '2px', overflow: 'hidden'
                                         }}
                                         onClick={(e) => {
+                                            e.stopPropagation();
                                             const audio = document.getElementById('audio-player');
                                             const rect = e.currentTarget.getBoundingClientRect();
                                             const percent = (e.clientX - rect.left) / rect.width;
@@ -685,22 +686,6 @@ function HomePage({ user }) {
                                             }}
                                         />
                                     </div>
-
-                                    {/* Expand Button */}
-                                    <motion.button
-                                        whileHover={{ scale: 1.1, color: '#FCFBF8' }}
-                                        whileTap={{ scale: 0.95 }}
-                                        onClick={() => setIsPlayerMinimized(false)}
-                                        title="Expandir player"
-                                        style={{
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            background: 'transparent', border: 'none',
-                                            color: '#666', cursor: 'pointer', padding: '4px',
-                                            transition: 'color 0.2s'
-                                        }}
-                                    >
-                                        <CaretUp size={20} weight="bold" />
-                                    </motion.button>
                                 </div>
                             ) : (
                                 /* Full View */
@@ -739,14 +724,14 @@ function HomePage({ user }) {
                                                 }
                                             }}
                                             style={{
-                                                width: '40px', height: '40px', minWidth: '40px',
+                                                width: '36px', height: '36px', minWidth: '36px',
                                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                                 background: '#FCFBF8', border: 'none',
                                                 borderRadius: '50%', color: '#0a0a0a', cursor: 'pointer',
                                                 boxShadow: '0 2px 8px rgba(255,255,255,0.1)'
                                             }}
                                         >
-                                            {isPlaying ? <Pause size={18} weight="fill" /> : <Play size={18} weight="fill" />}
+                                            {isPlaying ? <Pause size={16} weight="fill" /> : <Play size={16} weight="fill" />}
                                         </motion.button>
 
                                         {/* Current Time */}
@@ -785,7 +770,7 @@ function HomePage({ user }) {
                                     </div>
 
                                     {/* Right: Download + Minimize Buttons */}
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                         <motion.button
                                             whileHover={{ scale: 1.1, color: '#FCFBF8' }}
                                             whileTap={{ scale: 0.95 }}
@@ -794,11 +779,11 @@ function HomePage({ user }) {
                                             style={{
                                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                                 background: 'transparent', border: 'none',
-                                                color: '#666', cursor: 'pointer', padding: '8px',
+                                                color: '#666', cursor: 'pointer', padding: '6px',
                                                 transition: 'color 0.2s'
                                             }}
                                         >
-                                            <DownloadSimple size={22} weight="bold" />
+                                            <DownloadSimple size={18} weight="bold" />
                                         </motion.button>
 
                                         <motion.button
@@ -809,11 +794,11 @@ function HomePage({ user }) {
                                             style={{
                                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                                 background: 'transparent', border: 'none',
-                                                color: '#666', cursor: 'pointer', padding: '8px',
+                                                color: '#666', cursor: 'pointer', padding: '6px',
                                                 transition: 'color 0.2s'
                                             }}
                                         >
-                                            <CaretDown size={22} weight="bold" />
+                                            <CaretDown size={18} weight="bold" />
                                         </motion.button>
                                     </div>
                                 </div>
