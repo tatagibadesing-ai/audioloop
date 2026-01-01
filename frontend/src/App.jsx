@@ -782,7 +782,7 @@ function HomePage({ user }) {
                             style={{
                                 position: 'fixed',
                                 bottom: 0,
-                                left: 0,
+                                left: '260px',
                                 right: 0,
                                 background: '#0a0a0a',
                                 boxShadow: '0 -10px 40px rgba(0,0,0,0.6)',
