@@ -840,11 +840,11 @@ function HomePage({ user }) {
                                                     <img
                                                         src={selected.image}
                                                         alt=""
-                                                        style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #1a1a1a' }}
+                                                        style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #1a1a1a' }}
                                                     />
                                                 )}
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                                    <span style={{ fontSize: '13px', color: '#FCFBF8', fontWeight: '500' }}>
+                                                    <span style={{ fontSize: '15px', color: '#FCFBF8', fontWeight: '400' }}>
                                                         {selected?.label || 'Audio'}
                                                     </span>
                                                     <span style={{ fontSize: '11px', color: '#666' }}>
