@@ -56,11 +56,11 @@ const API_URL = import.meta.env.VITE_API_URL ||
 const ADMIN_EMAIL = '2closett@gmail.com'
 
 const VOICES = [
-    { value: 'pt-BR-AntonioNeural', label: 'Antonio BR', provider: 'edge' },
-    { value: 'pt-BR-Neural2-B', label: 'Bruno BR', provider: 'google' },
-    { value: 'pt-BR-FranciscaNeural', label: 'Francisca BR', provider: 'edge' },
-    { value: 'pt-BR-ThalitaMultilingualNeural', label: 'Thalita BR', provider: 'edge' },
-    { value: 'pt-BR-Wavenet-C', label: 'Fernanda BR', provider: 'google' },
+    { value: 'pt-BR-AntonioNeural', label: 'Antonio BR', provider: 'edge', image: '/masculino1.webp' },
+    { value: 'pt-BR-Neural2-B', label: 'Bruno BR', provider: 'google', image: '/masculino2.webp' },
+    { value: 'pt-BR-FranciscaNeural', label: 'Francisca BR', provider: 'edge', image: '/feminino1.webp' },
+    { value: 'pt-BR-ThalitaMultilingualNeural', label: 'Thalita BR', provider: 'edge', image: '/femino2.webp' },
+    { value: 'pt-BR-Wavenet-C', label: 'Fernanda BR', provider: 'google', image: '/feminino 3.webp' },
 ]
 
 const formatTime = (seconds) => {
@@ -655,7 +655,21 @@ function HomePage({ user }) {
                                         }
                                     }}
                                 >
-                                    {VOICES.find(v => v.value === voice)?.label}
+                                    {(() => {
+                                        const selected = VOICES.find(v => v.value === voice)
+                                        return (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                {selected?.image && (
+                                                    <img
+                                                        src={selected.image}
+                                                        alt=""
+                                                        style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover' }}
+                                                    />
+                                                )}
+                                                {selected?.label}
+                                            </div>
+                                        )
+                                    })()}
                                     <CaretDown
                                         size={14} weight="bold"
                                         style={{
@@ -701,18 +715,20 @@ function HomePage({ user }) {
                                                         transition: 'color 0.2s'
                                                     }}
                                                 >
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                        {v.label}
-                                                        {previewVoice === v.value ? (
-                                                            <motion.div
-                                                                animate={{ scale: [1, 1.2, 1] }}
-                                                                transition={{ repeat: Infinity, duration: 1 }}
-                                                            >
-                                                                <SpeakerHigh size={14} color="#FCFBF8" />
-                                                            </motion.div>
-                                                        ) : (
-                                                            <SpeakerHigh size={14} style={{ opacity: preloadedPreviews[v.value] ? 0.4 : 0.1 }} />
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                        {v.image && (
+                                                            <img
+                                                                src={v.image}
+                                                                alt=""
+                                                                style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }}
+                                                            />
                                                         )}
+                                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                                                            <span>{v.label}</span>
+                                                            <span style={{ fontSize: '10px', color: '#666', marginTop: '2px' }}>
+                                                                {v.provider === 'google' ? 'Google Cloud' : 'Microsoft Azure'}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                     {voice === v.value && <CheckCircle size={18} weight="fill" color="#FCFBF8" />}
                                                 </motion.div>
