@@ -431,6 +431,8 @@ function HomePage({ user }) {
     const [preloadedPreviews, setPreloadedPreviews] = useState({}) // Cache de URLs das prévias
     const [isPlaying, setIsPlaying] = useState(false) // Estado do player
     const [isPlayerMinimized, setIsPlayerMinimized] = useState(false) // Estado minimizado do player
+    const [generationProgress, setGenerationProgress] = useState(0)
+    const [timeLeft, setTimeLeft] = useState(0)
     const voiceSelectRef = useRef(null)
     const previewAudioRef = useRef(new Audio())
     const playerRef = useRef(null)
@@ -532,19 +534,50 @@ function HomePage({ user }) {
         if (!text.trim()) return
         setIsLoading(true)
         setAudioUrl(null)
+        setGenerationProgress(0)
+
+        // Estimativa de tempo baseada no tamanho do texto
+        const estimatedSeconds = Math.max(3, 3 + (text.length * 0.02)); // Ajustado para ser mais rápido (0.02s/char)
+        setTimeLeft(estimatedSeconds);
+
+        const interval = setInterval(() => {
+            setGenerationProgress(prev => {
+                if (prev >= 95) return 95;
+                return prev + (100 / (estimatedSeconds * 10));
+            });
+            setTimeLeft(prev => Math.max(0, prev - 0.1));
+        }, 100);
+
         try {
             const res = await fetch(`${API_URL}/api/generate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text, voice })
             })
-            if (!res.ok) throw new Error()
+
+            clearInterval(interval);
+
+            if (!res.ok) {
+                const err = await res.json()
+                throw new Error(err.error || 'Erro ao gerar áudio')
+            }
+
+            setGenerationProgress(100);
+            setTimeLeft(0);
+
+            // Pequeno delay para ver o 100%
             const blob = await res.blob()
-            setAudioUrl(URL.createObjectURL(blob))
-        } catch {
-            alert('Erro ao gerar áudio.')
-        } finally {
+            const url = URL.createObjectURL(blob)
+
+            setTimeout(() => {
+                setAudioUrl(url)
+                setIsLoading(false)
+            }, 500)
+
+        } catch (e) {
+            clearInterval(interval);
             setIsLoading(false)
+            alert(e.message)
         }
     }
 
@@ -809,157 +842,139 @@ function HomePage({ user }) {
                     </div>
                 </div>
 
-                {/* Player - Menu Inferior Fixo */}
                 <AnimatePresence>
-                    {audioUrl && (
+                    {(audioUrl || isLoading) && (
                         <motion.div
                             initial={{ opacity: 0, y: 100 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 100 }}
                             transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-                            onClick={isPlayerMinimized ? () => setIsPlayerMinimized(false) : undefined}
+                            onClick={isPlayerMinimized && !isLoading ? () => setIsPlayerMinimized(false) : undefined}
                             style={{
-                                position: 'fixed',
-                                bottom: 0,
-                                left: '260px',
-                                right: 0,
-                                background: '#0a0a0a',
-                                boxShadow: '0 -10px 40px rgba(0,0,0,0.6)',
-                                padding: isPlayerMinimized ? '8px 32px' : '16px 32px',
-                                zIndex: 1000,
-                                boxSizing: 'border-box',
+                                position: 'fixed', bottom: 0, left: '260px', right: 0,
+                                background: '#0a0a0a', boxShadow: '0 -10px 40px rgba(0,0,0,0.6)',
+                                padding: isPlayerMinimized && !isLoading ? '8px 32px' : '16px 32px',
+                                zIndex: 1000, boxSizing: 'border-box',
                                 transition: 'padding 0.3s ease',
-                                cursor: isPlayerMinimized ? 'pointer' : 'default'
+                                cursor: isPlayerMinimized && !isLoading ? 'pointer' : 'default'
                             }}
                         >
-                            {/* Minimized View - Only Progress Bar */}
-                            <div style={{
-                                maxWidth: '400px', // Largura BEM MENOR
-                                width: '100%',
-                                margin: '0 auto',
-                                display: isPlayerMinimized ? 'flex' : 'none',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}>
-                                <div
-                                    style={{
-                                        width: '100%', height: '4px', background: '#333',
-                                        borderRadius: '2px', overflow: 'hidden', cursor: 'pointer'
-                                    }}
-                                >
-                                    <div
-                                        className="minimized-progress"
-                                        style={{
-                                            width: '0%', height: '100%',
-                                            background: '#FCFBF8',
-                                            borderRadius: '2px'
-                                        }}
-                                    />
-                                </div>
-                            </div>
+                            {isLoading ? (
+                                <div style={{ maxWidth: '1200px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+                                    {/* Left: Info */}
+                                    <div style={{ width: '230px', display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+                                        {(() => {
+                                            const selected = VOICES.find(v => v.value === voice)
+                                            return selected?.image && (
+                                                <img src={selected.image} alt="" style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #1a1a1a', opacity: 0.7 }} />
+                                            )
+                                        })()}
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                            <span style={{ fontSize: '14px', color: '#FCFBF8', fontWeight: '500' }}>Gerando Áudio...</span>
+                                            <span style={{ fontSize: '11px', color: '#666' }}>Aguarde um momento</span>
+                                        </div>
+                                    </div>
 
-                            {/* Full View with react-h5-audio-player - Mantido no DOM para não pausar */}
-                            <div style={{
-                                maxWidth: '1200px',
-                                width: '100%',
-                                margin: '0 auto',
-                                display: !isPlayerMinimized ? 'flex' : 'none',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                gap: '16px'
-                            }}>
-                                {/* Left: Voice Info - Largura Ajustada para 180px */}
-                                {/* Left: Voice Info - Largura Ajustada para 180px */}
-                                <div style={{ width: '180px', display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-                                    {(() => {
-                                        const selected = VOICES.find(v => v.value === voice)
-                                        return (
-                                            <>
-                                                {selected?.image && (
-                                                    <img
-                                                        src={selected.image}
-                                                        alt=""
-                                                        style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #1a1a1a' }}
-                                                    />
-                                                )}
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                                    <span style={{ fontSize: '15px', color: '#FCFBF8', fontWeight: '400' }}>
-                                                        {selected?.label || 'Audio'}
-                                                    </span>
-                                                    <span style={{ fontSize: '11px', color: '#666' }}>
-                                                        Áudio gerado
-                                                    </span>
-                                                </div>
-                                            </>
-                                        )
-                                    })()}
-                                </div>
+                                    {/* Center: Progress */}
+                                    <div style={{ flex: 1, maxWidth: '600px', margin: '0 24px' }}>
+                                        <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
+                                            <motion.div
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${generationProgress}%` }}
+                                                transition={{ ease: 'linear', duration: 0.1 }}
+                                                style={{ height: '100%', background: '#FCFBF8' }}
+                                            />
+                                        </div>
+                                    </div>
 
-                                {/* Center: Audio Player - Centralizado */}
-                                <div style={{ flex: 1, maxWidth: '800px', width: '100%' }}>
-                                    <AudioPlayer
-                                        ref={playerRef}
-                                        src={audioUrl}
-                                        showJumpControls={false}
-                                        showDownloadProgress={false}
-                                        showFilledProgress={true}
-                                        showFilledVolume={true}
-                                        hasDefaultKeyBindings={false}
-                                        autoPlayAfterSrcChange={false}
-                                        layout="horizontal"
-                                        customProgressBarSection={['CURRENT_TIME', 'PROGRESS_BAR', 'DURATION']}
-                                        customControlsSection={['MAIN_CONTROLS']}
-                                        customVolumeControls={[]}
-                                        customIcons={{
-                                            play: <Play size={16} weight="fill" color="#0a0a0a" />,
-                                            pause: <Pause size={16} weight="fill" color="#0a0a0a" />
-                                        }}
-                                        onPlay={() => setIsPlaying(true)}
-                                        onPause={() => setIsPlaying(false)}
-                                        onEnded={() => setIsPlaying(false)}
-                                        onListen={(e) => {
-                                            // Update minimized progress bar
-                                            const minProgress = document.querySelector('.minimized-progress');
-                                            if (minProgress && e.target.duration) {
-                                                minProgress.style.width = `${(e.target.currentTime / e.target.duration) * 100}%`;
-                                            }
-                                        }}
-                                    />
+                                    {/* Right: Time */}
+                                    <div style={{ width: '230px', textAlign: 'right', fontSize: '13px', color: '#666', fontVariantNumeric: 'tabular-nums' }}>
+                                        ~{Math.ceil(timeLeft)}s restantes
+                                    </div>
                                 </div>
+                            ) : (
+                                <>
+                                    {/* Minimized View */}
+                                    <div style={{
+                                        maxWidth: '400px', width: '100%', margin: '0 auto',
+                                        display: isPlayerMinimized ? 'flex' : 'none',
+                                        alignItems: 'center', justifyContent: 'center'
+                                    }}>
+                                        <div style={{ width: '100%', height: '4px', background: '#333', borderRadius: '2px', overflow: 'hidden' }}>
+                                            <div className="minimized-progress" style={{ width: '0%', height: '100%', background: '#FCFBF8', borderRadius: '2px' }} />
+                                        </div>
+                                    </div>
 
-                                {/* Right: Download + Minimize Buttons - Largura Ajustada para 230px para ajuste fino */}
-                                <div style={{ width: '230px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', flexShrink: 0 }}>
-                                    <motion.button
-                                        whileHover={{ scale: 1.1, color: '#FCFBF8' }}
-                                        whileTap={{ scale: 0.95 }}
-                                        onClick={handleDownload}
-                                        title="Baixar MP3"
-                                        style={{
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            background: 'transparent', border: 'none',
-                                            color: '#666', cursor: 'pointer', padding: '6px',
-                                            transition: 'color 0.2s'
-                                        }}
-                                    >
-                                        <DownloadSimple size={18} weight="bold" />
-                                    </motion.button>
+                                    {/* Full View */}
+                                    <div style={{
+                                        maxWidth: '1200px', width: '100%', margin: '0 auto',
+                                        display: !isPlayerMinimized ? 'flex' : 'none',
+                                        alignItems: 'center', justifyContent: 'space-between', gap: '16px'
+                                    }}>
+                                        {/* Left: Info */}
+                                        <div style={{ width: '230px', display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+                                            {(() => {
+                                                const selected = VOICES.find(v => v.value === voice)
+                                                return (
+                                                    <>
+                                                        {selected?.image && (
+                                                            <img
+                                                                src={selected.image} alt=""
+                                                                style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #1a1a1a' }}
+                                                            />
+                                                        )}
+                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                            <span style={{ fontSize: '15px', color: '#FCFBF8', fontWeight: '400' }}>
+                                                                {selected?.label || 'Audio'}
+                                                            </span>
+                                                            <span style={{ fontSize: '11px', color: '#666' }}>
+                                                                Áudio gerado
+                                                            </span>
+                                                        </div>
+                                                    </>
+                                                )
+                                            })()}
+                                        </div>
 
-                                    <motion.button
-                                        whileHover={{ scale: 1.1, color: '#FCFBF8' }}
-                                        whileTap={{ scale: 0.95 }}
-                                        onClick={() => setIsPlayerMinimized(true)}
-                                        title="Minimizar player"
-                                        style={{
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            background: 'transparent', border: 'none',
-                                            color: '#666', cursor: 'pointer', padding: '6px',
-                                            transition: 'color 0.2s'
-                                        }}
-                                    >
-                                        <CaretDown size={18} weight="bold" />
-                                    </motion.button>
-                                </div>
-                            </div>
+                                        {/* Center: Audio Player */}
+                                        <div style={{ flex: 1, maxWidth: '800px', width: '100%' }}>
+                                            <AudioPlayer
+                                                ref={playerRef} src={audioUrl}
+                                                showJumpControls={false} showDownloadProgress={false}
+                                                showFilledProgress={true} showFilledVolume={true}
+                                                hasDefaultKeyBindings={false} autoPlayAfterSrcChange={false}
+                                                layout="horizontal"
+                                                customProgressBarSection={['CURRENT_TIME', 'PROGRESS_BAR', 'DURATION']}
+                                                customControlsSection={['MAIN_CONTROLS']}
+                                                customVolumeControls={[]}
+                                                customIcons={{
+                                                    play: <Play size={16} weight="fill" color="#0a0a0a" />,
+                                                    pause: <Pause size={16} weight="fill" color="#0a0a0a" />
+                                                }}
+                                                onPlay={() => setIsPlaying(true)}
+                                                onPause={() => setIsPlaying(false)}
+                                                onEnded={() => setIsPlaying(false)}
+                                                onListen={(e) => {
+                                                    const minProgress = document.querySelector('.minimized-progress');
+                                                    if (minProgress && e.target.duration) {
+                                                        minProgress.style.width = `${(e.target.currentTime / e.target.duration) * 100}%`;
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+
+                                        {/* Right: Actions */}
+                                        <div style={{ width: '230px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', flexShrink: 0 }}>
+                                            <motion.button whileHover={{ scale: 1.1, color: '#FCFBF8' }} whileTap={{ scale: 0.95 }} onClick={handleDownload} title="Baixar MP3" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', color: '#666', cursor: 'pointer', padding: '6px', transition: 'color 0.2s' }}>
+                                                <DownloadSimple size={18} weight="bold" />
+                                            </motion.button>
+                                            <motion.button whileHover={{ scale: 1.1, color: '#FCFBF8' }} whileTap={{ scale: 0.95 }} onClick={() => setIsPlayerMinimized(true)} title="Minimizar player" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', color: '#666', cursor: 'pointer', padding: '6px', transition: 'color 0.2s' }}>
+                                                <CaretDown size={18} weight="bold" />
+                                            </motion.button>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </motion.div>
                     )}
                 </AnimatePresence>
