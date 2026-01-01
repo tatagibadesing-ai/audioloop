@@ -44,12 +44,9 @@ const VOICES = [
     { value: 'en-US-GuyNeural', label: 'Guy (EN-US)', provider: 'edge' },
     { value: 'en-US-JennyNeural', label: 'Jenny (EN-US)', provider: 'edge' },
     // === GOOGLE CLOUD TTS - 1M chars/mês grátis ===
-    { value: 'pt-BR-Wavenet-B', label: '🌐 Ricardo (Google Masculino)', provider: 'google' },
-    { value: 'pt-BR-Neural2-B', label: '🌐 Carlos (Google Masculino)', provider: 'google' },
-    { value: 'pt-BR-Wavenet-A', label: '🌐 Camila (Google Feminino)', provider: 'google' },
+    { value: 'pt-BR-Neural2-B', label: '🌐 Bruno (Google Masculino)', provider: 'google' },
     { value: 'pt-BR-Neural2-A', label: '🌐 Julia (Google Feminino)', provider: 'google' },
     { value: 'pt-BR-Wavenet-C', label: '🌐 Fernanda (Google Feminino)', provider: 'google' },
-    { value: 'pt-BR-Neural2-C', label: '🌐 Beatriz (Google Feminino)', provider: 'google' },
 ]
 
 const formatTime = (seconds) => {

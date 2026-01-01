@@ -82,13 +82,11 @@ EDGE_VOICES = {
 }
 
 # Vozes Google Cloud TTS - 1M chars/mês grátis
+# Nota: Google só tem 1 voz masculina pt-BR (Wavenet-B e Neural2-B são a mesma voz com processamento diferente)
 GOOGLE_VOICES = {
-    'pt-BR-Wavenet-B': {'label': 'Ricardo (Google Masculino)', 'provider': 'google', 'ssml_gender': 'MALE'},
-    'pt-BR-Neural2-B': {'label': 'Carlos (Google Masculino)', 'provider': 'google', 'ssml_gender': 'MALE'},
-    'pt-BR-Wavenet-A': {'label': 'Camila (Google Feminino)', 'provider': 'google', 'ssml_gender': 'FEMALE'},
+    'pt-BR-Neural2-B': {'label': 'Bruno (Google Masculino)', 'provider': 'google', 'ssml_gender': 'MALE'},
     'pt-BR-Neural2-A': {'label': 'Julia (Google Feminino)', 'provider': 'google', 'ssml_gender': 'FEMALE'},
     'pt-BR-Wavenet-C': {'label': 'Fernanda (Google Feminino)', 'provider': 'google', 'ssml_gender': 'FEMALE'},
-    'pt-BR-Neural2-C': {'label': 'Beatriz (Google Feminino)', 'provider': 'google', 'ssml_gender': 'FEMALE'},
 }
 
 # Combina todas as vozes
