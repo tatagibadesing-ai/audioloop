@@ -575,7 +575,7 @@ function HomePage({ user }) {
                         Gerador de Audiobook Profissional
                     </h1>
                     <p style={{ fontSize: '22px', color: 'rgba(15,23,42,0.7)', fontWeight: '400' }}>
-                        Transforme qualquer texto em audiobook com vozes neurais da Microsoft.
+                        Transforme qualquer texto em audiobook de forma ilimitada e gratuita.
                     </p>
                 </div>
 
