@@ -613,74 +613,96 @@ function HomePage({ user }) {
                                 bottom: 0,
                                 left: 0,
                                 right: 0,
-                                background: '#1a1a1a',
-                                borderTop: '1px solid #333332',
-                                boxShadow: '0 -10px 40px rgba(0,0,0,0.5)',
-                                padding: '16px 24px',
+                                background: '#0a0a0a',
+                                borderTop: '1px solid #1f1f1f',
+                                boxShadow: '0 -10px 40px rgba(0,0,0,0.6)',
+                                padding: '12px 32px',
                                 zIndex: 1000,
                                 boxSizing: 'border-box'
                             }}
                         >
+                            {/* Hidden Audio Element */}
+                            <audio
+                                id="audio-player"
+                                src={audioUrl}
+                                style={{ display: 'none' }}
+                                onTimeUpdate={(e) => {
+                                    const progress = document.getElementById('audio-progress');
+                                    const currentTime = document.getElementById('current-time');
+                                    const totalTime = document.getElementById('total-time');
+                                    if (progress && e.target.duration) {
+                                        progress.style.width = `${(e.target.currentTime / e.target.duration) * 100}%`;
+                                    }
+                                    if (currentTime) {
+                                        const curr = Math.floor(e.target.currentTime);
+                                        const formatSec = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+                                        currentTime.textContent = formatSec(curr);
+                                    }
+                                    if (totalTime && e.target.duration) {
+                                        const dur = Math.floor(e.target.duration);
+                                        const formatSec = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+                                        totalTime.textContent = formatSec(dur);
+                                    }
+                                }}
+                                onPlay={() => setIsPlaying(true)}
+                                onPause={() => setIsPlaying(false)}
+                                onEnded={() => setIsPlaying(false)}
+                            />
+
                             <div style={{
-                                maxWidth: '850px',
+                                maxWidth: '1200px',
                                 width: '100%',
                                 margin: '0 auto',
-                                display: 'flex', alignItems: 'center', gap: '16px'
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '24px'
                             }}>
-                                {/* Play/Pause Button */}
-                                <motion.button
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    onClick={() => {
-                                        const audio = document.getElementById('audio-player');
-                                        if (audio.paused) {
-                                            audio.play();
-                                            setIsPlaying(true);
-                                        } else {
-                                            audio.pause();
-                                            setIsPlaying(false);
-                                        }
-                                    }}
-                                    style={{
-                                        width: '48px', height: '48px', minWidth: '48px',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        background: '#FCFBF8', border: 'none', borderRadius: '50%',
-                                        color: '#03030D', cursor: 'pointer',
-                                        boxShadow: '0 4px 12px rgba(255,255,255,0.1)'
-                                    }}
-                                >
-                                    {isPlaying ? <Pause size={22} weight="fill" /> : <Play size={22} weight="fill" />}
-                                </motion.button>
+                                {/* Left: Voice Info */}
+                                <div style={{ minWidth: '200px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                    <span style={{ fontSize: '14px', color: '#FCFBF8', fontWeight: '500' }}>
+                                        {VOICES.find(v => v.value === voice)?.label || 'Audio'}
+                                    </span>
+                                    <span style={{ fontSize: '12px', color: '#666' }}>
+                                        Áudio gerado
+                                    </span>
+                                </div>
 
-                                {/* Audio Element & Progress */}
-                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    <audio
-                                        id="audio-player"
-                                        src={audioUrl}
-                                        style={{ display: 'none' }}
-                                        onTimeUpdate={(e) => {
-                                            const progress = document.getElementById('audio-progress');
-                                            const timeDisplay = document.getElementById('audio-time');
-                                            if (progress && e.target.duration) {
-                                                progress.style.width = `${(e.target.currentTime / e.target.duration) * 100}%`;
-                                            }
-                                            if (timeDisplay) {
-                                                const curr = Math.floor(e.target.currentTime);
-                                                const dur = Math.floor(e.target.duration) || 0;
-                                                const formatSec = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-                                                timeDisplay.textContent = `${formatSec(curr)} / ${formatSec(dur)}`;
+                                {/* Center: Play Button + Progress Bar */}
+                                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                    {/* Play/Pause Button */}
+                                    <motion.button
+                                        whileHover={{ scale: 1.1 }}
+                                        whileTap={{ scale: 0.95 }}
+                                        onClick={() => {
+                                            const audio = document.getElementById('audio-player');
+                                            if (audio.paused) {
+                                                audio.play();
+                                                setIsPlaying(true);
+                                            } else {
+                                                audio.pause();
+                                                setIsPlaying(false);
                                             }
                                         }}
-                                        onPlay={() => setIsPlaying(true)}
-                                        onPause={() => setIsPlaying(false)}
-                                        onEnded={() => setIsPlaying(false)}
-                                    />
+                                        style={{
+                                            width: '36px', height: '36px', minWidth: '36px',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            background: 'transparent', border: '2px solid #FCFBF8',
+                                            borderRadius: '50%', color: '#FCFBF8', cursor: 'pointer'
+                                        }}
+                                    >
+                                        {isPlaying ? <Pause size={16} weight="fill" /> : <Play size={16} weight="fill" />}
+                                    </motion.button>
+
+                                    {/* Current Time */}
+                                    <span id="current-time" style={{ fontSize: '13px', color: '#888', fontWeight: '500', minWidth: '35px' }}>
+                                        0:00
+                                    </span>
 
                                     {/* Progress Bar */}
                                     <div
                                         style={{
-                                            width: '100%', height: '6px', background: '#333332',
-                                            borderRadius: '3px', cursor: 'pointer', overflow: 'hidden'
+                                            flex: 1, height: '4px', background: '#333',
+                                            borderRadius: '2px', cursor: 'pointer', overflow: 'hidden'
                                         }}
                                         onClick={(e) => {
                                             const audio = document.getElementById('audio-player');
@@ -694,36 +716,32 @@ function HomePage({ user }) {
                                             style={{
                                                 width: '0%', height: '100%',
                                                 background: '#FCFBF8',
-                                                borderRadius: '3px',
+                                                borderRadius: '2px',
                                                 transition: 'width 0.1s linear'
                                             }}
                                         />
                                     </div>
 
-                                    {/* Time Display */}
-                                    <span
-                                        id="audio-time"
-                                        style={{ fontSize: '13px', color: '#91918E', fontWeight: '500' }}
-                                    >
-                                        0:00 / 0:00
+                                    {/* Total Time */}
+                                    <span id="total-time" style={{ fontSize: '13px', color: '#888', fontWeight: '500', minWidth: '35px' }}>
+                                        0:00
                                     </span>
                                 </div>
 
-                                {/* Download Button */}
+                                {/* Right: Download Button */}
                                 <motion.button
-                                    whileHover={{ scale: 1.1, background: '#FCFBF8', color: '#03030D' }}
+                                    whileHover={{ scale: 1.1, color: '#FCFBF8' }}
                                     whileTap={{ scale: 0.95 }}
                                     onClick={handleDownload}
                                     title="Baixar MP3"
                                     style={{
-                                        width: '40px', height: '40px',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        background: 'transparent', border: '1px solid #333332',
-                                        borderRadius: '50%', color: '#91918E', cursor: 'pointer',
-                                        transition: 'all 0.2s'
+                                        background: 'transparent', border: 'none',
+                                        color: '#666', cursor: 'pointer', padding: '8px',
+                                        transition: 'color 0.2s'
                                     }}
                                 >
-                                    <DownloadSimple size={18} weight="bold" />
+                                    <DownloadSimple size={22} weight="bold" />
                                 </motion.button>
                             </div>
                         </motion.div>
