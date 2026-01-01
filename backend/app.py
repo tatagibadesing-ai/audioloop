@@ -72,21 +72,21 @@ os.makedirs(TEMP_DIR, exist_ok=True)
 
 # Vozes Edge-TTS (Microsoft) - Gratuito e Ilimitado
 EDGE_VOICES = {
-    'pt-BR-AntonioNeural': {'label': 'Antônio (Masculino)', 'provider': 'edge'},
-    'pt-BR-FranciscaNeural': {'label': 'Francisca (Feminino)', 'provider': 'edge'},
-    'pt-BR-ThalitaMultilingualNeural': {'label': 'Thalita (Feminino)', 'provider': 'edge'},
-    'pt-PT-DuarteNeural': {'label': 'Duarte (PT-PT Masculino)', 'provider': 'edge'},
-    'pt-PT-RaquelNeural': {'label': 'Raquel (PT-PT Feminino)', 'provider': 'edge'},
-    'en-US-GuyNeural': {'label': 'Guy (EN-US)', 'provider': 'edge'},
-    'en-US-JennyNeural': {'label': 'Jenny (EN-US)', 'provider': 'edge'},
+    'pt-BR-AntonioNeural': {'label': 'Antonio BR', 'provider': 'edge'},
+    'pt-BR-FranciscaNeural': {'label': 'Francisca BR', 'provider': 'edge'},
+    'pt-BR-ThalitaMultilingualNeural': {'label': 'Thalita BR', 'provider': 'edge'},
+    'pt-PT-DuarteNeural': {'label': 'Duarte PT', 'provider': 'edge'},
+    'pt-PT-RaquelNeural': {'label': 'Raquel PT', 'provider': 'edge'},
+    'en-US-GuyNeural': {'label': 'Guy EN', 'provider': 'edge'},
+    'en-US-JennyNeural': {'label': 'Jenny EN', 'provider': 'edge'},
 }
 
 # Vozes Google Cloud TTS - 1M chars/mês grátis
 # Nota: Google só tem 1 voz masculina pt-BR (Wavenet-B e Neural2-B são a mesma voz com processamento diferente)
 GOOGLE_VOICES = {
-    'pt-BR-Neural2-B': {'label': 'Bruno (Google Masculino)', 'provider': 'google', 'ssml_gender': 'MALE'},
-    'pt-BR-Neural2-A': {'label': 'Julia (Google Feminino)', 'provider': 'google', 'ssml_gender': 'FEMALE'},
-    'pt-BR-Wavenet-C': {'label': 'Fernanda (Google Feminino)', 'provider': 'google', 'ssml_gender': 'FEMALE'},
+    'pt-BR-Neural2-B': {'label': 'Bruno BR', 'provider': 'google', 'ssml_gender': 'MALE'},
+    'pt-BR-Neural2-A': {'label': 'Julia BR', 'provider': 'google', 'ssml_gender': 'FEMALE'},
+    'pt-BR-Wavenet-C': {'label': 'Fernanda BR', 'provider': 'google', 'ssml_gender': 'FEMALE'},
 }
 
 # Combina todas as vozes

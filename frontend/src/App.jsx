@@ -42,6 +42,12 @@ const VOICES = [
     { value: 'pt-BR-FranciscaNeural', label: 'Francisca BR', provider: 'edge' },
     { value: 'pt-BR-ThalitaMultilingualNeural', label: 'Thalita BR', provider: 'edge' },
     { value: 'pt-BR-Wavenet-C', label: 'Fernanda BR', provider: 'google' },
+    // Ocultos mas não excluídos (não aparecem no seletor principal)
+    { value: 'pt-BR-Neural2-A', label: 'Julia BR', provider: 'google', hidden: true },
+    { value: 'pt-PT-DuarteNeural', label: 'Duarte PT', provider: 'edge', hidden: true },
+    { value: 'pt-PT-RaquelNeural', label: 'Raquel PT', provider: 'edge', hidden: true },
+    { value: 'en-US-GuyNeural', label: 'Guy EN', provider: 'edge', hidden: true },
+    { value: 'en-US-JennyNeural', label: 'Jenny EN', provider: 'edge', hidden: true },
 ]
 
 const formatTime = (seconds) => {
@@ -76,14 +82,13 @@ function AudioWavePlayer({ url, onDownload }) {
 
         wavesurferRef.current = WaveSurfer.create({
             container: waveformRef.current,
-            waveColor: 'rgba(255, 255, 255, 0.1)',
+            waveColor: 'rgba(255, 255, 255, 0.2)',
             progressColor: '#6366f1',
             cursorColor: '#6366f1',
             barWidth: 2,
-            barGap: 3,
-            barRadius: 4,
+            barRadius: 3,
             responsive: true,
-            height: 50,
+            height: 48,
             normalize: true,
             partialRender: true
         })
@@ -117,43 +122,31 @@ function AudioWavePlayer({ url, onDownload }) {
 
     return (
         <motion.div
-            layout
-            initial={{ opacity: 0, y: 20, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="glass rounded-[40px] p-6 w-full max-w-[850px] relative transition-shadow hover:shadow-indigo-500/5 flex flex-col md:flex-row items-center gap-6"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass p-6 rounded-[40px] w-full max-w-[850px] flex items-center gap-6"
         >
-            <motion.button
-                whileHover={{ scale: 1.1, rotate: 5 }}
-                whileTap={{ scale: 0.9 }}
+            <button
                 onClick={togglePlay}
-                className="w-16 h-16 flex items-center justify-center rounded-[24px] premium-gradient text-white shadow-xl shadow-indigo-500/20 shrink-0"
+                className="w-12 h-12 flex items-center justify-center rounded-full bg-white text-slate-950 hover:scale-105 transition-transform shrink-0"
             >
-                {isPlaying ? <Pause size={32} weight="fill" /> : <Play size={32} weight="fill" className="ml-1" />}
-            </motion.button>
+                {isPlaying ? <Pause size={24} weight="fill" /> : <Play size={24} weight="fill" />}
+            </button>
 
-            <div className="flex-1 min-w-0 w-full">
-                <div ref={waveformRef} className="w-full mb-3" />
-                <div className="flex justify-between text-[11px] font-bold text-slate-500 font-mono tracking-widest uppercase">
+            <div className="flex-1 min-w-0">
+                <div ref={waveformRef} className="w-full mb-1" />
+                <div className="flex justify-between text-[11px] font-medium text-slate-400 font-mono tracking-tighter">
                     <span>{formatTimer(currentTime)}</span>
-                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 text-indigo-400">
-                        <div className={`w-1 h-1 rounded-full bg-indigo-500 ${isPlaying ? 'animate-pulse' : ''}`} />
-                        Ouvir Áudio
-                    </div>
                     <span>{formatTimer(duration)}</span>
                 </div>
             </div>
 
-            <motion.button
-                whileHover={{ scale: 1.05, backgroundColor: "rgba(255,255,255,0.1)" }}
-                whileTap={{ scale: 0.95 }}
+            <button
                 onClick={onDownload}
-                className="h-14 px-6 flex items-center gap-3 rounded-[20px] border border-white/10 text-white font-bold text-sm transition-all shrink-0 hover:border-indigo-500/50"
+                className="w-10 h-10 flex items-center justify-center rounded-full border border-slate-700 text-slate-300 hover:bg-white/5 hover:text-white transition-all shrink-0"
             >
-                <DownloadSimple size={22} weight="bold" />
-                <span>Download</span>
-            </motion.button>
+                <DownloadSimple size={20} weight="bold" />
+            </button>
         </motion.div>
     )
 }
@@ -569,7 +562,7 @@ function HomePage({ user }) {
                                             className="absolute top-full mt-4 left-0 glass bg-slate-900/95 rounded-[32px] p-4 min-w-[240px] shadow-2xl z-50 border border-white/10"
                                         >
                                             <div className="text-[10px] uppercase tracking-widest font-black text-slate-500 px-4 mb-2">Vozes Disponíveis</div>
-                                            {VOICES.map((v) => (
+                                            {VOICES.filter(v => !v.hidden).map((v) => (
                                                 <button
                                                     key={v.value}
                                                     onClick={() => {
