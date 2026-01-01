@@ -664,8 +664,8 @@ function HomePage({ user }) {
                                     justifyContent: 'space-between', // Garante distribuição
                                     gap: '16px'
                                 }}>
-                                    {/* Left: Voice Info - Largura Fixa para simetria */}
-                                    <div style={{ width: '200px', display: 'flex', flexDirection: 'column', gap: '2px', flexShrink: 0 }}>
+                                    {/* Left: Voice Info - Largura Fixa Menor para deslocar centro à esquerda */}
+                                    <div style={{ width: '150px', display: 'flex', flexDirection: 'column', gap: '2px', flexShrink: 0 }}>
                                         <span style={{ fontSize: '13px', color: '#FCFBF8', fontWeight: '500' }}>
                                             {VOICES.find(v => v.value === voice)?.label || 'Audio'}
                                         </span>
@@ -706,8 +706,8 @@ function HomePage({ user }) {
                                         />
                                     </div>
 
-                                    {/* Right: Download + Minimize Buttons - Largura Fixa igual à Esquerda */}
-                                    <div style={{ width: '200px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', flexShrink: 0 }}>
+                                    {/* Right: Download + Minimize Buttons - Largura Maior para empurrar centro para esquerda */}
+                                    <div style={{ width: '300px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', flexShrink: 0 }}>
                                         <motion.button
                                             whileHover={{ scale: 1.1, color: '#FCFBF8' }}
                                             whileTap={{ scale: 0.95 }}
