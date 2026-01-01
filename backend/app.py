@@ -93,7 +93,8 @@ GOOGLE_VOICES = {
 
 # Combina todas as vozes
 AVAILABLE_VOICES = {**EDGE_VOICES}
-if GOOGLE_TTS_ENABLED and os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'):
+GOOGLE_API_KEY = os.environ.get('GOOGLE_TTS_API_KEY', '')
+if GOOGLE_API_KEY:
     AVAILABLE_VOICES.update(GOOGLE_VOICES)
     print("✅ Vozes Google Cloud TTS habilitadas!")
 
@@ -118,35 +119,46 @@ async def generate_audio_edge(text: str, voice: str, output_path: str):
 
 
 def generate_audio_google(text: str, voice_name: str, output_path: str):
-    """Gera áudio usando Google Cloud TTS"""
+    """Gera áudio usando Google Cloud TTS via REST API com API Key"""
+    import requests
+    
+    GOOGLE_API_KEY = os.environ.get('GOOGLE_TTS_API_KEY', '')
+    
+    if not GOOGLE_API_KEY:
+        raise Exception("GOOGLE_TTS_API_KEY não configurada")
+    
     try:
-        client = texttospeech.TextToSpeechClient()
-        
         # Configuração da voz
-        voice_config = GOOGLE_VOICES.get(voice_name, {})
         language_code = voice_name.split('-')[0] + '-' + voice_name.split('-')[1]  # ex: pt-BR
         
-        voice = texttospeech.VoiceSelectionParams(
-            language_code=language_code,
-            name=voice_name,
-        )
+        # Payload para a API
+        payload = {
+            "input": {"text": text},
+            "voice": {
+                "languageCode": language_code,
+                "name": voice_name
+            },
+            "audioConfig": {
+                "audioEncoding": "MP3",
+                "speakingRate": 1.0,
+                "pitch": 0.0
+            }
+        }
         
-        # Configuração do áudio
-        audio_config = texttospeech.AudioConfig(
-            audio_encoding=texttospeech.AudioEncoding.MP3,
-            speaking_rate=1.0,
-            pitch=0.0,
-        )
+        # Chamada à API REST
+        url = f"https://texttospeech.googleapis.com/v1/text:synthesize?key={GOOGLE_API_KEY}"
+        response = requests.post(url, json=payload)
         
-        # Sintetiza
-        synthesis_input = texttospeech.SynthesisInput(text=text)
-        response = client.synthesize_speech(
-            input=synthesis_input, voice=voice, audio_config=audio_config
-        )
+        if response.status_code != 200:
+            error_msg = response.json().get('error', {}).get('message', 'Erro desconhecido')
+            raise Exception(f"Google TTS API error: {error_msg}")
+        
+        # Decodifica o áudio (vem em base64)
+        audio_content = base64.b64decode(response.json()['audioContent'])
         
         # Salva o arquivo
         with open(output_path, "wb") as out:
-            out.write(response.audio_content)
+            out.write(audio_content)
             
         print(f"✅ Áudio Google gerado: {voice_name}")
         
@@ -160,7 +172,7 @@ def generate_audio(text: str, voice: str, output_path: str):
     voice_config = AVAILABLE_VOICES.get(voice, {})
     provider = voice_config.get('provider', 'edge') if isinstance(voice_config, dict) else 'edge'
     
-    if provider == 'google' and GOOGLE_TTS_ENABLED:
+    if provider == 'google' and os.environ.get('GOOGLE_TTS_API_KEY'):
         generate_audio_google(text, voice, output_path)
     else:
         run_async(generate_audio_edge(text, voice, output_path))
