@@ -656,15 +656,16 @@ function HomePage({ user }) {
                             ) : (
                                 /* Full View with react-h5-audio-player */
                                 <div style={{
-                                    maxWidth: '850px',
+                                    maxWidth: '1200px',
                                     width: '100%',
                                     margin: '0 auto',
                                     display: 'flex',
                                     alignItems: 'center',
+                                    justifyContent: 'space-between', // Garante distribuição
                                     gap: '16px'
                                 }}>
-                                    {/* Left: Voice Info */}
-                                    <div style={{ width: '100px', display: 'flex', flexDirection: 'column', gap: '2px', flexShrink: 0 }}>
+                                    {/* Left: Voice Info - Largura Fixa para simetria */}
+                                    <div style={{ width: '200px', display: 'flex', flexDirection: 'column', gap: '2px', flexShrink: 0 }}>
                                         <span style={{ fontSize: '13px', color: '#FCFBF8', fontWeight: '500' }}>
                                             {VOICES.find(v => v.value === voice)?.label || 'Audio'}
                                         </span>
@@ -673,8 +674,8 @@ function HomePage({ user }) {
                                         </span>
                                     </div>
 
-                                    {/* Center: Audio Player */}
-                                    <div style={{ flex: 1 }}>
+                                    {/* Center: Audio Player - Centralizado */}
+                                    <div style={{ flex: 1, maxWidth: '800px', width: '100%' }}>
                                         <AudioPlayer
                                             ref={playerRef}
                                             src={audioUrl}
@@ -705,8 +706,8 @@ function HomePage({ user }) {
                                         />
                                     </div>
 
-                                    {/* Right: Download + Minimize Buttons */}
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                                    {/* Right: Download + Minimize Buttons - Largura Fixa igual à Esquerda */}
+                                    <div style={{ width: '200px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', flexShrink: 0 }}>
                                         <motion.button
                                             whileHover={{ scale: 1.1, color: '#FCFBF8' }}
                                             whileTap={{ scale: 0.95 }}
