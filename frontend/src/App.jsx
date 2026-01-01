@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { motion, AnimatePresence } from "framer-motion"
 import {
     CaretDown,
+    CaretUp,
     Paperclip,
     ArrowUp,
     DownloadSimple,
@@ -277,6 +278,7 @@ function HomePage({ user }) {
     const [preloadedPreviews, setPreloadedPreviews] = useState({}) // Cache de URLs das prévias
     const [isPlaying, setIsPlaying] = useState(false) // Estado do player
     const [isMuted, setIsMuted] = useState(false) // Estado mute do player
+    const [isPlayerMinimized, setIsPlayerMinimized] = useState(false) // Estado minimizado do player
     const voiceSelectRef = useRef(null)
     const previewAudioRef = useRef(new Audio())
 
@@ -616,9 +618,10 @@ function HomePage({ user }) {
                                 background: '#0a0a0a',
                                 borderTop: '1px solid #1f1f1f',
                                 boxShadow: '0 -10px 40px rgba(0,0,0,0.6)',
-                                padding: '12px 32px',
+                                padding: isPlayerMinimized ? '8px 32px' : '12px 32px',
                                 zIndex: 1000,
-                                boxSizing: 'border-box'
+                                boxSizing: 'border-box',
+                                transition: 'padding 0.3s ease'
                             }}
                         >
                             {/* Hidden Audio Element */}
@@ -649,55 +652,16 @@ function HomePage({ user }) {
                                 onEnded={() => setIsPlaying(false)}
                             />
 
-                            <div style={{
-                                maxWidth: '1200px',
-                                width: '100%',
-                                margin: '0 auto',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '24px'
-                            }}>
-                                {/* Left: Voice Info */}
-                                <div style={{ minWidth: '200px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                    <span style={{ fontSize: '14px', color: '#FCFBF8', fontWeight: '500' }}>
-                                        {VOICES.find(v => v.value === voice)?.label || 'Audio'}
-                                    </span>
-                                    <span style={{ fontSize: '12px', color: '#666' }}>
-                                        Áudio gerado
-                                    </span>
-                                </div>
-
-                                {/* Center: Play Button + Progress Bar */}
-                                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                    {/* Play/Pause Button */}
-                                    <motion.button
-                                        whileHover={{ scale: 1.1 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        onClick={() => {
-                                            const audio = document.getElementById('audio-player');
-                                            if (audio.paused) {
-                                                audio.play();
-                                                setIsPlaying(true);
-                                            } else {
-                                                audio.pause();
-                                                setIsPlaying(false);
-                                            }
-                                        }}
-                                        style={{
-                                            width: '36px', height: '36px', minWidth: '36px',
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            background: 'transparent', border: '2px solid #FCFBF8',
-                                            borderRadius: '50%', color: '#FCFBF8', cursor: 'pointer'
-                                        }}
-                                    >
-                                        {isPlaying ? <Pause size={16} weight="fill" /> : <Play size={16} weight="fill" />}
-                                    </motion.button>
-
-                                    {/* Current Time */}
-                                    <span id="current-time" style={{ fontSize: '13px', color: '#888', fontWeight: '500', minWidth: '35px' }}>
-                                        0:00
-                                    </span>
-
+                            {/* Minimized View - Only Progress Bar */}
+                            {isPlayerMinimized ? (
+                                <div style={{
+                                    maxWidth: '1200px',
+                                    width: '100%',
+                                    margin: '0 auto',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '16px'
+                                }}>
                                     {/* Progress Bar */}
                                     <div
                                         style={{
@@ -722,28 +686,138 @@ function HomePage({ user }) {
                                         />
                                     </div>
 
-                                    {/* Total Time */}
-                                    <span id="total-time" style={{ fontSize: '13px', color: '#888', fontWeight: '500', minWidth: '35px' }}>
-                                        0:00
-                                    </span>
+                                    {/* Expand Button */}
+                                    <motion.button
+                                        whileHover={{ scale: 1.1, color: '#FCFBF8' }}
+                                        whileTap={{ scale: 0.95 }}
+                                        onClick={() => setIsPlayerMinimized(false)}
+                                        title="Expandir player"
+                                        style={{
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            background: 'transparent', border: 'none',
+                                            color: '#666', cursor: 'pointer', padding: '4px',
+                                            transition: 'color 0.2s'
+                                        }}
+                                    >
+                                        <CaretUp size={20} weight="bold" />
+                                    </motion.button>
                                 </div>
+                            ) : (
+                                /* Full View */
+                                <div style={{
+                                    maxWidth: '1200px',
+                                    width: '100%',
+                                    margin: '0 auto',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '24px'
+                                }}>
+                                    {/* Left: Voice Info */}
+                                    <div style={{ minWidth: '200px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                        <span style={{ fontSize: '14px', color: '#FCFBF8', fontWeight: '500' }}>
+                                            {VOICES.find(v => v.value === voice)?.label || 'Audio'}
+                                        </span>
+                                        <span style={{ fontSize: '12px', color: '#666' }}>
+                                            Áudio gerado
+                                        </span>
+                                    </div>
 
-                                {/* Right: Download Button */}
-                                <motion.button
-                                    whileHover={{ scale: 1.1, color: '#FCFBF8' }}
-                                    whileTap={{ scale: 0.95 }}
-                                    onClick={handleDownload}
-                                    title="Baixar MP3"
-                                    style={{
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        background: 'transparent', border: 'none',
-                                        color: '#666', cursor: 'pointer', padding: '8px',
-                                        transition: 'color 0.2s'
-                                    }}
-                                >
-                                    <DownloadSimple size={22} weight="bold" />
-                                </motion.button>
-                            </div>
+                                    {/* Center: Play Button + Progress Bar */}
+                                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                        {/* Play/Pause Button */}
+                                        <motion.button
+                                            whileHover={{ scale: 1.1 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            onClick={() => {
+                                                const audio = document.getElementById('audio-player');
+                                                if (audio.paused) {
+                                                    audio.play();
+                                                    setIsPlaying(true);
+                                                } else {
+                                                    audio.pause();
+                                                    setIsPlaying(false);
+                                                }
+                                            }}
+                                            style={{
+                                                width: '40px', height: '40px', minWidth: '40px',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                background: '#FCFBF8', border: 'none',
+                                                borderRadius: '50%', color: '#0a0a0a', cursor: 'pointer',
+                                                boxShadow: '0 2px 8px rgba(255,255,255,0.1)'
+                                            }}
+                                        >
+                                            {isPlaying ? <Pause size={18} weight="fill" /> : <Play size={18} weight="fill" />}
+                                        </motion.button>
+
+                                        {/* Current Time */}
+                                        <span id="current-time" style={{ fontSize: '13px', color: '#888', fontWeight: '500', minWidth: '35px' }}>
+                                            0:00
+                                        </span>
+
+                                        {/* Progress Bar */}
+                                        <div
+                                            style={{
+                                                flex: 1, height: '4px', background: '#333',
+                                                borderRadius: '2px', cursor: 'pointer', overflow: 'hidden'
+                                            }}
+                                            onClick={(e) => {
+                                                const audio = document.getElementById('audio-player');
+                                                const rect = e.currentTarget.getBoundingClientRect();
+                                                const percent = (e.clientX - rect.left) / rect.width;
+                                                if (audio.duration) audio.currentTime = percent * audio.duration;
+                                            }}
+                                        >
+                                            <div
+                                                id="audio-progress"
+                                                style={{
+                                                    width: '0%', height: '100%',
+                                                    background: '#FCFBF8',
+                                                    borderRadius: '2px',
+                                                    transition: 'width 0.1s linear'
+                                                }}
+                                            />
+                                        </div>
+
+                                        {/* Total Time */}
+                                        <span id="total-time" style={{ fontSize: '13px', color: '#888', fontWeight: '500', minWidth: '35px' }}>
+                                            0:00
+                                        </span>
+                                    </div>
+
+                                    {/* Right: Download + Minimize Buttons */}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <motion.button
+                                            whileHover={{ scale: 1.1, color: '#FCFBF8' }}
+                                            whileTap={{ scale: 0.95 }}
+                                            onClick={handleDownload}
+                                            title="Baixar MP3"
+                                            style={{
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                background: 'transparent', border: 'none',
+                                                color: '#666', cursor: 'pointer', padding: '8px',
+                                                transition: 'color 0.2s'
+                                            }}
+                                        >
+                                            <DownloadSimple size={22} weight="bold" />
+                                        </motion.button>
+
+                                        <motion.button
+                                            whileHover={{ scale: 1.1, color: '#FCFBF8' }}
+                                            whileTap={{ scale: 0.95 }}
+                                            onClick={() => setIsPlayerMinimized(true)}
+                                            title="Minimizar player"
+                                            style={{
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                background: 'transparent', border: 'none',
+                                                color: '#666', cursor: 'pointer', padding: '8px',
+                                                transition: 'color 0.2s'
+                                            }}
+                                        >
+                                            <CaretDown size={22} weight="bold" />
+                                        </motion.button>
+                                    </div>
+                                </div>
+                            )}
                         </motion.div>
                     )}
                 </AnimatePresence>
