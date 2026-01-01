@@ -19,6 +19,16 @@ import {
     House,
     Layout,
     UserCircle,
+    MagnifyingGlass,
+    SquaresFour,
+    Star,
+    Users,
+    Compass,
+    Cube,
+    BookOpen,
+    Gear,
+    Plus,
+    Gift,
     CheckCircle,
     SpeakerHigh,
     SpeakerSlash,
@@ -97,81 +107,218 @@ export default function App() {
     const isAdmin = user?.email === ADMIN_EMAIL
 
     return (
-        <div style={{ minHeight: '100vh' }}>
-            <Header user={user} isAdmin={isAdmin} setShowLoginModal={setShowLoginModal} />
+        <div style={{ display: 'flex', minHeight: '100vh', background: '#e9e9e9' }}>
+            <Sidebar user={user} isAdmin={isAdmin} setShowLoginModal={setShowLoginModal} />
 
-            {page === 'admin' ? (
-                <AdminPage user={user} isAdmin={isAdmin} setShowLoginModal={setShowLoginModal} />
-            ) : (
-                <HomePage user={user} />
-            )}
+            <main style={{ marginLeft: '260px', flex: 1, position: 'relative', width: 'calc(100% - 260px)' }}>
+                {page === 'admin' ? (
+                    <AdminPage user={user} isAdmin={isAdmin} setShowLoginModal={setShowLoginModal} />
+                ) : (
+                    <HomePage user={user} />
+                )}
+            </main>
 
-            {showLoginModal && (
-                <LoginModal onClose={() => setShowLoginModal(false)} />
-            )}
+            <AnimatePresence>
+                {showLoginModal && (
+                    <LoginModal onClose={() => setShowLoginModal(false)} />
+                )}
+            </AnimatePresence>
         </div>
     )
 }
 
-// ==================== HEADER ====================
-function Header({ user, isAdmin, setShowLoginModal }) {
+// ==================== SIDEBAR ====================
+function Sidebar({ user, isAdmin, setShowLoginModal }) {
     const handleLogout = async () => {
         if (supabase) await supabase.auth.signOut()
     }
 
-    return (
-        <header style={{
-            position: 'fixed', top: 0, left: 0, right: 0, height: '60px',
-            background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(15px)',
-            borderBottom: '1px solid rgba(255,255,255,0.3)',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '0 24px', zIndex: 100
-        }}>
-            <a href="#" style={{ fontWeight: '600', fontSize: '18px', color: '#0f172a', textDecoration: 'none' }}>
-                AudioLoop
-            </a>
+    const MenuItem = ({ icon: Icon, label, isActive, onClick, isComingSoon }) => (
+        <button
+            onClick={onClick}
+            style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '8px 12px',
+                background: isActive ? 'rgba(255,255,255,0.08)' : 'transparent',
+                border: 'none',
+                borderRadius: '8px',
+                color: isActive ? '#fff' : '#888',
+                cursor: 'pointer',
+                textAlign: 'left',
+                fontSize: '14px',
+                fontWeight: '500',
+                transition: 'all 0.2s',
+                marginBottom: '2px',
+                position: 'relative'
+            }}
+            onMouseEnter={e => {
+                if (!isActive) {
+                    e.currentTarget.style.color = '#fff';
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+                }
+            }}
+            onMouseLeave={e => {
+                if (!isActive) {
+                    e.currentTarget.style.color = '#888';
+                    e.currentTarget.style.background = 'transparent';
+                }
+            }}
+        >
+            <Icon size={18} weight={isActive ? "fill" : "regular"} />
+            {label}
+            {isComingSoon && (
+                <span style={{ fontSize: '10px', background: '#333', padding: '2px 6px', borderRadius: '4px', marginLeft: 'auto', color: '#888' }}>
+                    Em breve
+                </span>
+            )}
+        </button>
+    );
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                {isAdmin && (
-                    <button onClick={() => window.location.hash = '#admin'} style={{
-                        background: 'transparent', border: 'none', color: '#64748b',
-                        cursor: 'pointer', fontSize: '14px', fontWeight: '500',
-                        display: 'flex', alignItems: 'center', gap: '6px'
-                    }}>
-                        <Layout size={18} /> Painel Admin
-                    </button>
-                )}
-                <button onClick={() => window.location.hash = '#'} style={{
-                    background: 'transparent', border: 'none', color: '#64748b',
-                    cursor: 'pointer', fontSize: '14px', fontWeight: '500',
-                    display: 'flex', alignItems: 'center', gap: '6px'
+    const SectionTitle = ({ label }) => (
+        <div style={{
+            fontSize: '12px',
+            fontWeight: '600',
+            color: '#444',
+            marginTop: '24px',
+            marginBottom: '8px',
+            paddingLeft: '12px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px'
+        }}>
+            {label}
+        </div>
+    );
+
+    return (
+        <aside style={{
+            width: '260px',
+            height: '100vh',
+            background: '#0a0a0a',
+            borderRight: '1px solid #222',
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '24px 16px',
+            boxSizing: 'border-box',
+            position: 'fixed',
+            left: 0,
+            top: 0,
+            zIndex: 1000,
+            color: '#fff'
+        }}>
+            {/* Logo Area */}
+            <div style={{ marginBottom: '24px', paddingLeft: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{
+                    width: '32px', height: '32px',
+                    background: 'linear-gradient(135deg, #FF512F 0%, #DD2476 100%)',
+                    borderRadius: '8px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}>
-                    <House size={18} /> Home
-                </button>
-                <div style={{ width: '1px', height: '20px', background: '#e2e8f0', margin: '0 8px' }} />
-                {user ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <span style={{ fontSize: '14px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <UserCircle size={20} /> {user.email?.split('@')[0]}
-                        </span>
-                        <button onClick={handleLogout} style={{
-                            background: 'transparent', color: '#ef4444', border: 'none',
-                            fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px'
-                        }}>
-                            <SignOut size={18} /> Sair
-                        </button>
-                    </div>
-                ) : (
-                    <button onClick={() => setShowLoginModal(true)} style={{
-                        background: '#2546C7', color: '#fff', border: 'none',
-                        padding: '8px 20px', borderRadius: '8px', fontSize: '14px',
-                        fontWeight: '500', cursor: 'pointer'
-                    }}>
-                        Login
-                    </button>
-                )}
+                    <span style={{ fontWeight: 'bold', fontSize: '18px', color: '#fff' }}>A</span>
+                </div>
+                <span style={{ fontWeight: '600', fontSize: '16px' }}>AudioLoop</span>
             </div>
-        </header>
+
+            {/* Workspace Selector Mockup */}
+            <div style={{
+                marginBottom: '24px',
+                background: '#161616',
+                border: '1px solid #2a2a2a',
+                borderRadius: '8px',
+                padding: '8px 12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                cursor: 'pointer'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '20px', height: '20px', background: '#333', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px' }}>W</div>
+                    <span style={{ fontSize: '13px', fontWeight: '500' }}>Workspace</span>
+                </div>
+                <CaretDown size={12} color="#666" />
+            </div>
+
+            {/* Main Menu */}
+            <nav style={{ flex: 1, overflowY: 'auto' }}>
+                <MenuItem icon={House} label="Home" isActive={true} onClick={() => window.location.hash = '#'} />
+                <MenuItem icon={MagnifyingGlass} label="Search" isComingSoon />
+
+                <SectionTitle label="Projects" />
+                <MenuItem icon={SquaresFour} label="All projects" />
+                <MenuItem icon={Star} label="Starred" />
+                <MenuItem icon={Users} label="Shared with me" />
+
+                <SectionTitle label="Resources" />
+                <MenuItem icon={Compass} label="Discover" isComingSoon />
+                <MenuItem icon={Layout} label="Templates" isComingSoon />
+                <MenuItem icon={BookOpen} label="Learn" isComingSoon />
+
+                {isAdmin && (
+                    <>
+                        <SectionTitle label="Admin" />
+                        <MenuItem icon={Gear} label="Painel Admin" onClick={() => window.location.hash = '#admin'} />
+                    </>
+                )}
+            </nav>
+
+            {/* Footer */}
+            <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid #222' }}>
+                <MenuItem icon={Gift} label="Share AudioLoop" />
+
+                <div style={{
+                    marginTop: '12px',
+                    background: '#161616',
+                    padding: '12px',
+                    borderRadius: '12px',
+                    border: '1px solid #222',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px'
+                }}>
+                    {user ? (
+                        <>
+                            <div style={{
+                                width: '36px', height: '36px',
+                                background: '#333', borderRadius: '50%',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                color: '#aaa'
+                            }}>
+                                <UserCircle size={24} />
+                            </div>
+                            <div style={{ flex: 1, overflow: 'hidden' }}>
+                                <div style={{ fontSize: '13px', fontWeight: '500', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {user.email?.split('@')[0]}
+                                </div>
+                                <div style={{ fontSize: '11px', color: '#666' }}>Free Plan</div>
+                            </div>
+                            <button onClick={handleLogout} title="Sair" style={{ background: 'transparent', border: 'none', color: '#666', cursor: 'pointer' }}>
+                                <SignOut size={16} />
+                            </button>
+                        </>
+                    ) : (
+                        <button
+                            onClick={() => setShowLoginModal(true)}
+                            style={{
+                                width: '100%',
+                                background: '#fff',
+                                color: '#000',
+                                border: 'none',
+                                padding: '8px',
+                                borderRadius: '6px',
+                                fontWeight: '600',
+                                fontSize: '13px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Log in / Sign up
+                        </button>
+                    )}
+                </div>
+            </div>
+        </aside>
     )
 }
 
