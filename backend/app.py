@@ -263,7 +263,7 @@ def generate_preview():
         output_path = os.path.join(TEMP_DIR, output_filename)
         
         # Gera o áudio
-        run_async(generate_audio(preview_text, voice, output_path))
+        generate_audio(preview_text, voice, output_path)
         
         if not os.path.exists(output_path):
             return jsonify({'error': 'Falha ao gerar o preview'}), 500
@@ -328,7 +328,7 @@ def generate_audiobook():
         start_time = time.time()
         
         # Executa a geração de áudio
-        run_async(generate_audio(text, voice, output_path))
+        generate_audio(text, voice, output_path)
         
         processing_time = time.time() - start_time
         print(f'✅ Audiobook gerado em {processing_time:.2f}s - {len(text)} caracteres - Voz: {voice}')
