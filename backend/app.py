@@ -116,9 +116,71 @@ async def generate_audio_edge(text: str, voice: str, output_path: str):
         raise e
 
 
+def split_text_for_google(text, limit=4500):
+    """Divide o texto em chunks respeitando o limite de bytes do Google"""
+    chunks = []
+    current_chunk = ""
+    
+    # Normaliza quebras de linha
+    text = text.replace('\r\n', '\n').replace('\r', '\n')
+    
+    # Divide primeiro por parágrafos para preservar estrutura
+    paragraphs = text.split('\n')
+    
+    for para in paragraphs:
+        if not para.strip():
+            continue
+            
+        # Se adicionar o parágrafo estourar o limite
+        if len((current_chunk + "\n" + para).encode('utf-8')) > limit:
+            # Se tem algo no buffer, salva
+            if current_chunk:
+                chunks.append(current_chunk)
+                current_chunk = ""
+            
+            # Se o parágrafo sozinho é maior que o limite, divide por frases
+            if len(para.encode('utf-8')) > limit:
+                import re
+                # Split por pontuação final (. ? !)
+                sentences = re.split(r'(?<=[.!?])\s+', para)
+                for sent in sentences:
+                    if len((current_chunk + " " + sent).encode('utf-8')) > limit:
+                        if current_chunk:
+                            chunks.append(current_chunk)
+                            current_chunk = ""
+                        # Se a frase sozinha é gigante (muito raro), corta na força bruta
+                        if len(sent.encode('utf-8')) > limit:
+                             # Corta a cada limit caracteres (aproximado)
+                             while sent:
+                                 part = sent[:limit]
+                                 # Tenta não cortar palavra no meio
+                                 last_space_idx = part.rfind(' ')
+                                 if last_space_idx > limit - 100:
+                                     part = sent[:last_space_idx]
+                                     sent = sent[last_space_idx:].strip()
+                                 else:
+                                     # Se não achar espaço, corta bruto
+                                     sent = sent[len(part):].strip()
+                                 chunks.append(part)
+                        else:
+                            current_chunk = sent
+                    else:
+                        current_chunk += (" " if current_chunk else "") + sent
+            else:
+                current_chunk = para
+        else:
+            current_chunk += ("\n" if current_chunk else "") + para
+            
+    if current_chunk:
+        chunks.append(current_chunk)
+        
+    return chunks
+
+
 def generate_audio_google(text: str, voice_name: str, output_path: str):
-    """Gera áudio usando Google Cloud TTS via REST API com API Key"""
+    """Gera áudio usando Google Cloud TTS via REST API com suporte a textos longos"""
     import requests
+    import base64
     
     GOOGLE_API_KEY = os.environ.get('GOOGLE_TTS_API_KEY', '')
     
@@ -129,36 +191,50 @@ def generate_audio_google(text: str, voice_name: str, output_path: str):
         # Configuração da voz
         language_code = voice_name.split('-')[0] + '-' + voice_name.split('-')[1]  # ex: pt-BR
         
-        # Payload para a API
-        payload = {
-            "input": {"text": text},
-            "voice": {
-                "languageCode": language_code,
-                "name": voice_name
-            },
-            "audioConfig": {
-                "audioEncoding": "MP3",
-                "speakingRate": 1.0,
-                "pitch": 0.0
-            }
-        }
-        
-        # Chamada à API REST
+        # URL API REST
         url = f"https://texttospeech.googleapis.com/v1/text:synthesize?key={GOOGLE_API_KEY}"
-        response = requests.post(url, json=payload)
         
-        if response.status_code != 200:
-            error_msg = response.json().get('error', {}).get('message', 'Erro desconhecido')
-            raise Exception(f"Google TTS API error: {error_msg}")
+        # Divide o texto em pedaços seguros
+        chunks = split_text_for_google(text)
+        combined_audio = b""
         
-        # Decodifica o áudio (vem em base64)
-        audio_content = base64.b64decode(response.json()['audioContent'])
+        print(f"🔄 Processando {len(chunks)} partes com Google TTS...", flush=True)
         
-        # Salva o arquivo
-        with open(output_path, "wb") as out:
-            out.write(audio_content)
+        for i, chunk in enumerate(chunks):
+            if not chunk.strip():
+                continue
+
+            # Payload para a API
+            payload = {
+                "input": {"text": chunk},
+                "voice": {
+                    "languageCode": language_code,
+                    "name": voice_name
+                },
+                "audioConfig": {
+                    "audioEncoding": "MP3",
+                    "speakingRate": 1.0,
+                    "pitch": 0.0
+                }
+            }
             
-        print(f"✅ Áudio Google gerado: {voice_name}")
+            # Chamada à API
+            response = requests.post(url, json=payload)
+            
+            if response.status_code != 200:
+                error_msg = response.json().get('error', {}).get('message', 'Erro desconhecido')
+                print(f"❌ Erro no chunk {i+1}: {error_msg}")
+                raise Exception(f"Google TTS API error (Chunk {i+1}): {error_msg}")
+            
+            # Decodifica e concatena
+            chunk_content = base64.b64decode(response.json()['audioContent'])
+            combined_audio += chunk_content
+            
+        # Salva o arquivo final
+        with open(output_path, "wb") as out:
+            out.write(combined_audio)
+            
+        print(f"✅ Áudio Google gerado e combinado: {voice_name}")
         
     except Exception as e:
         print(f"❌ Erro no Google TTS: {str(e)}")
