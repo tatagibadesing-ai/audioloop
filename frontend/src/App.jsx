@@ -279,10 +279,13 @@ function HomePage({ user }) {
     const [isPlaying, setIsPlaying] = useState(false) // Estado do player
     const [isMuted, setIsMuted] = useState(false) // Estado mute do player
     const [isPlayerMinimized, setIsPlayerMinimized] = useState(false) // Estado minimizado do player
+    const [isDragging, setIsDragging] = useState(false) // Estado de arrasto do progress
+    const [progressPercent, setProgressPercent] = useState(0) // Porcentagem do progresso
     const voiceSelectRef = useRef(null)
     const previewAudioRef = useRef(new Audio())
     const audioRef = useRef(null)
     const animationRef = useRef(null)
+    const progressBarRef = useRef(null)
 
 
     // Pré-carrega as vozes para que o clique seja instantâneo
@@ -345,14 +348,13 @@ function HomePage({ user }) {
     // Atualização suave da barra de progresso (60fps)
     const updateProgress = () => {
         const audio = audioRef.current
-        if (audio && audio.duration) {
-            const progress = document.getElementById('audio-progress')
+        if (audio && audio.duration && !isDragging) {
+            const percent = (audio.currentTime / audio.duration) * 100
+            setProgressPercent(percent)
+
             const currentTime = document.getElementById('current-time')
             const totalTime = document.getElementById('total-time')
 
-            if (progress) {
-                progress.style.width = `${(audio.currentTime / audio.duration) * 100}%`
-            }
             if (currentTime) {
                 const curr = Math.floor(audio.currentTime)
                 currentTime.textContent = `${Math.floor(curr / 60)}:${String(curr % 60).padStart(2, '0')}`
@@ -756,25 +758,74 @@ function HomePage({ user }) {
                                             0:00
                                         </span>
 
-                                        {/* Progress Bar */}
+                                        {/* Progress Bar with Draggable Thumb */}
                                         <div
+                                            ref={progressBarRef}
                                             style={{
                                                 flex: 1, height: '4px', background: '#333',
-                                                borderRadius: '2px', cursor: 'pointer', overflow: 'hidden'
+                                                borderRadius: '2px', cursor: 'pointer',
+                                                position: 'relative'
                                             }}
                                             onClick={(e) => {
-                                                const audio = document.getElementById('audio-player');
+                                                if (isDragging) return;
+                                                const audio = audioRef.current;
                                                 const rect = e.currentTarget.getBoundingClientRect();
-                                                const percent = (e.clientX - rect.left) / rect.width;
-                                                if (audio.duration) audio.currentTime = percent * audio.duration;
+                                                const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                                                if (audio && audio.duration) {
+                                                    audio.currentTime = percent * audio.duration;
+                                                    setProgressPercent(percent * 100);
+                                                }
                                             }}
                                         >
-                                            <div
+                                            {/* Progress Fill */}
+                                            <motion.div
                                                 id="audio-progress"
                                                 style={{
-                                                    width: '0%', height: '100%',
+                                                    width: `${progressPercent}%`,
+                                                    height: '100%',
                                                     background: '#FCFBF8',
-                                                    borderRadius: '2px'
+                                                    borderRadius: '2px',
+                                                    position: 'absolute',
+                                                    top: 0,
+                                                    left: 0
+                                                }}
+                                            />
+
+                                            {/* Draggable Thumb */}
+                                            <motion.div
+                                                drag="x"
+                                                dragConstraints={progressBarRef}
+                                                dragElastic={0}
+                                                dragMomentum={false}
+                                                onDragStart={() => setIsDragging(true)}
+                                                onDrag={(e, info) => {
+                                                    const bar = progressBarRef.current;
+                                                    if (bar) {
+                                                        const rect = bar.getBoundingClientRect();
+                                                        const x = e.clientX - rect.left;
+                                                        const percent = Math.max(0, Math.min(1, x / rect.width));
+                                                        const audio = audioRef.current;
+                                                        if (audio && audio.duration) {
+                                                            audio.currentTime = percent * audio.duration;
+                                                            setProgressPercent(percent * 100);
+                                                        }
+                                                    }
+                                                }}
+                                                onDragEnd={() => setIsDragging(false)}
+                                                whileHover={{ scale: 1.3 }}
+                                                whileTap={{ scale: 1.1 }}
+                                                style={{
+                                                    width: '12px',
+                                                    height: '12px',
+                                                    background: '#FCFBF8',
+                                                    borderRadius: '50%',
+                                                    position: 'absolute',
+                                                    top: '50%',
+                                                    left: `${progressPercent}%`,
+                                                    transform: 'translate(-50%, -50%)',
+                                                    cursor: 'grab',
+                                                    boxShadow: '0 0 8px rgba(252, 251, 248, 0.4)',
+                                                    zIndex: 10
                                                 }}
                                             />
                                         </div>
