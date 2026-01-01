@@ -9,8 +9,10 @@
     "start": "next start"
   },
   "dependencies": {
+    "@emotion/is-prop-valid": "latest",
     "@eslint/js": "latest",
     "@hookform/resolvers": "^3.10.0",
+    "@phosphor-icons/react": "latest",
     "@radix-ui/react-accordion": "1.2.2",
     "@radix-ui/react-alert-dialog": "1.1.4",
     "@radix-ui/react-aspect-ratio": "1.1.1",
@@ -51,6 +53,7 @@
     "eslint": "latest",
     "eslint-plugin-react-hooks": "latest",
     "eslint-plugin-react-refresh": "latest",
+    "framer-motion": "latest",
     "globals": "latest",
     "input-otp": "1.4.1",
     "jiti": "latest",
@@ -76,6 +79,7 @@
     "tsx": "latest",
     "vaul": "^1.1.2",
     "vite": "latest",
+    "wavesurfer.js": "latest",
     "yaml": "latest",
     "zod": "3.25.76"
   },
