@@ -684,7 +684,7 @@ function HomePage({ user }) {
                                             showFilledVolume={true}
                                             hasDefaultKeyBindings={false}
                                             autoPlayAfterSrcChange={false}
-                                            layout="horizontal-reverse"
+                                            layout="horizontal"
                                             customProgressBarSection={['CURRENT_TIME', 'PROGRESS_BAR', 'DURATION']}
                                             customControlsSection={['MAIN_CONTROLS']}
                                             customVolumeControls={[]}
