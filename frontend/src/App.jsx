@@ -706,8 +706,8 @@ function HomePage({ user }) {
                                         />
                                     </div>
 
-                                    {/* Right: Download + Minimize Buttons - Largura Ajustada para 250px */}
-                                    <div style={{ width: '250px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', flexShrink: 0 }}>
+                                    {/* Right: Download + Minimize Buttons - Largura Ajustada para 230px para ajuste fino */}
+                                    <div style={{ width: '230px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', flexShrink: 0 }}>
                                         <motion.button
                                             whileHover={{ scale: 1.1, color: '#FCFBF8' }}
                                             whileTap={{ scale: 0.95 }}
