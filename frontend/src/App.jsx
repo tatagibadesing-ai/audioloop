@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react"
 import { createClient } from '@supabase/supabase-js'
 import { motion, AnimatePresence } from "framer-motion"
+import { TypeAnimation } from 'react-type-animation'
 import AudioPlayer from 'react-h5-audio-player'
 import 'react-h5-audio-player/lib/styles.css'
 import {
@@ -586,15 +587,45 @@ function HomePage({ user }) {
                     boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
                     padding: '12px', boxSizing: 'border-box'
                 }}>
-                    <div style={{ padding: '16px 20px 8px' }}>
+                    <div style={{ padding: '16px 20px 8px', position: 'relative' }}>
+                        {!text && (
+                            <div style={{
+                                position: 'absolute',
+                                top: '16px',
+                                left: '20px',
+                                pointerEvents: 'none',
+                                fontSize: '18px',
+                                lineHeight: '1.6',
+                                color: '#666',
+                                fontFamily: "'Figtree', sans-serif"
+                            }}>
+                                <TypeAnimation
+                                    sequence={[
+                                        'Peça para gerar um audiobook de seu Texto...',
+                                        2000,
+                                        'Peça para gerar um audiobook de seu PDF...',
+                                        2000,
+                                        'Peça para gerar um audiobook de seu Artigo...',
+                                        2000,
+                                        'Peça para gerar um audiobook de sua Ideia...',
+                                        2000
+                                    ]}
+                                    wrapper="span"
+                                    speed={50}
+                                    repeat={Infinity}
+                                    cursor={true}
+                                />
+                            </div>
+                        )}
                         <textarea
                             value={text} onChange={(e) => { setText(e.target.value); setAudioUrl(null); }}
-                            placeholder="Peça para gerar um audiobook de..."
+                            placeholder=""
                             disabled={isLoading}
                             style={{
                                 width: '100%', minHeight: '60px', background: 'transparent', border: 'none',
                                 outline: 'none', resize: 'none', fontSize: '18px', lineHeight: '1.6', color: '#FCFBF8',
-                                fontFamily: "'Figtree', sans-serif", boxSizing: 'border-box'
+                                fontFamily: "'Figtree', sans-serif", boxSizing: 'border-box',
+                                position: 'relative', zIndex: 1
                             }}
                         />
                     </div>
