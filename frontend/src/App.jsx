@@ -656,7 +656,7 @@ function HomePage({ user }) {
                             {/* Minimized View - Only Progress Bar */}
                             {isPlayerMinimized ? (
                                 <div style={{
-                                    maxWidth: '1200px',
+                                    maxWidth: '850px',
                                     width: '100%',
                                     margin: '0 auto',
                                     display: 'flex',
@@ -666,14 +666,7 @@ function HomePage({ user }) {
                                     <div
                                         style={{
                                             flex: 1, height: '4px', background: '#333',
-                                            borderRadius: '2px', overflow: 'hidden'
-                                        }}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            const audio = document.getElementById('audio-player');
-                                            const rect = e.currentTarget.getBoundingClientRect();
-                                            const percent = (e.clientX - rect.left) / rect.width;
-                                            if (audio.duration) audio.currentTime = percent * audio.duration;
+                                            borderRadius: '2px', overflow: 'hidden', cursor: 'pointer'
                                         }}
                                     >
                                         <div
