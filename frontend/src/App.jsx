@@ -628,118 +628,116 @@ function HomePage({ user }) {
                             }}
                         >
                             {/* Minimized View - Only Progress Bar */}
-                            {isPlayerMinimized ? (
-                                <div style={{
-                                    maxWidth: '850px',
-                                    width: '100%',
-                                    margin: '0 auto',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}>
+                            <div style={{
+                                maxWidth: '400px', // Largura BEM MENOR
+                                width: '100%',
+                                margin: '0 auto',
+                                display: isPlayerMinimized ? 'flex' : 'none',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <div
+                                    style={{
+                                        width: '100%', height: '4px', background: '#333',
+                                        borderRadius: '2px', overflow: 'hidden', cursor: 'pointer'
+                                    }}
+                                >
                                     <div
+                                        className="minimized-progress"
                                         style={{
-                                            width: '100%', height: '4px', background: '#333',
-                                            borderRadius: '2px', overflow: 'hidden', cursor: 'pointer'
+                                            width: '0%', height: '100%',
+                                            background: '#FCFBF8',
+                                            borderRadius: '2px'
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Full View with react-h5-audio-player - Mantido no DOM para não pausar */}
+                            <div style={{
+                                maxWidth: '1200px',
+                                width: '100%',
+                                margin: '0 auto',
+                                display: !isPlayerMinimized ? 'flex' : 'none',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '16px'
+                            }}>
+                                {/* Left: Voice Info - Largura Ajustada para 180px */}
+                                <div style={{ width: '180px', display: 'flex', flexDirection: 'column', gap: '2px', flexShrink: 0 }}>
+                                    <span style={{ fontSize: '13px', color: '#FCFBF8', fontWeight: '500' }}>
+                                        {VOICES.find(v => v.value === voice)?.label || 'Audio'}
+                                    </span>
+                                    <span style={{ fontSize: '11px', color: '#666' }}>
+                                        Áudio gerado
+                                    </span>
+                                </div>
+
+                                {/* Center: Audio Player - Centralizado */}
+                                <div style={{ flex: 1, maxWidth: '800px', width: '100%' }}>
+                                    <AudioPlayer
+                                        ref={playerRef}
+                                        src={audioUrl}
+                                        showJumpControls={false}
+                                        showDownloadProgress={false}
+                                        showFilledProgress={true}
+                                        showFilledVolume={true}
+                                        hasDefaultKeyBindings={false}
+                                        autoPlayAfterSrcChange={false}
+                                        layout="horizontal"
+                                        customProgressBarSection={['CURRENT_TIME', 'PROGRESS_BAR', 'DURATION']}
+                                        customControlsSection={['MAIN_CONTROLS']}
+                                        customVolumeControls={[]}
+                                        customIcons={{
+                                            play: <Play size={16} weight="fill" color="#0a0a0a" />,
+                                            pause: <Pause size={16} weight="fill" color="#0a0a0a" />
+                                        }}
+                                        onPlay={() => setIsPlaying(true)}
+                                        onPause={() => setIsPlaying(false)}
+                                        onEnded={() => setIsPlaying(false)}
+                                        onListen={(e) => {
+                                            // Update minimized progress bar
+                                            const minProgress = document.querySelector('.minimized-progress');
+                                            if (minProgress && e.target.duration) {
+                                                minProgress.style.width = `${(e.target.currentTime / e.target.duration) * 100}%`;
+                                            }
+                                        }}
+                                    />
+                                </div>
+
+                                {/* Right: Download + Minimize Buttons - Largura Ajustada para 230px para ajuste fino */}
+                                <div style={{ width: '230px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', flexShrink: 0 }}>
+                                    <motion.button
+                                        whileHover={{ scale: 1.1, color: '#FCFBF8' }}
+                                        whileTap={{ scale: 0.95 }}
+                                        onClick={handleDownload}
+                                        title="Baixar MP3"
+                                        style={{
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            background: 'transparent', border: 'none',
+                                            color: '#666', cursor: 'pointer', padding: '6px',
+                                            transition: 'color 0.2s'
                                         }}
                                     >
-                                        <div
-                                            className="minimized-progress"
-                                            style={{
-                                                width: '0%', height: '100%',
-                                                background: '#FCFBF8',
-                                                borderRadius: '2px'
-                                            }}
-                                        />
-                                    </div>
+                                        <DownloadSimple size={18} weight="bold" />
+                                    </motion.button>
+
+                                    <motion.button
+                                        whileHover={{ scale: 1.1, color: '#FCFBF8' }}
+                                        whileTap={{ scale: 0.95 }}
+                                        onClick={() => setIsPlayerMinimized(true)}
+                                        title="Minimizar player"
+                                        style={{
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            background: 'transparent', border: 'none',
+                                            color: '#666', cursor: 'pointer', padding: '6px',
+                                            transition: 'color 0.2s'
+                                        }}
+                                    >
+                                        <CaretDown size={18} weight="bold" />
+                                    </motion.button>
                                 </div>
-                            ) : (
-                                /* Full View with react-h5-audio-player */
-                                <div style={{
-                                    maxWidth: '1200px',
-                                    width: '100%',
-                                    margin: '0 auto',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between', // Garante distribuição
-                                    gap: '16px'
-                                }}>
-                                    {/* Left: Voice Info - Largura Ajustada para 180px */}
-                                    <div style={{ width: '180px', display: 'flex', flexDirection: 'column', gap: '2px', flexShrink: 0 }}>
-                                        <span style={{ fontSize: '13px', color: '#FCFBF8', fontWeight: '500' }}>
-                                            {VOICES.find(v => v.value === voice)?.label || 'Audio'}
-                                        </span>
-                                        <span style={{ fontSize: '11px', color: '#666' }}>
-                                            Áudio gerado
-                                        </span>
-                                    </div>
-
-                                    {/* Center: Audio Player - Centralizado */}
-                                    <div style={{ flex: 1, maxWidth: '800px', width: '100%' }}>
-                                        <AudioPlayer
-                                            ref={playerRef}
-                                            src={audioUrl}
-                                            showJumpControls={false}
-                                            showDownloadProgress={false}
-                                            showFilledProgress={true}
-                                            showFilledVolume={true}
-                                            hasDefaultKeyBindings={false}
-                                            autoPlayAfterSrcChange={false}
-                                            layout="horizontal"
-                                            customProgressBarSection={['CURRENT_TIME', 'PROGRESS_BAR', 'DURATION']}
-                                            customControlsSection={['MAIN_CONTROLS']}
-                                            customVolumeControls={[]}
-                                            customIcons={{
-                                                play: <Play size={16} weight="fill" color="#0a0a0a" />,
-                                                pause: <Pause size={16} weight="fill" color="#0a0a0a" />
-                                            }}
-                                            onPlay={() => setIsPlaying(true)}
-                                            onPause={() => setIsPlaying(false)}
-                                            onEnded={() => setIsPlaying(false)}
-                                            onListen={(e) => {
-                                                // Update minimized progress bar
-                                                const minProgress = document.querySelector('.minimized-progress');
-                                                if (minProgress && e.target.duration) {
-                                                    minProgress.style.width = `${(e.target.currentTime / e.target.duration) * 100}%`;
-                                                }
-                                            }}
-                                        />
-                                    </div>
-
-                                    {/* Right: Download + Minimize Buttons - Largura Ajustada para 230px para ajuste fino */}
-                                    <div style={{ width: '230px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', flexShrink: 0 }}>
-                                        <motion.button
-                                            whileHover={{ scale: 1.1, color: '#FCFBF8' }}
-                                            whileTap={{ scale: 0.95 }}
-                                            onClick={handleDownload}
-                                            title="Baixar MP3"
-                                            style={{
-                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                background: 'transparent', border: 'none',
-                                                color: '#666', cursor: 'pointer', padding: '6px',
-                                                transition: 'color 0.2s'
-                                            }}
-                                        >
-                                            <DownloadSimple size={18} weight="bold" />
-                                        </motion.button>
-
-                                        <motion.button
-                                            whileHover={{ scale: 1.1, color: '#FCFBF8' }}
-                                            whileTap={{ scale: 0.95 }}
-                                            onClick={() => setIsPlayerMinimized(true)}
-                                            title="Minimizar player"
-                                            style={{
-                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                background: 'transparent', border: 'none',
-                                                color: '#666', cursor: 'pointer', padding: '6px',
-                                                transition: 'color 0.2s'
-                                            }}
-                                        >
-                                            <CaretDown size={18} weight="bold" />
-                                        </motion.button>
-                                    </div>
-                                </div>
-                            )}
+                            </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
