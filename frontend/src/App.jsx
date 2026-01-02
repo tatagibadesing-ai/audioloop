@@ -106,15 +106,15 @@ const HoverActionButton = ({ icon: Icon, label, onClick }) => {
                             marginBottom: '12px',
                             background: '#FCFBF8',
                             color: '#0a0a0a',
-                            padding: '6px 14px',
-                            borderRadius: '8px',
+                            padding: '4px 10px',
+                            borderRadius: '6px',
                             fontSize: '11px',
-                            fontWeight: '600',
+                            fontWeight: '500',
                             whiteSpace: 'nowrap',
                             boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
                             pointerEvents: 'none',
                             zIndex: 100,
-                            letterSpacing: '0.02em',
+                            letterSpacing: '0.01em',
                             fontFamily: "'Inter', sans-serif"
                         }}
                     >
@@ -1191,20 +1191,28 @@ function HomePage({ user, isAdmin }) {
                                             {isAdmin && (
                                                 <HoverActionButton
                                                     icon={UploadSimple}
-                                                    label="Publicar Audiobook"
+                                                    label="Publicar"
                                                     onClick={() => setIsPublishModalOpen(true)}
                                                 />
                                             )}
                                             <HoverActionButton
                                                 icon={DownloadSimple}
-                                                label="Baixar MP3"
+                                                label="Baixar"
                                                 onClick={handleDownload}
                                             />
-                                            <HoverActionButton
-                                                icon={CaretDown}
-                                                label="Minimizar"
+
+                                            <motion.button
+                                                whileTap={{ scale: 0.9 }}
                                                 onClick={() => setIsPlayerMinimized(true)}
-                                            />
+                                                style={{
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                    background: 'transparent', border: 'none',
+                                                    color: '#666', cursor: 'pointer', padding: '8px',
+                                                    transition: 'opacity 0.2s', marginLeft: '4px'
+                                                }}
+                                            >
+                                                <CaretDown size={20} weight="bold" />
+                                            </motion.button>
                                         </div>
                                     </div>
                                 </>
