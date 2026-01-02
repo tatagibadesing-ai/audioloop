@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion"
 import { TypeAnimation } from 'react-type-animation'
 import AudioPlayer from 'react-h5-audio-player'
 import 'react-h5-audio-player/lib/styles.css'
@@ -49,6 +49,11 @@ export default function HomePage({ user, isAdmin }) {
     const [publishCover, setPublishCover] = useState(null)
     const [isPublishing, setIsPublishing] = useState(false)
     const [isPlayerHovered, setIsPlayerHovered] = useState(false)
+
+    // Progresso suave do player com Framer Motion
+    const progressValue = useMotionValue(0)
+    const smoothProgress = useSpring(progressValue, { damping: 30, stiffness: 300 })
+    const progressWidth = useTransform(smoothProgress, (v) => `${v}%`)
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         accept: { 'image/*': [] },
@@ -769,7 +774,15 @@ export default function HomePage({ user, isAdmin }) {
                                             )}
                                         </AnimatePresence>
                                         <div style={{ width: '100%', height: '4px', background: '#333', borderRadius: '2px', overflow: 'hidden' }}>
-                                            <div className="minimized-progress" style={{ width: '0%', height: '100%', background: '#FCFBF8', borderRadius: '2px' }} />
+                                            <motion.div
+                                                style={{
+                                                    width: progressWidth,
+                                                    height: '100%',
+                                                    background: '#FCFBF8',
+                                                    borderRadius: '2px',
+                                                    willChange: 'width'
+                                                }}
+                                            />
                                         </div>
                                     </div>
 
@@ -821,9 +834,9 @@ export default function HomePage({ user, isAdmin }) {
                                                 onPause={() => setIsPlaying(false)}
                                                 onEnded={() => setIsPlaying(false)}
                                                 onListen={(e) => {
-                                                    const minProgress = document.querySelector('.minimized-progress')
-                                                    if (minProgress && e.target.duration) {
-                                                        minProgress.style.width = `${(e.target.currentTime / e.target.duration) * 100}%`
+                                                    if (e.target.duration) {
+                                                        const percent = (e.target.currentTime / e.target.duration) * 100
+                                                        progressValue.set(percent)
                                                     }
                                                 }}
                                             />
