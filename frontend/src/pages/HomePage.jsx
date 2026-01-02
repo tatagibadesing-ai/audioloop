@@ -51,22 +51,20 @@ export default function HomePage({ user, isAdmin }) {
     const [isPlayerHovered, setIsPlayerHovered] = useState(false)
     const [playerProgress, setPlayerProgress] = useState(0)
 
-    // Sincronização suave do player (estilo loading bar)
+    // Sincronização suave do player (estilo idêntico ao loading bar)
     useEffect(() => {
-        let rafId
-        const loop = () => {
-            if (playerRef.current?.audio?.current) {
-                const audio = playerRef.current.audio.current
-                if (!audio.paused && audio.duration) {
-                    setPlayerProgress((audio.currentTime / audio.duration) * 100)
+        let intervalId
+        if (isPlaying) {
+            intervalId = setInterval(() => {
+                if (playerRef.current?.audio?.current) {
+                    const audio = playerRef.current.audio.current
+                    if (!audio.paused && audio.duration) {
+                        setPlayerProgress((audio.currentTime / audio.duration) * 100)
+                    }
                 }
-            }
-            if (isPlaying) {
-                rafId = requestAnimationFrame(loop)
-            }
+            }, 100) // Atualiza a cada 100ms, igual à barra de loading
         }
-        if (isPlaying) loop()
-        return () => cancelAnimationFrame(rafId)
+        return () => clearInterval(intervalId)
     }, [isPlaying])
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
