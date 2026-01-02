@@ -163,7 +163,7 @@ body {
 .rhap_progress-filled {
   background: #FCFBF8 !important;
   border-radius: 2px !important;
-  transition: none !important;
+  transition: width 0.15s linear !important;
 }
 
 .rhap_progress-indicator {
