@@ -515,6 +515,7 @@ function HomePage({ user, isAdmin }) {
     const [publishDesc, setPublishDesc] = useState('')
     const [publishCover, setPublishCover] = useState(null)
     const [isPublishing, setIsPublishing] = useState(false)
+    const [isPlayerHovered, setIsPlayerHovered] = useState(false)
 
     const handlePublish = async () => {
         if (!publishTitle.trim()) return alert('Digite um título')
@@ -1072,7 +1073,9 @@ function HomePage({ user, isAdmin }) {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 100 }}
                             transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-                            onClick={isPlayerMinimized && !isLoading ? () => setIsPlayerMinimized(false) : undefined}
+                            onMouseEnter={() => isPlayerMinimized && !isLoading && setIsPlayerHovered(true)}
+                            onMouseLeave={() => setIsPlayerHovered(false)}
+                            onClick={isPlayerMinimized && !isLoading ? () => { setIsPlayerMinimized(false); setIsPlayerHovered(false); } : undefined}
                             style={{
                                 position: 'fixed', bottom: 0, left: '260px', right: 0,
                                 background: '#0a0a0a', boxShadow: '0 -10px 40px rgba(0,0,0,0.6)',
@@ -1082,6 +1085,49 @@ function HomePage({ user, isAdmin }) {
                                 cursor: isPlayerMinimized && !isLoading ? 'pointer' : 'default'
                             }}
                         >
+                            <AnimatePresence>
+                                {isPlayerHovered && isPlayerMinimized && !isLoading && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                                        transition={{ duration: 0.2, ease: "easeOut" }}
+                                        style={{
+                                            position: 'absolute',
+                                            bottom: '100%',
+                                            left: '50%',
+                                            transform: 'translateX(-50%)',
+                                            marginBottom: '12px',
+                                            background: '#FCFBF8',
+                                            color: '#0a0a0a',
+                                            padding: '4px 10px',
+                                            borderRadius: '6px',
+                                            fontSize: '11px',
+                                            fontWeight: '500',
+                                            whiteSpace: 'nowrap',
+                                            boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+                                            pointerEvents: 'none',
+                                            zIndex: 10001,
+                                            letterSpacing: '0.01em',
+                                            fontFamily: "'Inter', sans-serif"
+                                        }}
+                                    >
+                                        Expandir Player
+                                        {/* Triângulo (Seta) */}
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '100%',
+                                            left: '50%',
+                                            transform: 'translateX(-50%)',
+                                            width: 0,
+                                            height: 0,
+                                            borderLeft: '5px solid transparent',
+                                            borderRight: '5px solid transparent',
+                                            borderTop: '5px solid #FCFBF8',
+                                        }} />
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                             {isLoading ? (
                                 <div style={{ maxWidth: '1200px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
                                     {/* Left: Info */}
