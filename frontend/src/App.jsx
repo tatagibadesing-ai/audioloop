@@ -83,6 +83,81 @@ const estimateAudioDuration = (text) => {
     return formatTime(seconds)
 }
 
+// Componente de Botão com Tooltip Animado
+const HoverActionButton = ({ icon: Icon, label, onClick }) => {
+    const [isHovered, setIsHovered] = useState(false)
+
+    return (
+        <div
+            style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
+            <AnimatePresence>
+                {isHovered && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
+                        style={{
+                            position: 'absolute',
+                            bottom: '100%',
+                            marginBottom: '12px',
+                            background: '#FCFBF8',
+                            color: '#0a0a0a',
+                            padding: '6px 14px',
+                            borderRadius: '8px',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            whiteSpace: 'nowrap',
+                            boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+                            pointerEvents: 'none',
+                            zIndex: 100,
+                            letterSpacing: '0.02em',
+                            fontFamily: "'Inter', sans-serif"
+                        }}
+                    >
+                        {label}
+                        {/* Triângulo (Seta) */}
+                        <div style={{
+                            position: 'absolute',
+                            top: '100%',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            width: 0,
+                            height: 0,
+                            borderLeft: '5px solid transparent',
+                            borderRight: '5px solid transparent',
+                            borderTop: '5px solid #FCFBF8',
+                        }} />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <motion.button
+                onClick={onClick}
+                whileHover={{ scale: 1.1, color: '#FCFBF8' }}
+                whileTap={{ scale: 0.9 }}
+                style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: isHovered ? '#FCFBF8' : '#666',
+                    cursor: 'pointer',
+                    padding: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'color 0.2s ease',
+                    borderRadius: '50%'
+                }}
+            >
+                <Icon size={20} weight={isHovered ? "fill" : "bold"} />
+            </motion.button>
+        </div>
+    )
+}
+
 // ==================== COMPONENTE PRINCIPAL ====================
 export default function App() {
     const [page, setPage] = useState(window.location.hash === '#admin' ? 'admin' : 'home')
@@ -1112,24 +1187,24 @@ function HomePage({ user, isAdmin }) {
                                         </div>
 
                                         {/* Right: Actions */}
-                                        <div style={{ width: '230px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', flexShrink: 0 }}>
+                                        <div style={{ width: '230px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px', flexShrink: 0 }}>
                                             {isAdmin && (
-                                                <motion.button
-                                                    whileHover={{ scale: 1.1, color: '#FCFBF8' }}
-                                                    whileTap={{ scale: 0.95 }}
+                                                <HoverActionButton
+                                                    icon={UploadSimple}
+                                                    label="Publicar Audiobook"
                                                     onClick={() => setIsPublishModalOpen(true)}
-                                                    title="Publicar Audiobook"
-                                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', color: '#666', cursor: 'pointer', padding: '6px', transition: 'color 0.2s' }}>
-                                                    <UploadSimple size={20} weight="bold" />
-                                                </motion.button>
+                                                />
                                             )}
-
-                                            <motion.button whileHover={{ scale: 1.1, color: '#FCFBF8' }} whileTap={{ scale: 0.95 }} onClick={handleDownload} title="Baixar MP3" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', color: '#666', cursor: 'pointer', padding: '6px', transition: 'color 0.2s' }}>
-                                                <DownloadSimple size={18} weight="bold" />
-                                            </motion.button>
-                                            <motion.button whileHover={{ scale: 1.1, color: '#FCFBF8' }} whileTap={{ scale: 0.95 }} onClick={() => setIsPlayerMinimized(true)} title="Minimizar player" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', color: '#666', cursor: 'pointer', padding: '6px', transition: 'color 0.2s' }}>
-                                                <CaretDown size={18} weight="bold" />
-                                            </motion.button>
+                                            <HoverActionButton
+                                                icon={DownloadSimple}
+                                                label="Baixar MP3"
+                                                onClick={handleDownload}
+                                            />
+                                            <HoverActionButton
+                                                icon={CaretDown}
+                                                label="Minimizar"
+                                                onClick={() => setIsPlayerMinimized(true)}
+                                            />
                                         </div>
                                     </div>
                                 </>
