@@ -180,9 +180,10 @@ def split_text_for_google(text, limit=4500):
 
 
 def generate_audio_google(text: str, voice_name: str, output_path: str):
-    """Gera áudio usando Google Cloud TTS via REST API com suporte a textos longos"""
+    """Gera áudio usando Google Cloud TTS via REST API com processamento PARALELO para velocidade"""
     import requests
     import base64
+    from concurrent.futures import ThreadPoolExecutor
     
     GOOGLE_API_KEY = os.environ.get('GOOGLE_TTS_API_KEY', '')
     
@@ -198,21 +199,17 @@ def generate_audio_google(text: str, voice_name: str, output_path: str):
         
         # Divide o texto em pedaços seguros
         chunks = split_text_for_google(text)
-        combined_audio = b""
         
-        print(f"🔄 Processando {len(chunks)} partes com Google TTS...", flush=True)
-        
-        for i, chunk in enumerate(chunks):
-            if not chunk.strip():
-                continue
+        print(f"🔄 Processando {len(chunks)} partes com Google TTS em PARALELO...", flush=True)
 
-            # Payload para a API
+        def fetch_chunk(i_chunk):
+            i, chunk = i_chunk
+            if not chunk.strip():
+                return i, b""
+            
             payload = {
                 "input": {"text": chunk},
-                "voice": {
-                    "languageCode": language_code,
-                    "name": voice_name
-                },
+                "voice": {"languageCode": language_code, "name": voice_name},
                 "audioConfig": {
                     "audioEncoding": "OGG_OPUS",
                     "sampleRateHertz": 24000,
@@ -221,17 +218,21 @@ def generate_audio_google(text: str, voice_name: str, output_path: str):
                 }
             }
             
-            # Chamada à API
-            response = requests.post(url, json=payload)
-            
-            if response.status_code != 200:
-                error_msg = response.json().get('error', {}).get('message', 'Erro desconhecido')
-                print(f"❌ Erro no chunk {i+1}: {error_msg}")
+            resp = requests.post(url, json=payload)
+            if resp.status_code != 200:
+                error_msg = resp.json().get('error', {}).get('message', 'Erro desconhecido')
                 raise Exception(f"Google TTS API error (Chunk {i+1}): {error_msg}")
             
-            # Decodifica e concatena
-            chunk_content = base64.b64decode(response.json()['audioContent'])
-            combined_audio += chunk_content
+            return i, base64.b64decode(resp.json()['audioContent'])
+
+        # Dispara requisições em paralelo (máximo 10 ao mesmo tempo para não ser bloqueado)
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            # i_chunk é (index, text)
+            results = list(executor.map(fetch_chunk, enumerate(chunks)))
+
+        # Ordena os resultados pelo índice original e combina o áudio
+        results.sort(key=lambda x: x[0])
+        combined_audio = b"".join([r[1] for r in results])
             
         # Salva o arquivo final
         with open(output_path, "wb") as out:
