@@ -121,7 +121,7 @@ export default function App() {
                 {page === 'admin' ? (
                     <AdminPage user={user} isAdmin={isAdmin} setShowLoginModal={setShowLoginModal} />
                 ) : (
-                    <HomePage user={user} />
+                    <HomePage user={user} isAdmin={isAdmin} />
                 )}
             </main>
 
@@ -421,7 +421,7 @@ function LoginModal({ onClose }) {
 }
 
 // ==================== PÁGINA HOME (Gerador) ====================
-function HomePage({ user }) {
+function HomePage({ user, isAdmin }) {
     const [text, setText] = useState("")
     const [voice, setVoice] = useState("pt-BR-AntonioNeural")
     const [isLoading, setIsLoading] = useState(false)
