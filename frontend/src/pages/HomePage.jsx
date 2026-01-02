@@ -50,10 +50,10 @@ export default function HomePage({ user, isAdmin }) {
     const [isPublishing, setIsPublishing] = useState(false)
     const [isPlayerHovered, setIsPlayerHovered] = useState(false)
 
-    // Progresso suave do player com Framer Motion
-    const progressValue = useMotionValue(0)
-    const smoothProgress = useSpring(progressValue, { damping: 30, stiffness: 300 })
-    const progressWidth = useTransform(smoothProgress, (v) => `${v}%`)
+    // Motion values para a barra de progresso suave
+    const progressMV = useMotionValue(0)
+    const smoothProgress = useSpring(progressMV, { damping: 20, stiffness: 100, restDelta: 0.001 })
+    const progressWidth = useTransform(smoothProgress, v => `${v}%`)
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         accept: { 'image/*': [] },
@@ -779,8 +779,7 @@ export default function HomePage({ user, isAdmin }) {
                                                     width: progressWidth,
                                                     height: '100%',
                                                     background: '#FCFBF8',
-                                                    borderRadius: '2px',
-                                                    willChange: 'width'
+                                                    borderRadius: '2px'
                                                 }}
                                             />
                                         </div>
@@ -835,8 +834,8 @@ export default function HomePage({ user, isAdmin }) {
                                                 onEnded={() => setIsPlaying(false)}
                                                 onListen={(e) => {
                                                     if (e.target.duration) {
-                                                        const percent = (e.target.currentTime / e.target.duration) * 100
-                                                        progressValue.set(percent)
+                                                        const current = (e.target.currentTime / e.target.duration) * 100
+                                                        progressMV.set(current)
                                                     }
                                                 }}
                                             />
