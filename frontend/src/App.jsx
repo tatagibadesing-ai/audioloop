@@ -1120,7 +1120,6 @@ function HomePage({ user, isAdmin }) {
                                 </div>
                             ) : (
                                 <>
-                                    {/* Minimized View */}
                                     <div style={{
                                         maxWidth: '400px', width: '100%', margin: '0 auto',
                                         display: isPlayerMinimized ? 'flex' : 'none',
@@ -1137,8 +1136,10 @@ function HomePage({ user, isAdmin }) {
                                                     style={{
                                                         position: 'absolute',
                                                         bottom: '100%',
-                                                        left: '50%',
-                                                        transform: 'translateX(-50%)',
+                                                        left: 0,
+                                                        right: 0,
+                                                        margin: '0 auto',
+                                                        width: 'max-content',
                                                         marginBottom: '16px',
                                                         background: '#FCFBF8',
                                                         color: '#0a0a0a',
@@ -1151,7 +1152,8 @@ function HomePage({ user, isAdmin }) {
                                                         pointerEvents: 'none',
                                                         zIndex: 10001,
                                                         letterSpacing: '0.01em',
-                                                        fontFamily: "'Inter', sans-serif"
+                                                        fontFamily: "'Inter', sans-serif",
+                                                        textAlign: 'center'
                                                     }}
                                                 >
                                                     Expandir Player
