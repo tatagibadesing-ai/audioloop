@@ -1,10 +1,20 @@
 import { useState, useRef, useEffect } from "react"
-import { createClient } from '@supabase/supabase-js'
 import { motion, AnimatePresence } from "framer-motion"
 import { TypeAnimation } from 'react-type-animation'
 import AudioPlayer from 'react-h5-audio-player'
 import 'react-h5-audio-player/lib/styles.css'
 import { useDropzone } from 'react-dropzone'
+
+// Componentes extraídos
+import Sidebar from './components/layout/Sidebar'
+import LoginModal from './components/modals/LoginModal'
+import HoverActionButton from './components/ui/HoverActionButton'
+
+// Serviços e constantes
+import { supabase } from './services/supabase'
+import { API_URL, ADMIN_EMAIL, VOICES, formatTime, estimateAudioDuration } from './constants'
+
+// Ícones usados no App principal e páginas
 import {
     CaretDown,
     CaretUp,
@@ -17,147 +27,14 @@ import {
     X,
     Play,
     Pause,
-    SignOut,
-    House,
-    Layout,
-    UserCircle,
-    MagnifyingGlass,
-    SquaresFour,
-    Star,
     UploadSimple,
     CheckCircle,
-    Compass,
-    Cube,
-    BookOpen,
-    Gear,
     Plus,
-    Gift,
     SpeakerHigh,
     SpeakerSlash,
     CircleNotch,
-    Microphone,
-    ClockCounterClockwise,
-    Books,
-    MagicWand,
-    Faders,
-    Playlist
+    ClockCounterClockwise
 } from "@phosphor-icons/react"
-
-// Configuração
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || ''
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
-const supabase = SUPABASE_URL && SUPABASE_ANON_KEY
-    ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-    : null
-
-const API_URL = import.meta.env.VITE_API_URL ||
-    (window.location.hostname === 'localhost' ? 'http://localhost:5000' :
-        window.location.origin.replace(':3000', ':5000'))
-
-// Email do admin (hardcoded para segurança - verificação dupla no backend)
-const ADMIN_EMAIL = '2closett@gmail.com'
-
-const VOICES = [
-    { value: 'pt-BR-AntonioNeural', label: 'Antonio BR', provider: 'edge', image: '/masculino1.webp' },
-    { value: 'pt-BR-Neural2-B', label: 'Bruno BR', provider: 'google', image: '/masculino2.webp' },
-    { value: 'pt-BR-FranciscaNeural', label: 'Francisca BR', provider: 'edge', image: '/feminino1.webp' },
-    { value: 'pt-BR-ThalitaMultilingualNeural', label: 'Thalita BR', provider: 'edge', image: '/femino2.webp' },
-    { value: 'pt-BR-Wavenet-C', label: 'Fernanda BR', provider: 'google', image: '/feminino 3.webp' },
-]
-
-const formatTime = (seconds) => {
-    if (seconds <= 0) return "0s"
-    if (seconds < 60) return `${Math.round(seconds)}s`
-    if (seconds < 3600) {
-        const m = Math.floor(seconds / 60)
-        const s = Math.round(seconds % 60)
-        return s > 0 ? `${m}m ${s}s` : `${m}m`
-    }
-    const h = Math.floor(seconds / 3600)
-    const m = Math.floor((seconds % 3600) / 60)
-    return m > 0 ? `${h}h ${m}m` : `${h}h`
-}
-
-const estimateAudioDuration = (text) => {
-    const words = text.trim().split(/\s+/).length
-    const seconds = Math.ceil(words / 150 * 60)
-    return formatTime(seconds)
-}
-
-// Componente de Botão com Tooltip Animado
-const HoverActionButton = ({ icon: Icon, label, onClick }) => {
-    const [isHovered, setIsHovered] = useState(false)
-
-    return (
-        <div
-            style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-        >
-            <AnimatePresence>
-                {isHovered && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
-                        style={{
-                            position: 'absolute',
-                            bottom: '100%',
-                            marginBottom: '12px',
-                            background: '#FCFBF8',
-                            color: '#0a0a0a',
-                            padding: '4px 10px',
-                            borderRadius: '6px',
-                            fontSize: '11px',
-                            fontWeight: '500',
-                            whiteSpace: 'nowrap',
-                            boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
-                            pointerEvents: 'none',
-                            zIndex: 100,
-                            letterSpacing: '0.01em',
-                            fontFamily: "'Inter', sans-serif"
-                        }}
-                    >
-                        {label}
-                        {/* Triângulo (Seta) */}
-                        <div style={{
-                            position: 'absolute',
-                            top: '100%',
-                            left: '50%',
-                            transform: 'translateX(-50%)',
-                            width: 0,
-                            height: 0,
-                            borderLeft: '5px solid transparent',
-                            borderRight: '5px solid transparent',
-                            borderTop: '5px solid #FCFBF8',
-                        }} />
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            <motion.button
-                onClick={onClick}
-                whileHover={{ scale: 1.1, color: '#FCFBF8' }}
-                whileTap={{ scale: 0.9 }}
-                style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: isHovered ? '#FCFBF8' : '#666',
-                    cursor: 'pointer',
-                    padding: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'color 0.2s ease',
-                    borderRadius: '50%'
-                }}
-            >
-                <Icon size={20} weight="bold" />
-            </motion.button>
-        </div>
-    )
-}
 
 // ==================== COMPONENTE PRINCIPAL ====================
 export default function App() {
@@ -191,7 +68,7 @@ export default function App() {
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh', background: '#e9e9e9' }}>
-            <Sidebar user={user} isAdmin={isAdmin} setShowLoginModal={setShowLoginModal} />
+            <Sidebar user={user} isAdmin={isAdmin} setShowLoginModal={setShowLoginModal} supabase={supabase} />
 
             <main style={{ marginLeft: '260px', flex: 1, position: 'relative', width: 'calc(100% - 260px)' }}>
                 {page === 'admin' ? (
@@ -203,295 +80,9 @@ export default function App() {
 
             <AnimatePresence>
                 {showLoginModal && (
-                    <LoginModal onClose={() => setShowLoginModal(false)} />
+                    <LoginModal onClose={() => setShowLoginModal(false)} supabase={supabase} />
                 )}
             </AnimatePresence>
-        </div>
-    )
-}
-
-// ==================== SIDEBAR ====================
-function Sidebar({ user, isAdmin, setShowLoginModal }) {
-    const handleLogout = async () => {
-        if (supabase) await supabase.auth.signOut()
-    }
-
-    const MenuItem = ({ icon: Icon, label, isActive, onClick, isComingSoon }) => (
-        <button
-            onClick={onClick}
-            style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '8px 12px',
-                background: isActive ? 'rgba(255,255,255,0.08)' : 'transparent',
-                border: 'none',
-                borderRadius: '8px',
-                color: isActive ? '#fff' : '#888',
-                cursor: 'pointer',
-                textAlign: 'left',
-                fontSize: '14px',
-                fontWeight: '500',
-                transition: 'all 0.2s',
-                marginBottom: '2px',
-                position: 'relative'
-            }}
-            onMouseEnter={e => {
-                if (!isActive) {
-                    e.currentTarget.style.color = '#fff';
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-                }
-            }}
-            onMouseLeave={e => {
-                if (!isActive) {
-                    e.currentTarget.style.color = '#888';
-                    e.currentTarget.style.background = 'transparent';
-                }
-            }}
-        >
-            <Icon size={18} weight={isActive ? "fill" : "regular"} />
-            {label}
-            {isComingSoon && (
-                <span style={{ fontSize: '10px', background: '#333', padding: '2px 6px', borderRadius: '4px', marginLeft: 'auto', color: '#888' }}>
-                    Em breve
-                </span>
-            )}
-        </button>
-    );
-
-    const SectionTitle = ({ label }) => (
-        <div style={{
-            fontSize: '12px',
-            fontWeight: '600',
-            color: '#444',
-            marginTop: '24px',
-            marginBottom: '8px',
-            paddingLeft: '12px',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px'
-        }}>
-            {label}
-        </div>
-    );
-
-    return (
-        <aside style={{
-            width: '260px',
-            height: '100vh',
-            background: '#0a0a0a',
-            borderRight: '1px solid #222',
-            display: 'flex',
-            flexDirection: 'column',
-            padding: '24px 16px',
-            boxSizing: 'border-box',
-            position: 'fixed',
-            left: 0,
-            top: 0,
-            zIndex: 1000,
-            color: '#fff'
-        }}>
-            {/* Logo Area */}
-            <div style={{ marginBottom: '24px', paddingLeft: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <img
-                    src="https://rlbaboiwngviskgsaomb.supabase.co/storage/v1/object/sign/imagens/audiolooplogo.webp?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8zMGJmN2E4Ny00MDc3LTQ5ZWItYjc1Ni1lNDk2M2Y5MmMzMTciLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZW5zL2F1ZGlvbG9vcGxvZ28ud2VicCIsImlhdCI6MTc2NzI5NzAwMywiZXhwIjoyNTczMzIyNjAzfQ.VQQrRWT3AqlUcUaWXToP7ZoGSvnKIqr3l-Q9HZp-FdI"
-                    alt="AudioLoop"
-                    style={{ width: '32px', height: '32px', borderRadius: '8px', objectFit: 'contain' }}
-                />
-                <span style={{ fontWeight: '600', fontSize: '16px' }}>AudioLoop</span>
-            </div>
-
-            {/* Workspace Selector Mockup */}
-            <div style={{
-                marginBottom: '24px',
-                background: '#161616',
-                border: '1px solid #2a2a2a',
-                borderRadius: '8px',
-                padding: '8px 12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                cursor: 'pointer'
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '20px', height: '20px', background: '#333', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px' }}>W</div>
-                    <span style={{ fontSize: '13px', fontWeight: '500' }}>Workspace</span>
-                </div>
-                <CaretDown size={12} color="#666" />
-            </div>
-
-            {/* Main Menu */}
-            {/* Main Menu */}
-            <nav style={{ flex: 1, overflowY: 'auto' }}>
-                <SectionTitle label="Estúdio" />
-                <MenuItem icon={House} label="Gerar Áudio" isActive={true} onClick={() => window.location.hash = '#'} />
-                <MenuItem icon={MagicWand} label="Modelo IA" isComingSoon />
-
-                <SectionTitle label="Biblioteca" />
-                <MenuItem icon={Books} label="Meus Livros" />
-                <MenuItem icon={Playlist} label="Playlists" />
-
-                <SectionTitle label="Explorar" />
-                <MenuItem icon={Microphone} label="Vozes" />
-                <MenuItem icon={BookOpen} label="Audiobooks" />
-
-                {isAdmin && (
-                    <>
-                        <SectionTitle label="Admin" />
-                        <MenuItem icon={Gear} label="Painel Admin" onClick={() => window.location.hash = '#admin'} />
-                    </>
-                )}
-            </nav>
-
-            {/* Footer */}
-            <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid #222' }}>
-                <MenuItem icon={Gift} label="Compartilhar" />
-
-                <div style={{
-                    marginTop: '12px',
-                    background: '#161616',
-                    padding: '12px',
-                    borderRadius: '12px',
-                    border: '1px solid #222',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px'
-                }}>
-                    {user ? (
-                        <>
-                            <div style={{
-                                width: '36px', height: '36px',
-                                background: '#333', borderRadius: '50%',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                color: '#aaa'
-                            }}>
-                                <UserCircle size={24} />
-                            </div>
-                            <div style={{ flex: 1, overflow: 'hidden' }}>
-                                <div style={{ fontSize: '13px', fontWeight: '500', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    {user.email?.split('@')[0]}
-                                </div>
-                                <div style={{ fontSize: '11px', color: '#666' }}>{isAdmin ? 'Plano Admin' : 'Plano Grátis'}</div>
-                            </div>
-                            <button onClick={handleLogout} title="Sair" style={{ background: 'transparent', border: 'none', color: '#666', cursor: 'pointer' }}>
-                                <SignOut size={16} />
-                            </button>
-                        </>
-                    ) : (
-                        <button
-                            onClick={() => setShowLoginModal(true)}
-                            style={{
-                                width: '100%',
-                                background: '#fff',
-                                color: '#000',
-                                border: 'none',
-                                padding: '8px',
-                                borderRadius: '6px',
-                                fontWeight: '600',
-                                fontSize: '13px',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            Log in / Sign up
-                        </button>
-                    )}
-                </div>
-            </div>
-        </aside>
-    )
-}
-
-// ==================== MODAL DE LOGIN ====================
-function LoginModal({ onClose }) {
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
-    const [error, setError] = useState('')
-    const [loading, setLoading] = useState(false)
-    const [mode, setMode] = useState('login') // login ou signup
-
-    const handleSubmit = async (e) => {
-        e.preventDefault()
-        if (!supabase) return alert('Supabase não configurado')
-
-        setLoading(true)
-        setError('')
-
-        try {
-            if (mode === 'login') {
-                const { error } = await supabase.auth.signInWithPassword({ email, password })
-                if (error) throw error
-                onClose()
-            } else {
-                const { error } = await supabase.auth.signUp({ email, password })
-                if (error) throw error
-                setError('Verifique seu email para confirmar o cadastro!')
-            }
-        } catch (e) {
-            setError(e.message || 'Erro')
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    return (
-        <div style={{
-            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200
-        }} onClick={onClose}>
-            <div style={{
-                background: '#fff', borderRadius: '16px', padding: '32px',
-                width: '90%', maxWidth: '400px', boxShadow: '0 25px 50px rgba(0,0,0,0.25)'
-            }} onClick={e => e.stopPropagation()}>
-                <h2 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '24px', textAlign: 'center' }}>
-                    {mode === 'login' ? 'Entrar' : 'Criar Conta'}
-                </h2>
-
-                <form onSubmit={handleSubmit}>
-                    <input
-                        type="email" placeholder="Email" value={email}
-                        onChange={e => setEmail(e.target.value)} required
-                        style={{
-                            width: '100%', padding: '12px 16px', marginBottom: '12px',
-                            border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '16px', boxSizing: 'border-box'
-                        }}
-                    />
-                    <input
-                        type="password" placeholder="Senha (mín. 6 caracteres)" value={password}
-                        onChange={e => setPassword(e.target.value)} required minLength={6}
-                        style={{
-                            width: '100%', padding: '12px 16px', marginBottom: '16px',
-                            border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '16px', boxSizing: 'border-box'
-                        }}
-                    />
-
-                    {error && (
-                        <p style={{
-                            color: error.includes('Verifique') ? '#22c55e' : '#ef4444',
-                            fontSize: '14px', marginBottom: '12px', textAlign: 'center'
-                        }}>
-                            {error}
-                        </p>
-                    )}
-
-                    <button type="submit" disabled={loading} style={{
-                        width: '100%', padding: '12px', background: '#2546C7',
-                        color: '#fff', border: 'none', borderRadius: '8px',
-                        fontSize: '16px', fontWeight: '500', cursor: 'pointer', marginBottom: '12px'
-                    }}>
-                        {loading ? 'Aguarde...' : (mode === 'login' ? 'Entrar' : 'Cadastrar')}
-                    </button>
-
-                    <button type="button" onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
-                        style={{
-                            width: '100%', padding: '12px', background: 'transparent',
-                            color: '#2546C7', border: '1px solid #2546C7', borderRadius: '8px',
-                            fontSize: '14px', cursor: 'pointer'
-                        }}>
-                        {mode === 'login' ? 'Não tem conta? Cadastre-se' : 'Já tem conta? Entre'}
-                    </button>
-                </form>
-            </div>
         </div>
     )
 }
