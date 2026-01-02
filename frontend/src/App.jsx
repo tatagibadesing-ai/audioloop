@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { TypeAnimation } from 'react-type-animation'
 import AudioPlayer from 'react-h5-audio-player'
 import 'react-h5-audio-player/lib/styles.css'
+import { useDropzone } from 'react-dropzone'
 import {
     CaretDown,
     CaretUp,
@@ -517,6 +518,14 @@ function HomePage({ user, isAdmin }) {
     const [isPublishing, setIsPublishing] = useState(false)
     const [isPlayerHovered, setIsPlayerHovered] = useState(false)
 
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({
+        accept: { 'image/*': [] },
+        maxFiles: 1,
+        onDrop: acceptedFiles => {
+            setPublishCover(acceptedFiles[0])
+        }
+    })
+
     const handlePublish = async () => {
         if (!publishTitle.trim()) return alert('Digite um título')
         if (!audioUrl) return alert('Nenhum áudio para publicar')
@@ -1004,63 +1013,139 @@ function HomePage({ user, isAdmin }) {
                     </div>
                 </div>
 
-                {/* Modal de Publicação */}
+                {/* Modal de Publicação Melhorado */}
                 <AnimatePresence>
                     {isPublishModalOpen && (
                         <motion.div
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
                             style={{
-                                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                                background: 'rgba(0,0,0,0.85)', zIndex: 9999,
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px'
+                                position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000,
+                                backdropFilter: 'blur(10px)'
                             }}
+                            onClick={() => setIsPublishModalOpen(false)}
                         >
                             <motion.div
-                                initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                                onClick={e => e.stopPropagation()}
                                 style={{
-                                    width: '100%', maxWidth: '500px', background: '#1a1a1a',
-                                    borderRadius: '24px', padding: '32px', border: '1px solid rgba(255,255,255,0.1)'
+                                    width: '100%', maxWidth: '640px', background: '#0a0a0a',
+                                    borderRadius: '28px', padding: '40px', border: 'none',
+                                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)'
                                 }}
                             >
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-                                    <h2 style={{ fontSize: '24px', fontWeight: '600', color: '#FCFBF8', margin: 0 }}>Publicar Audiobook</h2>
-                                    <button onClick={() => setIsPublishModalOpen(false)} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer' }}>
-                                        <X size={24} />
-                                    </button>
-                                </div>
-
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                    <input
-                                        type="text" placeholder="Título do Audiobook"
-                                        value={publishTitle} onChange={e => setPublishTitle(e.target.value)}
-                                        style={{ width: '100%', padding: '12px 16px', background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#FCFBF8', fontSize: '15px', boxSizing: 'border-box' }}
-                                    />
-                                    <textarea
-                                        placeholder="Descrição" rows={4}
-                                        value={publishDesc} onChange={e => setPublishDesc(e.target.value)}
-                                        style={{ width: '100%', padding: '12px 16px', background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#FCFBF8', fontSize: '15px', resize: 'vertical', boxSizing: 'border-box' }}
-                                    />
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
                                     <div>
-                                        <label style={{ display: 'block', marginBottom: '8px', color: '#999', fontSize: '14px' }}>Capa (Opcional)</label>
-                                        <input
-                                            type="file" accept="image/*"
-                                            onChange={e => setPublishCover(e.target.files?.[0])}
-                                            style={{ color: '#FCFBF8' }}
-                                        />
+                                        <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#FCFBF8', margin: 0, letterSpacing: '-0.02em' }}>Publicar Audiobook</h2>
+                                        <p style={{ color: '#666', fontSize: '14px', marginTop: '4px' }}>Configure os detalhes do seu novo conteúdo</p>
                                     </div>
-
                                     <button
-                                        onClick={handlePublish} disabled={isPublishing}
+                                        onClick={() => setIsPublishModalOpen(false)}
                                         style={{
-                                            width: '100%', padding: '14px', marginTop: '8px',
-                                            background: isPublishing ? '#333' : '#FCFBF8',
-                                            color: isPublishing ? '#999' : '#0a0a0a',
-                                            border: 'none', borderRadius: '12px', fontSize: '16px', fontWeight: '600', cursor: isPublishing ? 'not-allowed' : 'pointer'
+                                            background: 'rgba(255,255,255,0.05)', border: 'none', color: '#666',
+                                            cursor: 'pointer', width: '40px', height: '40px', borderRadius: '50%',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            transition: 'all 0.2s'
                                         }}
                                     >
-                                        {isPublishing ? 'Publicando...' : 'Publicar Agora'}
+                                        <X size={20} />
                                     </button>
                                 </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 200px', gap: '24px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            <label style={{ color: '#888', fontSize: '13px', fontWeight: '500', marginLeft: '4px' }}>Título</label>
+                                            <input
+                                                type="text" placeholder="Dê um nome ao seu audiobook"
+                                                value={publishTitle} onChange={e => setPublishTitle(e.target.value)}
+                                                style={{
+                                                    width: '100%', padding: '16px', background: 'rgba(255,255,255,0.03)',
+                                                    border: 'none', borderRadius: '16px', color: '#FCFBF8',
+                                                    fontSize: '15px', boxSizing: 'border-box', outline: 'none',
+                                                    transition: 'background 0.2s'
+                                                }}
+                                            />
+                                        </div>
+
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            <label style={{ color: '#888', fontSize: '13px', fontWeight: '500', marginLeft: '4px' }}>Descrição</label>
+                                            <textarea
+                                                placeholder="O que os ouvintes devem saber?" rows={5}
+                                                value={publishDesc} onChange={e => setPublishDesc(e.target.value)}
+                                                style={{
+                                                    width: '100%', padding: '16px', background: 'rgba(255,255,255,0.03)',
+                                                    border: 'none', borderRadius: '16px', color: '#FCFBF8',
+                                                    fontSize: '15px', resize: 'none', boxSizing: 'border-box', outline: 'none',
+                                                    transition: 'background 0.2s'
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <label style={{ color: '#888', fontSize: '13px', fontWeight: '500', marginLeft: '4px' }}>Capa</label>
+                                        <div
+                                            {...getRootProps()}
+                                            style={{
+                                                width: '200px', height: '266px', background: 'rgba(255,255,255,0.03)',
+                                                borderRadius: '16px', border: isDragActive ? '2px dashed #FCFBF8' : '2px dashed rgba(255,255,255,0.1)',
+                                                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                                                cursor: 'pointer', overflow: 'hidden', position: 'relative',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            <input {...getInputProps()} />
+                                            {publishCover ? (
+                                                <>
+                                                    <img
+                                                        src={URL.createObjectURL(publishCover)}
+                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                        alt="Preview"
+                                                    />
+                                                    <div style={{
+                                                        position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        opacity: 0, transition: 'opacity 0.2s'
+                                                    }}
+                                                        onMouseEnter={e => e.currentTarget.style.opacity = 1}
+                                                        onMouseLeave={e => e.currentTarget.style.opacity = 0}
+                                                    >
+                                                        <PencilSimple size={24} color="#fff" />
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div style={{ textAlign: 'center', padding: '20px' }}>
+                                                    <Plus size={32} color="#444" style={{ marginBottom: '12px' }} />
+                                                    <p style={{ color: '#444', fontSize: '12px', margin: 0, lineHeight: '1.4' }}>Arraste aqui ou clique para selecionar</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={handlePublish} disabled={isPublishing}
+                                    style={{
+                                        width: '100%', padding: '18px', marginTop: '32px',
+                                        background: isPublishing ? '#333' : '#FCFBF8',
+                                        color: isPublishing ? '#999' : '#0a0a0a',
+                                        border: 'none', borderRadius: '18px', fontSize: '16px',
+                                        fontWeight: '700', cursor: isPublishing ? 'not-allowed' : 'pointer',
+                                        transition: 'all 0.2s'
+                                    }}
+                                >
+                                    {isPublishing ? (
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                                            <CircleNotch size={20} style={{ animation: 'spin 1s linear infinite' }} />
+                                            Publicando...
+                                        </div>
+                                    ) : 'Publicar Agora'}
+                                </button>
                             </motion.div>
                         </motion.div>
                     )}
