@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react"
-import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { TypeAnimation } from 'react-type-animation'
 import AudioPlayer from 'react-h5-audio-player'
 import 'react-h5-audio-player/lib/styles.css'
@@ -7,6 +7,7 @@ import { useDropzone } from 'react-dropzone'
 
 // Componentes
 import HoverActionButton from '../components/ui/HoverActionButton'
+import SmoothProgressBar from '../components/ui/SmoothProgressBar'
 
 // Serviços e constantes
 import { supabase } from '../services/supabase'
@@ -49,11 +50,6 @@ export default function HomePage({ user, isAdmin }) {
     const [publishCover, setPublishCover] = useState(null)
     const [isPublishing, setIsPublishing] = useState(false)
     const [isPlayerHovered, setIsPlayerHovered] = useState(false)
-
-    // Motion values para a barra de progresso suave
-    const progressMV = useMotionValue(0)
-    const smoothProgress = useSpring(progressMV, { damping: 20, stiffness: 100, restDelta: 0.001 })
-    const progressWidth = useTransform(smoothProgress, v => `${v}%`)
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         accept: { 'image/*': [] },
@@ -140,35 +136,6 @@ export default function HomePage({ user, isAdmin }) {
     const voiceSelectRef = useRef(null)
     const previewAudioRef = useRef(new Audio())
     const playerRef = useRef(null)
-
-    // Efeito para sincronização ultra-suave da barra de progresso (60FPS)
-    useEffect(() => {
-        let animationFrameId
-        const loop = () => {
-            if (playerRef.current && playerRef.current.audio && playerRef.current.audio.current) {
-                const audio = playerRef.current.audio.current
-                if (!audio.paused && audio.duration) {
-                    const current = (audio.currentTime / audio.duration) * 100
-                    progressMV.set(current)
-                }
-            }
-            animationFrameId = requestAnimationFrame(loop)
-        }
-
-        if (isPlaying) {
-            loop()
-        } else {
-            // Garante sincronia final ao pausar
-            if (playerRef.current && playerRef.current.audio && playerRef.current.audio.current) {
-                const audio = playerRef.current.audio.current
-                if (audio.duration) {
-                    const current = (audio.currentTime / audio.duration) * 100
-                    progressMV.set(current)
-                }
-            }
-        }
-        return () => cancelAnimationFrame(animationFrameId)
-    }, [isPlaying, progressMV])
 
     useEffect(() => {
         const preloadVoices = async () => {
@@ -802,16 +769,7 @@ export default function HomePage({ user, isAdmin }) {
                                                 </motion.div>
                                             )}
                                         </AnimatePresence>
-                                        <div style={{ width: '100%', height: '4px', background: '#333', borderRadius: '2px', overflow: 'hidden' }}>
-                                            <motion.div
-                                                style={{
-                                                    width: progressWidth,
-                                                    height: '100%',
-                                                    background: '#FCFBF8',
-                                                    borderRadius: '2px'
-                                                }}
-                                            />
-                                        </div>
+                                        <SmoothProgressBar playerRef={playerRef} isPlaying={isPlaying} />
                                     </div>
 
                                     {/* Full View */}
