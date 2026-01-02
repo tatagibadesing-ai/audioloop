@@ -10,9 +10,12 @@ import Sidebar from './components/layout/Sidebar'
 import LoginModal from './components/modals/LoginModal'
 import HoverActionButton from './components/ui/HoverActionButton'
 
+// Hooks customizados
+import { useAuth } from './hooks/useAuth'
+
 // Serviços e constantes
 import { supabase } from './services/supabase'
-import { API_URL, ADMIN_EMAIL, VOICES, formatTime, estimateAudioDuration } from './constants'
+import { API_URL, VOICES, formatTime, estimateAudioDuration } from './constants'
 
 // Ícones usados no App principal e páginas
 import {
@@ -39,22 +42,10 @@ import {
 // ==================== COMPONENTE PRINCIPAL ====================
 export default function App() {
     const [page, setPage] = useState(window.location.hash === '#admin' ? 'admin' : 'home')
-    const [user, setUser] = useState(null)
     const [showLoginModal, setShowLoginModal] = useState(false)
 
-    useEffect(() => {
-        if (!supabase) return
-
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setUser(session?.user ?? null)
-        })
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setUser(session?.user ?? null)
-        })
-
-        return () => subscription.unsubscribe()
-    }, [])
+    // Usar hook de autenticação
+    const { user, isAdmin, supabase } = useAuth()
 
     useEffect(() => {
         const handleHash = () => {
@@ -63,8 +54,6 @@ export default function App() {
         window.addEventListener('hashchange', handleHash)
         return () => window.removeEventListener('hashchange', handleHash)
     }, [])
-
-    const isAdmin = user?.email === ADMIN_EMAIL
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh', background: '#e9e9e9' }}>
