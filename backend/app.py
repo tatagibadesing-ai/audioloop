@@ -215,6 +215,7 @@ def generate_audio_google(text: str, voice_name: str, output_path: str):
                 },
                 "audioConfig": {
                     "audioEncoding": "OGG_OPUS",
+                    "sampleRateHertz": 24000,
                     "speakingRate": 1.0,
                     "pitch": 0.0
                 }
