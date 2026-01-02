@@ -829,6 +829,50 @@ def upload_cover():
         return jsonify({'error': f'Erro no upload: {str(e)}'}), 500
 
 
+@app.route('/api/upload/audio', methods=['POST'])
+@require_admin
+def upload_audio_file():
+    """
+    Faz upload de um arquivo de áudio para o Supabase Storage (apenas admin)
+    """
+    if 'file' not in request.files:
+        return jsonify({'error': 'Nenhum arquivo enviado'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'Nome de arquivo vazio'}), 400
+    
+    try:
+        # Gera nome único
+        ext = 'mp3'
+        if '.' in file.filename:
+            ext = file.filename.rsplit('.', 1)[-1].lower()
+            
+        filename = f"{uuid.uuid4()}.{ext}"
+        
+        # Upload para Supabase Storage (bucket 'audiobooks')
+        # Tenta criar o bucket se não existir? Não, a lib não faz isso fácil.
+        file_bytes = file.read()
+        
+        # Define content-type explicitamente
+        file_options = {"content-type": "audio/mpeg"}
+        
+        result = supabase.storage.from_('audiobooks').upload(filename, file_bytes, file_options)
+        
+        # Gera URL pública
+        public_url = f"{SUPABASE_URL}/storage/v1/object/public/audiobooks/{filename}"
+        
+        return jsonify({
+            'success': True,
+            'url': public_url,
+            'filename': filename
+        })
+    
+    except Exception as e:
+        print(f"Erro ao fazer upload de áudio: {e}")
+        return jsonify({'error': f'Erro no upload de áudio: {str(e)}'}), 500
+
+
 @app.route('/', methods=['GET'])
 def root():
     """Rota raiz para verificação básica"""

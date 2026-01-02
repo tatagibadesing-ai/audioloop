@@ -23,7 +23,8 @@ import {
     MagnifyingGlass,
     SquaresFour,
     Star,
-    Users,
+    UploadSimple,
+    CheckCircle,
     Compass,
     Cube,
     BookOpen,
@@ -433,6 +434,92 @@ function HomePage({ user }) {
     const [isPlayerMinimized, setIsPlayerMinimized] = useState(false) // Estado minimizado do player
     const [generationProgress, setGenerationProgress] = useState(0)
     const [timeLeft, setTimeLeft] = useState(0)
+
+    // Estados para publicação
+    const [isPublishModalOpen, setIsPublishModalOpen] = useState(false)
+    const [publishTitle, setPublishTitle] = useState('')
+    const [publishDesc, setPublishDesc] = useState('')
+    const [publishCover, setPublishCover] = useState(null)
+    const [isPublishing, setIsPublishing] = useState(false)
+
+    const handlePublish = async () => {
+        if (!publishTitle.trim()) return alert('Digite um título')
+        if (!audioUrl) return alert('Nenhum áudio para publicar')
+
+        setIsPublishing(true)
+        try {
+            const sessionData = await supabase.auth.getSession()
+            const token = sessionData.data.session?.access_token
+            if (!token) throw new Error("Não autenticado")
+
+            // 1. Converter AudioUrl (blob) para File
+            const audioBlob = await fetch(audioUrl).then(r => r.blob())
+            const audioFile = new File([audioBlob], `audiobook-${Date.now()}.mp3`, { type: 'audio/mpeg' })
+
+            // 2. Upload Audio
+            const audioFormData = new FormData()
+            audioFormData.append('file', audioFile)
+
+            const audioRes = await fetch(`${API_URL}/api/upload/audio`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: audioFormData
+            })
+
+            if (!audioRes.ok) {
+                const err = await audioRes.json()
+                throw new Error(err.error || 'Falha no upload do áudio')
+            }
+            const audioData = await audioRes.json()
+
+            // 3. Upload Cover (se houver)
+            let coverUrl = ''
+            if (publishCover) {
+                const coverFormData = new FormData()
+                coverFormData.append('file', publishCover)
+                const coverRes = await fetch(`${API_URL}/api/upload/cover`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: coverFormData
+                })
+                if (coverRes.ok) {
+                    const coverData = await coverRes.json()
+                    coverUrl = coverData.url
+                }
+            }
+
+            // 4. Create Audiobook
+            const createRes = await fetch(`${API_URL}/api/audiobooks`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    title: publishTitle,
+                    description: publishDesc,
+                    audio_url: audioData.url,
+                    cover_url: coverUrl,
+                    duration_seconds: playerRef.current?.audio?.current?.duration || 0
+                })
+            })
+
+            if (!createRes.ok) throw new Error('Falha ao criar registro')
+
+            alert('Audiobook publicado com sucesso!')
+            setIsPublishModalOpen(false)
+            setPublishTitle('')
+            setPublishDesc('')
+            setPublishCover(null)
+            loadAudiobooks()
+
+        } catch (e) {
+            alert(`Erro ao publicar: ${e.message}`)
+        } finally {
+            setIsPublishing(false)
+        }
+    }
+
     const voiceSelectRef = useRef(null)
     const previewAudioRef = useRef(new Audio())
     const playerRef = useRef(null)
@@ -842,6 +929,68 @@ function HomePage({ user }) {
                     </div>
                 </div>
 
+                {/* Modal de Publicação */}
+                <AnimatePresence>
+                    {isPublishModalOpen && (
+                        <motion.div
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            style={{
+                                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                                background: 'rgba(0,0,0,0.85)', zIndex: 9999,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px'
+                            }}
+                        >
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                                style={{
+                                    width: '100%', maxWidth: '500px', background: '#1a1a1a',
+                                    borderRadius: '24px', padding: '32px', border: '1px solid rgba(255,255,255,0.1)'
+                                }}
+                            >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+                                    <h2 style={{ fontSize: '24px', fontWeight: '600', color: '#FCFBF8', margin: 0 }}>Publicar Audiobook</h2>
+                                    <button onClick={() => setIsPublishModalOpen(false)} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer' }}>
+                                        <X size={24} />
+                                    </button>
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                    <input
+                                        type="text" placeholder="Título do Audiobook"
+                                        value={publishTitle} onChange={e => setPublishTitle(e.target.value)}
+                                        style={{ width: '100%', padding: '12px 16px', background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#FCFBF8', fontSize: '15px', boxSizing: 'border-box' }}
+                                    />
+                                    <textarea
+                                        placeholder="Descrição" rows={4}
+                                        value={publishDesc} onChange={e => setPublishDesc(e.target.value)}
+                                        style={{ width: '100%', padding: '12px 16px', background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#FCFBF8', fontSize: '15px', resize: 'vertical', boxSizing: 'border-box' }}
+                                    />
+                                    <div>
+                                        <label style={{ display: 'block', marginBottom: '8px', color: '#999', fontSize: '14px' }}>Capa (Opcional)</label>
+                                        <input
+                                            type="file" accept="image/*"
+                                            onChange={e => setPublishCover(e.target.files?.[0])}
+                                            style={{ color: '#FCFBF8' }}
+                                        />
+                                    </div>
+
+                                    <button
+                                        onClick={handlePublish} disabled={isPublishing}
+                                        style={{
+                                            width: '100%', padding: '14px', marginTop: '8px',
+                                            background: isPublishing ? '#333' : '#FCFBF8',
+                                            color: isPublishing ? '#999' : '#0a0a0a',
+                                            border: 'none', borderRadius: '12px', fontSize: '16px', fontWeight: '600', cursor: isPublishing ? 'not-allowed' : 'pointer'
+                                        }}
+                                    >
+                                        {isPublishing ? 'Publicando...' : 'Publicar Agora'}
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 <AnimatePresence>
                     {(audioUrl || isLoading) && (
                         <motion.div
@@ -965,6 +1114,17 @@ function HomePage({ user }) {
 
                                         {/* Right: Actions */}
                                         <div style={{ width: '230px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', flexShrink: 0 }}>
+                                            {isAdmin && (
+                                                <motion.button
+                                                    whileHover={{ scale: 1.1, color: '#FCFBF8' }}
+                                                    whileTap={{ scale: 0.95 }}
+                                                    onClick={() => setIsPublishModalOpen(true)}
+                                                    title="Publicar Audiobook"
+                                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', color: '#666', cursor: 'pointer', padding: '6px', transition: 'color 0.2s' }}>
+                                                    <UploadSimple size={20} weight="bold" />
+                                                </motion.button>
+                                            )}
+
                                             <motion.button whileHover={{ scale: 1.1, color: '#FCFBF8' }} whileTap={{ scale: 0.95 }} onClick={handleDownload} title="Baixar MP3" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', color: '#666', cursor: 'pointer', padding: '6px', transition: 'color 0.2s' }}>
                                                 <DownloadSimple size={18} weight="bold" />
                                             </motion.button>
