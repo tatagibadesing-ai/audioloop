@@ -141,6 +141,35 @@ export default function HomePage({ user, isAdmin }) {
     const previewAudioRef = useRef(new Audio())
     const playerRef = useRef(null)
 
+    // Efeito para sincronização ultra-suave da barra de progresso (60FPS)
+    useEffect(() => {
+        let animationFrameId
+        const loop = () => {
+            if (playerRef.current && playerRef.current.audio && playerRef.current.audio.current) {
+                const audio = playerRef.current.audio.current
+                if (!audio.paused && audio.duration) {
+                    const current = (audio.currentTime / audio.duration) * 100
+                    progressMV.set(current)
+                }
+            }
+            animationFrameId = requestAnimationFrame(loop)
+        }
+
+        if (isPlaying) {
+            loop()
+        } else {
+            // Garante sincronia final ao pausar
+            if (playerRef.current && playerRef.current.audio && playerRef.current.audio.current) {
+                const audio = playerRef.current.audio.current
+                if (audio.duration) {
+                    const current = (audio.currentTime / audio.duration) * 100
+                    progressMV.set(current)
+                }
+            }
+        }
+        return () => cancelAnimationFrame(animationFrameId)
+    }, [isPlaying, progressMV])
+
     useEffect(() => {
         const preloadVoices = async () => {
             const cache = {}
@@ -833,10 +862,7 @@ export default function HomePage({ user, isAdmin }) {
                                                 onPause={() => setIsPlaying(false)}
                                                 onEnded={() => setIsPlaying(false)}
                                                 onListen={(e) => {
-                                                    if (e.target.duration) {
-                                                        const current = (e.target.currentTime / e.target.duration) * 100
-                                                        progressMV.set(current)
-                                                    }
+                                                    // Sincronização é feita via requestAnimationFrame para fluidez
                                                 }}
                                             />
                                         </div>
