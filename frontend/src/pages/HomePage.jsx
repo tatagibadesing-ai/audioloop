@@ -7,7 +7,6 @@ import { useDropzone } from 'react-dropzone'
 
 // Componentes
 import HoverActionButton from '../components/ui/HoverActionButton'
-import SmoothProgressBar from '../components/ui/SmoothProgressBar'
 
 // Serviços e constantes
 import { supabase } from '../services/supabase'
@@ -50,6 +49,25 @@ export default function HomePage({ user, isAdmin }) {
     const [publishCover, setPublishCover] = useState(null)
     const [isPublishing, setIsPublishing] = useState(false)
     const [isPlayerHovered, setIsPlayerHovered] = useState(false)
+    const [playerProgress, setPlayerProgress] = useState(0)
+
+    // Sincronização suave do player (estilo loading bar)
+    useEffect(() => {
+        let rafId
+        const loop = () => {
+            if (playerRef.current?.audio?.current) {
+                const audio = playerRef.current.audio.current
+                if (!audio.paused && audio.duration) {
+                    setPlayerProgress((audio.currentTime / audio.duration) * 100)
+                }
+            }
+            if (isPlaying) {
+                rafId = requestAnimationFrame(loop)
+            }
+        }
+        if (isPlaying) loop()
+        return () => cancelAnimationFrame(rafId)
+    }, [isPlaying])
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         accept: { 'image/*': [] },
@@ -769,7 +787,13 @@ export default function HomePage({ user, isAdmin }) {
                                                 </motion.div>
                                             )}
                                         </AnimatePresence>
-                                        <SmoothProgressBar playerRef={playerRef} isPlaying={isPlaying} />
+                                        <div style={{ width: '100%', height: '4px', background: '#333', borderRadius: '2px', overflow: 'hidden' }}>
+                                            <motion.div
+                                                animate={{ width: `${playerProgress}%` }}
+                                                transition={{ ease: 'linear', duration: 0.1 }}
+                                                style={{ height: '100%', background: '#FCFBF8', borderRadius: '2px' }}
+                                            />
+                                        </div>
                                     </div>
 
                                     {/* Full View */}
