@@ -109,11 +109,9 @@ PREVIEW_TEXTS = {
 async def generate_audio_edge(text: str, voice: str, output_path: str):
     """Gera áudio usando Edge-TTS (Microsoft)"""
     try:
-        # Usamos webm-24khz-16bit-mono-opus por ser extremamente leve e de alta qualidade
-        # Embora a extensão seja .ogg no arquivo final, o stream opus é compatível
-        communicate = edge_tts.Communicate(text, voice, rate="+0%", volume="+0%", pitch="+0%")
-        # O edge-tts suporta especificar o formato. Opus é muito menor que MP3.
-        # Vamos usar o formato opus que é suportado nativamente pelo edge-tts
+        # Simplificado para evitar erros de 'Invalid pitch'. 
+        # O edge-tts já gera áudio otimizado por padrão.
+        communicate = edge_tts.Communicate(text, voice)
         await communicate.save(output_path)
     except Exception as e:
         print(f"❌ Erro no edge-tts: {str(e)}")
