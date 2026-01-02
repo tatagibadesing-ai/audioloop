@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useNavigate, useLocation } from "react-router-dom"
 import { motion } from "framer-motion"
 import {
     CaretDown,
@@ -15,6 +16,9 @@ import {
 } from "@phosphor-icons/react"
 
 export default function Sidebar({ user, isAdmin, setShowLoginModal, supabase }) {
+    const navigate = useNavigate()
+    const location = useLocation()
+
     const handleLogout = async () => {
         if (supabase) await supabase.auth.signOut()
     }
@@ -126,7 +130,7 @@ export default function Sidebar({ user, isAdmin, setShowLoginModal, supabase }) 
             {/* Main Menu */}
             <nav style={{ flex: 1, overflowY: 'auto' }}>
                 <SectionTitle label="Estúdio" />
-                <MenuItem icon={House} label="Gerar Áudio" isActive={true} onClick={() => window.location.hash = '#'} />
+                <MenuItem icon={House} label="Gerar Áudio" isActive={location.pathname === '/'} onClick={() => navigate('/')} />
                 <MenuItem icon={MagicWand} label="Modelo IA" isComingSoon />
 
                 <SectionTitle label="Biblioteca" />
@@ -140,7 +144,7 @@ export default function Sidebar({ user, isAdmin, setShowLoginModal, supabase }) 
                 {isAdmin && (
                     <>
                         <SectionTitle label="Admin" />
-                        <MenuItem icon={Gear} label="Painel Admin" onClick={() => window.location.hash = '#admin'} />
+                        <MenuItem icon={Gear} label="Painel Admin" isActive={location.pathname === '/admin'} onClick={() => navigate('/admin')} />
                     </>
                 )}
             </nav>

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react"
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { TypeAnimation } from 'react-type-animation'
 import AudioPlayer from 'react-h5-audio-player'
@@ -39,32 +40,17 @@ import {
     ClockCounterClockwise
 } from "@phosphor-icons/react"
 
-// ==================== COMPONENTE PRINCIPAL ====================
-export default function App() {
-    const [page, setPage] = useState(window.location.hash === '#admin' ? 'admin' : 'home')
+// ==================== LAYOUT PRINCIPAL ====================
+function AppLayout({ children }) {
     const [showLoginModal, setShowLoginModal] = useState(false)
-
-    // Usar hook de autenticação
     const { user, isAdmin, supabase } = useAuth()
-
-    useEffect(() => {
-        const handleHash = () => {
-            setPage(window.location.hash === '#admin' ? 'admin' : 'home')
-        }
-        window.addEventListener('hashchange', handleHash)
-        return () => window.removeEventListener('hashchange', handleHash)
-    }, [])
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh', background: '#e9e9e9' }}>
             <Sidebar user={user} isAdmin={isAdmin} setShowLoginModal={setShowLoginModal} supabase={supabase} />
 
             <main style={{ marginLeft: '260px', flex: 1, position: 'relative', width: 'calc(100% - 260px)' }}>
-                {page === 'admin' ? (
-                    <AdminPage user={user} isAdmin={isAdmin} setShowLoginModal={setShowLoginModal} />
-                ) : (
-                    <HomePage user={user} isAdmin={isAdmin} />
-                )}
+                {children({ user, isAdmin, setShowLoginModal })}
             </main>
 
             <AnimatePresence>
@@ -73,6 +59,22 @@ export default function App() {
                 )}
             </AnimatePresence>
         </div>
+    )
+}
+
+// ==================== COMPONENTE PRINCIPAL COM ROUTER ====================
+export default function App() {
+    return (
+        <BrowserRouter>
+            <AppLayout>
+                {({ user, isAdmin, setShowLoginModal }) => (
+                    <Routes>
+                        <Route path="/" element={<HomePage user={user} isAdmin={isAdmin} />} />
+                        <Route path="/admin" element={<AdminPage user={user} isAdmin={isAdmin} setShowLoginModal={setShowLoginModal} />} />
+                    </Routes>
+                )}
+            </AppLayout>
+        </BrowserRouter>
     )
 }
 
