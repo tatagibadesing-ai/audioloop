@@ -212,7 +212,7 @@ def generate_audio_google(text: str, voice_name: str, output_path: str):
                     "name": voice_name
                 },
                 "audioConfig": {
-                    "audioEncoding": "MP3",
+                    "audioEncoding": "OGG_OPUS",
                     "speakingRate": 1.0,
                     "pitch": 0.0
                 }
@@ -395,7 +395,11 @@ def generate_audiobook():
         
         # Gera um nome único para o arquivo
         file_id = str(uuid.uuid4())
-        output_filename = f'audiobook_{file_id}.mp3'
+        # Determina extensão baseado no provider (Google usa OGG, Edge usa MP3)
+        voice_config = AVAILABLE_VOICES.get(voice, {})
+        provider = voice_config.get('provider', 'edge') if isinstance(voice_config, dict) else 'edge'
+        ext = 'ogg' if provider == 'google' else 'mp3'
+        output_filename = f'audiobook_{file_id}.{ext}'
         output_path = os.path.join(TEMP_DIR, output_filename)
         
         # Registra tempo de início
@@ -433,11 +437,22 @@ def generate_audiobook():
             return response
         
         # Retorna o arquivo para download
+        # Determina o mimetype e extensão baseado no provider
+        voice_config = AVAILABLE_VOICES.get(voice, {})
+        provider = voice_config.get('provider', 'edge') if isinstance(voice_config, dict) else 'edge'
+        
+        if provider == 'google':
+            mimetype = 'audio/ogg'
+            download_name = 'audiobook.ogg'
+        else:
+            mimetype = 'audio/mpeg'
+            download_name = 'audiobook.mp3'
+        
         return send_file(
             output_path,
-            mimetype='audio/mpeg',
+            mimetype=mimetype,
             as_attachment=True,
-            download_name='audiobook.mp3'
+            download_name=download_name
         )
         
     except Exception as e:
