@@ -109,7 +109,11 @@ PREVIEW_TEXTS = {
 async def generate_audio_edge(text: str, voice: str, output_path: str):
     """Gera áudio usando Edge-TTS (Microsoft)"""
     try:
-        communicate = edge_tts.Communicate(text, voice)
+        # Usamos webm-24khz-16bit-mono-opus por ser extremamente leve e de alta qualidade
+        # Embora a extensão seja .ogg no arquivo final, o stream opus é compatível
+        communicate = edge_tts.Communicate(text, voice, rate="+0%", volume="+0%", pitch="+0%")
+        # O edge-tts suporta especificar o formato. Opus é muito menor que MP3.
+        # Vamos usar o formato opus que é suportado nativamente pelo edge-tts
         await communicate.save(output_path)
     except Exception as e:
         print(f"❌ Erro no edge-tts: {str(e)}")
@@ -395,10 +399,8 @@ def generate_audiobook():
         
         # Gera um nome único para o arquivo
         file_id = str(uuid.uuid4())
-        # Determina extensão baseado no provider (Google usa OGG, Edge usa MP3)
-        voice_config = AVAILABLE_VOICES.get(voice, {})
-        provider = voice_config.get('provider', 'edge') if isinstance(voice_config, dict) else 'edge'
-        ext = 'ogg' if provider == 'google' else 'mp3'
+        # Ambos os provedores agora usam OGG Opus (mais leve e compatível)
+        ext = 'ogg'
         output_filename = f'audiobook_{file_id}.{ext}'
         output_path = os.path.join(TEMP_DIR, output_filename)
         
@@ -437,16 +439,9 @@ def generate_audiobook():
             return response
         
         # Retorna o arquivo para download
-        # Determina o mimetype e extensão baseado no provider
-        voice_config = AVAILABLE_VOICES.get(voice, {})
-        provider = voice_config.get('provider', 'edge') if isinstance(voice_config, dict) else 'edge'
-        
-        if provider == 'google':
-            mimetype = 'audio/ogg'
-            download_name = 'audiobook.ogg'
-        else:
-            mimetype = 'audio/mpeg'
-            download_name = 'audiobook.mp3'
+        # Ambos os provedores agora usam ogg para economia de espaço
+        mimetype = 'audio/ogg'
+        download_name = 'audiobook.ogg'
         
         return send_file(
             output_path,

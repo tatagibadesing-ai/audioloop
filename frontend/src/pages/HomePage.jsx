@@ -294,12 +294,9 @@ export default function HomePage({ user, isAdmin }) {
 
     const handleDownload = () => {
         if (!audioUrl) return
-        // Detecta extensão baseado no provider da voz selecionada
-        const selectedVoice = VOICES.find(v => v.value === voice)
-        const ext = selectedVoice?.provider === 'google' ? 'ogg' : 'mp3'
         const a = document.createElement('a')
         a.href = audioUrl
-        a.download = `audiobook-${Date.now()}.${ext}`
+        a.download = `audiobook-${Date.now()}.ogg`
         a.click()
     }
 
