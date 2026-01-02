@@ -1,0 +1,350 @@
+/**
+ * Design Tokens - AudioLoop
+ * Sistema de design centralizado com variáveis CSS
+ */
+
+:root {
+    /* ==================== CORES ==================== */
+
+    /* Backgrounds */
+    --color-bg: #0a0a0a;
+    --color-bg-elevated: #161616;
+    --color-surface: #1a1a1a;
+    --color-surface-soft: rgba(255, 255, 255, 0.03);
+    --color-surface-hover: rgba(255, 255, 255, 0.04);
+    --color-surface-active: rgba(255, 255, 255, 0.08);
+
+    /* Text */
+    --color-text: #FCFBF8;
+    --color-text-secondary: #888;
+    --color-text-muted: #666;
+    --color-text-subtle: #444;
+
+    /* Accent */
+    --color-primary: #FCFBF8;
+    --color-primary-muted: rgba(252, 251, 248, 0.8);
+    --color-accent: #2546C7;
+    --color-success: #22c55e;
+    --color-error: #ef4444;
+
+    /* Borders */
+    --color-border: #222;
+    --color-border-soft: rgba(255, 255, 255, 0.1);
+    --color-border-active: rgba(255, 255, 255, 0.2);
+
+    /* ==================== ESPAÇAMENTOS ==================== */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-10: 40px;
+
+    /* ==================== BORDAS ==================== */
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-2xl: 24px;
+    --radius-full: 9999px;
+
+    /* ==================== SOMBRAS ==================== */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.6);
+    --shadow-xl: 0 25px 50px rgba(0, 0, 0, 0.8);
+
+    /* ==================== TIPOGRAFIA ==================== */
+    --font-sans: 'Figtree', 'Inter', system-ui, sans-serif;
+    --font-size-xs: 11px;
+    --font-size-sm: 13px;
+    --font-size-base: 15px;
+    --font-size-lg: 18px;
+    --font-size-xl: 24px;
+    --font-size-2xl: 28px;
+
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+
+    /* ==================== TRANSIÇÕES ==================== */
+    --transition-fast: 0.15s ease;
+    --transition-base: 0.2s ease;
+    --transition-slow: 0.3s ease;
+
+    /* ==================== LAYOUT ==================== */
+    --sidebar-width: 260px;
+    --player-height: 80px;
+    --player-height-minimized: 40px;
+}
+
+/* ==================== CLASSES UTILITÁRIAS ==================== */
+
+/* Backgrounds */
+.bg-base {
+    background: var(--color-bg);
+}
+
+.bg-elevated {
+    background: var(--color-bg-elevated);
+}
+
+.bg-surface {
+    background: var(--color-surface);
+}
+
+.bg-surface-soft {
+    background: var(--color-surface-soft);
+}
+
+/* Text Colors */
+.text-primary {
+    color: var(--color-text);
+}
+
+.text-secondary {
+    color: var(--color-text-secondary);
+}
+
+.text-muted {
+    color: var(--color-text-muted);
+}
+
+/* Borders */
+.border-soft {
+    border: 1px solid var(--color-border-soft);
+}
+
+.border-default {
+    border: 1px solid var(--color-border);
+}
+
+/* Border Radius */
+.rounded-sm {
+    border-radius: var(--radius-sm);
+}
+
+.rounded-md {
+    border-radius: var(--radius-md);
+}
+
+.rounded-lg {
+    border-radius: var(--radius-lg);
+}
+
+.rounded-xl {
+    border-radius: var(--radius-xl);
+}
+
+.rounded-full {
+    border-radius: var(--radius-full);
+}
+
+/* Shadows */
+.shadow-sm {
+    box-shadow: var(--shadow-sm);
+}
+
+.shadow-md {
+    box-shadow: var(--shadow-md);
+}
+
+.shadow-lg {
+    box-shadow: var(--shadow-lg);
+}
+
+/* Transitions */
+.transition-fast {
+    transition: all var(--transition-fast);
+}
+
+.transition-base {
+    transition: all var(--transition-base);
+}
+
+.transition-slow {
+    transition: all var(--transition-slow);
+}
+
+/* ==================== COMPONENTES COMUNS ==================== */
+
+/* Botão Primário */
+.btn-primary {
+    background: var(--color-primary);
+    color: var(--color-bg);
+    border: none;
+    border-radius: var(--radius-lg);
+    padding: var(--space-4) var(--space-6);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.btn-primary:hover {
+    transform: scale(1.02);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-primary:active {
+    transform: scale(0.98);
+}
+
+.btn-primary:disabled {
+    background: #333;
+    color: #999;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Botão Secundário */
+.btn-secondary {
+    background: transparent;
+    color: var(--color-text);
+    border: 1px solid var(--color-border-soft);
+    border-radius: var(--radius-lg);
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.btn-secondary:hover {
+    background: var(--color-surface-hover);
+    border-color: var(--color-border-active);
+}
+
+/* Botão Ícone */
+.btn-icon {
+    background: transparent;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    padding: var(--space-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    transition: all var(--transition-base);
+}
+
+.btn-icon:hover {
+    color: var(--color-text);
+    background: var(--color-surface-hover);
+}
+
+/* Input */
+.input {
+    width: 100%;
+    background: var(--color-surface-soft);
+    border: none;
+    border-radius: var(--radius-xl);
+    padding: var(--space-4);
+    color: var(--color-text);
+    font-size: var(--font-size-base);
+    outline: none;
+    transition: background var(--transition-base);
+}
+
+.input:focus {
+    background: var(--color-surface-hover);
+}
+
+.input::placeholder {
+    color: var(--color-text-subtle);
+}
+
+/* Card */
+.card {
+    background: var(--color-surface);
+    border-radius: var(--radius-2xl);
+    padding: var(--space-6);
+    border: 1px solid var(--color-border-soft);
+}
+
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+/* Modal Content */
+.modal-content {
+    background: var(--color-bg);
+    border-radius: var(--radius-2xl);
+    padding: var(--space-10);
+    box-shadow: var(--shadow-xl);
+    max-width: 640px;
+    width: 100%;
+}
+
+/* Tooltip */
+.tooltip {
+    position: absolute;
+    background: var(--color-primary);
+    color: var(--color-bg);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
+    box-shadow: var(--shadow-md);
+    pointer-events: none;
+    z-index: 100;
+}
+
+/* Spinner Animation */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Fade In Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.2s ease;
+}
+
+/* Slide Up Animation */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-slide-up {
+    animation: slideUp 0.3s ease;
+}
