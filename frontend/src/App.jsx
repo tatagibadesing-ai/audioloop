@@ -31,7 +31,6 @@ import {
     Gear,
     Plus,
     Gift,
-    CheckCircle,
     SpeakerHigh,
     SpeakerSlash,
     CircleNotch,
