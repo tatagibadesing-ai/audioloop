@@ -152,7 +152,7 @@ const HoverActionButton = ({ icon: Icon, label, onClick }) => {
                     borderRadius: '50%'
                 }}
             >
-                <Icon size={20} weight={isHovered ? "fill" : "bold"} />
+                <Icon size={20} weight="bold" />
             </motion.button>
         </div>
     )
@@ -1201,18 +1201,11 @@ function HomePage({ user, isAdmin }) {
                                                 onClick={handleDownload}
                                             />
 
-                                            <motion.button
-                                                whileTap={{ scale: 0.9 }}
+                                            <HoverActionButton
+                                                icon={CaretDown}
+                                                label="Minimizar"
                                                 onClick={() => setIsPlayerMinimized(true)}
-                                                style={{
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    background: 'transparent', border: 'none',
-                                                    color: '#666', cursor: 'pointer', padding: '8px',
-                                                    transition: 'opacity 0.2s', marginLeft: '4px'
-                                                }}
-                                            >
-                                                <CaretDown size={20} weight="bold" />
-                                            </motion.button>
+                                            />
                                         </div>
                                     </div>
                                 </>
