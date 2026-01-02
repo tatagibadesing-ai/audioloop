@@ -1085,49 +1085,6 @@ function HomePage({ user, isAdmin }) {
                                 cursor: isPlayerMinimized && !isLoading ? 'pointer' : 'default'
                             }}
                         >
-                            <AnimatePresence>
-                                {isPlayerHovered && isPlayerMinimized && !isLoading && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                                        transition={{ duration: 0.2, ease: "easeOut" }}
-                                        style={{
-                                            position: 'absolute',
-                                            bottom: '100%',
-                                            left: '50%',
-                                            transform: 'translateX(-50%)',
-                                            marginBottom: '12px',
-                                            background: '#FCFBF8',
-                                            color: '#0a0a0a',
-                                            padding: '4px 10px',
-                                            borderRadius: '6px',
-                                            fontSize: '11px',
-                                            fontWeight: '500',
-                                            whiteSpace: 'nowrap',
-                                            boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
-                                            pointerEvents: 'none',
-                                            zIndex: 10001,
-                                            letterSpacing: '0.01em',
-                                            fontFamily: "'Inter', sans-serif"
-                                        }}
-                                    >
-                                        Expandir Player
-                                        {/* Triângulo (Seta) */}
-                                        <div style={{
-                                            position: 'absolute',
-                                            top: '100%',
-                                            left: '50%',
-                                            transform: 'translateX(-50%)',
-                                            width: 0,
-                                            height: 0,
-                                            borderLeft: '5px solid transparent',
-                                            borderRight: '5px solid transparent',
-                                            borderTop: '5px solid #FCFBF8',
-                                        }} />
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
                             {isLoading ? (
                                 <div style={{ maxWidth: '1200px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
                                     {/* Left: Info */}
@@ -1167,8 +1124,51 @@ function HomePage({ user, isAdmin }) {
                                     <div style={{
                                         maxWidth: '400px', width: '100%', margin: '0 auto',
                                         display: isPlayerMinimized ? 'flex' : 'none',
-                                        alignItems: 'center', justifyContent: 'center'
+                                        alignItems: 'center', justifyContent: 'center',
+                                        position: 'relative'
                                     }}>
+                                        <AnimatePresence>
+                                            {isPlayerHovered && isPlayerMinimized && !isLoading && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                    exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                                                    transition={{ duration: 0.2, ease: "easeOut" }}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        bottom: '100%',
+                                                        left: '50%',
+                                                        transform: 'translateX(-50%)',
+                                                        marginBottom: '16px',
+                                                        background: '#FCFBF8',
+                                                        color: '#0a0a0a',
+                                                        padding: '4px 10px',
+                                                        borderRadius: '6px',
+                                                        fontSize: '11px',
+                                                        fontWeight: '500',
+                                                        whiteSpace: 'nowrap',
+                                                        boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+                                                        pointerEvents: 'none',
+                                                        zIndex: 10001,
+                                                        letterSpacing: '0.01em',
+                                                        fontFamily: "'Inter', sans-serif"
+                                                    }}
+                                                >
+                                                    Expandir Player
+                                                    <div style={{
+                                                        position: 'absolute',
+                                                        top: '100%',
+                                                        left: '50%',
+                                                        transform: 'translateX(-50%)',
+                                                        width: 0,
+                                                        height: 0,
+                                                        borderLeft: '5px solid transparent',
+                                                        borderRight: '5px solid transparent',
+                                                        borderTop: '5px solid #FCFBF8',
+                                                    }} />
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
                                         <div style={{ width: '100%', height: '4px', background: '#333', borderRadius: '2px', overflow: 'hidden' }}>
                                             <div className="minimized-progress" style={{ width: '0%', height: '100%', background: '#FCFBF8', borderRadius: '2px' }} />
                                         </div>
