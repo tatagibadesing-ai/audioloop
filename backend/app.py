@@ -136,8 +136,8 @@ def split_text_for_google(text, limit=4500):
         # Se adicionar o parágrafo estourar o limite
         if len((current_chunk + "\n" + para).encode('utf-8')) > limit:
             # Se tem algo no buffer, salva
-            if current_chunk:
-                chunks.append(current_chunk)
+            if current_chunk.strip():
+                chunks.append(current_chunk.strip())
                 current_chunk = ""
             
             # Se o parágrafo sozinho é maior que o limite, divide por frases
@@ -225,8 +225,8 @@ def generate_audio_google(text: str, voice_name: str, output_path: str):
             
             return i, base64.b64decode(resp.json()['audioContent'])
 
-        # Dispara requisições em paralelo (máximo 10 ao mesmo tempo para não ser bloqueado)
-        with ThreadPoolExecutor(max_workers=10) as executor:
+        # Dispara requisições em paralelo (máximo 20 ao mesmo tempo para máxima velocidade)
+        with ThreadPoolExecutor(max_workers=20) as executor:
             # i_chunk é (index, text)
             results = list(executor.map(fetch_chunk, enumerate(chunks)))
 
@@ -380,7 +380,7 @@ def generate_audiobook():
     """
     Endpoint principal para gerar o audiobook
     Recebe: { text: string, voice: string }
-    Retorna: arquivo MP3 para download
+    Retorna: arquivo OGG/MP3 para download
     """
     try:
         data = request.get_json()
@@ -393,6 +393,8 @@ def generate_audiobook():
         
         if not text:
             return jsonify({'error': 'Texto não pode estar vazio'}), 400
+            
+        print(f"📥 Recebido texto para geração: {len(text)} caracteres")
         
         if voice not in AVAILABLE_VOICES:
             return jsonify({'error': f'Voz {voice} não suportada'}), 400
