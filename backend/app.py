@@ -785,10 +785,11 @@ def verify_token(token):
 
 
 def is_admin(email):
-    """Verifica se o email pertence a um administrador"""
-    # Email padrão do admin conforme configurado no seu frontend
+    """Verifica se o email pertence a um administrador (case-insensitive)"""
+    if not email:
+        return False
     ADMIN_EMAILS = ['2closett@gmail.com']
-    return email in ADMIN_EMAILS
+    return email.lower() in [e.lower() for e in ADMIN_EMAILS]
 
 
 def require_auth(f):
@@ -916,7 +917,34 @@ def delete_audiobook(audiobook_id):
     """Remove do SQLite"""
     try:
         conn = sqlite3.connect(DB_PATH)
-        conn.cursor().execute('DELETE FROM audiobooks WHERE id = ?', (audiobook_id,))
+        conn.execute('DELETE FROM audiobooks WHERE id = ?', (audiobook_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/audiobooks/<int:audiobook_id>', methods=['PUT'])
+@require_admin
+def update_audiobook(audiobook_id):
+    """Atualiza um audiobook no SQLite"""
+    try:
+        data = request.get_json()
+        fields = []
+        values = []
+        for key in ['title', 'description', 'audio_url', 'cover_url', 'duration_seconds']:
+            if key in data:
+                fields.append(f"{key} = ?")
+                values.append(data[key])
+        
+        if not fields:
+            return jsonify({'error': 'Nenhum campo para atualizar'}), 400
+            
+        values.append(audiobook_id)
+        sql = f"UPDATE audiobooks SET {', '.join(fields)} WHERE id = ?"
+        
+        conn = sqlite3.connect(DB_PATH)
+        conn.execute(sql, values)
         conn.commit()
         conn.close()
         return jsonify({'success': True})
