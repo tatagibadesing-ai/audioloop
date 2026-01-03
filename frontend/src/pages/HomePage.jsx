@@ -270,22 +270,24 @@ export default function HomePage({ user, isAdmin }) {
 
             // 2. Polling de Status
             const startTime = Date.now()
+            let estimatedTotalSeconds = initialEstimation
 
-            // Timer visual para decréscimo de tempo e incremento de progresso linear (60 FPS feel)
+            // Timer visual ultra-suave (100 FPS) - Atualiza a cada 10ms
             const visualTimer = setInterval(() => {
-                setTimeLeft(prevTime => {
-                    if (prevTime <= 0.1) return 0.1
-                    return prevTime - 0.05
-                })
+                const elapsedSeconds = (Date.now() - startTime) / 1000
 
-                setGenerationProgress(prevProg => {
-                    if (prevProg >= 99.5) return 99.5
-                    // Incremento suave: tenta chegar em 100% no tempo estimado
-                    const remainingToFill = 100 - prevProg
-                    const step = (0.05 * remainingToFill) / Math.max(1, timeLeft)
-                    return prevProg + step
+                // Calcula o tempo restante baseado no total estimado que temos
+                const remaining = Math.max(0.1, estimatedTotalSeconds - elapsedSeconds)
+                setTimeLeft(remaining)
+
+                // Calcula o progresso visual suave (0-99.9)
+                setGenerationProgress(prev => {
+                    const visualProg = (elapsedSeconds / estimatedTotalSeconds) * 100
+                    if (visualProg >= 99.9) return 99.9
+                    // Garante que a barra nunca volte para trás
+                    return Math.max(prev, visualProg)
                 })
-            }, 50)
+            }, 10)
 
             const pollInterval = setInterval(async () => {
                 try {
@@ -318,15 +320,12 @@ export default function HomePage({ user, isAdmin }) {
                         setIsLoading(false)
                         alert(`Erro na geração: ${statusData.error}`)
                     } else if (backendProgress > 5) {
+                        // RECALCULA A ESTIMATIVA REAL BASEADA NA VELOCIDADE DO BACKEND
                         const elapsedMs = Date.now() - startTime
-                        const estimatedTotalMs = (elapsedMs / backendProgress) * 100
-                        const realRemainingSeconds = Math.max(0.2, (estimatedTotalMs - elapsedMs) / 1000)
+                        const currentEstimatedTotalMs = (elapsedMs / backendProgress) * 100
 
-                        // Sincronização suave amortecida (Exponential Moving Average)
-                        setTimeLeft(prev => prev * 0.7 + realRemainingSeconds * 0.3)
-
-                        // Sincroniza o progresso visual com o real do backend se o real estiver à frente
-                        setGenerationProgress(prev => Math.max(prev, backendProgress))
+                        // Atualiza a variável que o visualTimer usa para calcular os frames
+                        estimatedTotalSeconds = currentEstimatedTotalMs / 1000
                     }
                 } catch (e) {
                     console.error("Erro no polling:", e)
@@ -772,7 +771,7 @@ export default function HomePage({ user, isAdmin }) {
                                             <motion.div
                                                 initial={{ width: 0 }}
                                                 animate={{ width: `${generationProgress}%` }}
-                                                transition={{ ease: 'linear', duration: 0.05 }}
+                                                transition={{ ease: 'linear', duration: 0.1 }}
                                                 style={{ height: '100%', background: '#FCFBF8' }}
                                             />
                                         </div>
