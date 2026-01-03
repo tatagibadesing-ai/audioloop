@@ -185,11 +185,16 @@ def split_text_for_google(text, limit=4500):
     return chunks
 
 
-def generate_audio_google(text: str, voice_name: str, output_path: str):
+def generate_audio_google(text: str, voice_name: str, output_path: str, job_id: str = None):
     """Gera áudio usando Google Cloud TTS via REST API com suporte a textos longos"""
     import requests
     import base64
     
+    # Função auxiliar para atualizar progresso
+    def update_progress(p):
+        if job_id and job_id in JOBS:
+            JOBS[job_id]['progress'] = p
+
     GOOGLE_API_KEY = os.environ.get('GOOGLE_TTS_API_KEY', '')
     
     if not GOOGLE_API_KEY:
@@ -212,6 +217,10 @@ def generate_audio_google(text: str, voice_name: str, output_path: str):
             if not chunk.strip():
                 continue
 
+            # Atualiza progresso real (ex: de 5% a 95%)
+            real_progress = 5 + int((i / len(chunks)) * 90)
+            update_progress(real_progress)
+            
             # Payload para a API
             payload = {
                 "input": {"text": chunk},
@@ -241,13 +250,12 @@ def generate_audio_google(text: str, voice_name: str, output_path: str):
             
             # Log de progresso
             print(f"✅ Chunk {i+1}/{len(chunks)} recebido ({len(chunk_content)} bytes)", flush=True)
-            if (i + 1) % 10 == 0:
-                print(f"📊 Processado {i+1}/{len(chunks)} partes...", flush=True)
             
         # Salva o arquivo final
         with open(output_path, "wb") as out:
             out.write(combined_audio)
             
+        update_progress(100)
         print(f"✅ Áudio Google gerado e combinado: {voice_name} ({len(chunks)} partes)")
         
     except Exception as e:
@@ -255,13 +263,13 @@ def generate_audio_google(text: str, voice_name: str, output_path: str):
         raise e
 
 
-def generate_audio(text: str, voice: str, output_path: str):
+def generate_audio(text: str, voice: str, output_path: str, job_id: str = None):
     """Função principal que escolhe o provedor correto"""
     voice_config = AVAILABLE_VOICES.get(voice, {})
     provider = voice_config.get('provider', 'edge') if isinstance(voice_config, dict) else 'edge'
     
     if provider == 'google' and os.environ.get('GOOGLE_TTS_API_KEY'):
-        generate_audio_google(text, voice, output_path)
+        generate_audio_google(text, voice, output_path, job_id)
     else:
         run_async(generate_audio_edge(text, voice, output_path))
 
@@ -481,7 +489,7 @@ def process_audio_job(job_id: str, text: str, voice: str):
         print(f"🚀 Job {job_id}: Iniciando geração de áudio ({len(text)} caracteres)")
         
         # Gera o áudio
-        generate_audio(text, voice, output_path)
+        generate_audio(text, voice, output_path, job_id)
         
         # Verifica se foi criado
         if os.path.exists(output_path):

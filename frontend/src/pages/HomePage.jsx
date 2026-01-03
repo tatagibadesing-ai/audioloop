@@ -265,6 +265,7 @@ export default function HomePage({ user, isAdmin }) {
             const { job_id } = await startRes.json()
 
             // 2. Polling de Status
+            const startTime = Date.now()
             const pollInterval = setInterval(async () => {
                 try {
                     const statusRes = await fetch(`${API_URL.replace(/\/$/, '')}/api/generate/status/${job_id}`)
@@ -272,17 +273,18 @@ export default function HomePage({ user, isAdmin }) {
                     if (statusRes.status === 404) {
                         clearInterval(pollInterval)
                         setIsLoading(false)
-                        console.warn("Job expirado ou servidor reiniciado.")
                         return
                     }
 
                     const statusData = await statusRes.json()
+                    const currentProgress = statusData.progress || 0
+                    setGenerationProgress(currentProgress)
 
                     if (statusData.status === 'done') {
                         clearInterval(pollInterval)
                         setGenerationProgress(100)
+                        setTimeLeft(0)
 
-                        // Busca o arquivo final
                         const downloadUrl = `${API_URL.replace(/\/$/, '')}/api/generate/download/${job_id}`
                         const audioBlob = await fetch(downloadUrl).then(r => r.blob())
                         const url = URL.createObjectURL(audioBlob)
@@ -292,9 +294,19 @@ export default function HomePage({ user, isAdmin }) {
                         clearInterval(pollInterval)
                         setIsLoading(false)
                         alert(`Erro na geração: ${statusData.error}`)
-                    } else {
-                        // Atualiza progresso se o backend enviar, senão usa o atual
-                        setGenerationProgress(statusData.progress || 10)
+                    } else if (currentProgress > 0) {
+                        // Cálculo de tempo restante real:
+                        // tempo_decorrido / progresso = tempo_total_estimado
+                        // tempo_restante = tempo_total_estimado - tempo_decorrido
+                        const elapsedMs = Date.now() - startTime
+                        const estimatedTotalMs = (elapsedMs / currentProgress) * 100
+                        const remainingSeconds = Math.max(0, (estimatedTotalMs - elapsedMs) / 1000)
+
+                        // Não permite que o tempo suba bruscamente, apenas desça suavemente
+                        setTimeLeft(prev => {
+                            if (prev === 0) return remainingSeconds
+                            return Math.min(prev, remainingSeconds)
+                        })
                     }
                 } catch (e) {
                     console.error("Erro no polling:", e)
@@ -746,7 +758,7 @@ export default function HomePage({ user, isAdmin }) {
                                         </div>
                                     </div>
                                     <div style={{ width: '230px', textAlign: 'right', fontSize: '13px', color: '#666', fontVariantNumeric: 'tabular-nums' }}>
-                                        ~{Math.ceil(timeLeft)}s restantes
+                                        ~{formatTime(timeLeft)} restantes
                                     </div>
                                 </div>
                             ) : (
