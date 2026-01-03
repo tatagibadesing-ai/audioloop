@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 
 // Serviços e constantes
-import { supabase, SUPABASE_URL } from '../services/supabase'
+import { supabase } from '../services/supabase'
 import { API_URL } from '../constants'
 
 // Ícones
@@ -53,20 +53,34 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
             let audioUrl = existingAudioUrl
             let coverUrl = existingCoverUrl
 
-            // Upload do áudio se um novo arquivo for selecionado
+            // 1. Upload do áudio via API Local
             if (audioFile) {
-                const audioName = `${Date.now()}-${audioFile.name}`
-                const { error: audioError } = await supabase.storage.from('audios').upload(audioName, audioFile, { upsert: true })
-                if (audioError) throw audioError
-                audioUrl = `${SUPABASE_URL}/storage/v1/object/public/audios/${audioName}`
+                const audioFormData = new FormData()
+                audioFormData.append('file', audioFile)
+                const audioRes = await fetch(`${API_URL}/api/upload/audio`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: audioFormData
+                })
+                if (!audioRes.ok) throw new Error('Falha no upload do áudio')
+                const audioData = await audioRes.json()
+                audioUrl = audioData.url
+                if (audioUrl.startsWith('/')) audioUrl = `${API_URL}${audioUrl}`
             }
 
-            // Upload da capa se um novo arquivo for selecionado
+            // 2. Upload da capa via API Local
             if (coverFile) {
-                const coverName = `${Date.now()}-${coverFile.name}`
-                const { error: coverError } = await supabase.storage.from('covers').upload(coverName, coverFile, { upsert: true })
-                if (!coverError) {
-                    coverUrl = `${SUPABASE_URL}/storage/v1/object/public/covers/${coverName}`
+                const coverFormData = new FormData()
+                coverFormData.append('file', coverFile)
+                const coverRes = await fetch(`${API_URL}/api/upload/cover`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: coverFormData
+                })
+                if (coverRes.ok) {
+                    const coverData = await coverRes.json()
+                    coverUrl = coverData.url
+                    if (coverUrl.startsWith('/')) coverUrl = `${API_URL}${coverUrl}`
                 }
             }
 
