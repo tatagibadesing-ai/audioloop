@@ -11,6 +11,7 @@ import time
 import io
 import jwt
 import base64
+import threading
 from functools import wraps
 from flask import Flask, request, jsonify, send_file, after_this_request
 from flask_cors import CORS
@@ -66,6 +67,11 @@ CORS(app)  # Permite requisições do frontend
 # Diretório para arquivos temporários
 TEMP_DIR = os.path.join(os.path.dirname(__file__), 'temp_audio')
 os.makedirs(TEMP_DIR, exist_ok=True)
+
+# ==================== SISTEMA DE JOBS EM BACKGROUND ====================
+# Armazena o status dos jobs de geração de áudio
+# Formato: { job_id: { 'status': 'pending'|'processing'|'done'|'error', 'progress': 0-100, 'file_path': str, 'error': str } }
+JOBS = {}
 
 
 # ==================== VOZES DISPONÍVEIS ====================
@@ -460,10 +466,150 @@ def generate_audiobook():
         return jsonify({'error': f'Erro interno: {str(e)}'}), 500
 
 
+# ==================== SISTEMA DE JOBS EM BACKGROUND ====================
+
+def process_audio_job(job_id: str, text: str, voice: str):
+    """Processa o áudio em background e atualiza o status do job"""
+    try:
+        JOBS[job_id]['status'] = 'processing'
+        JOBS[job_id]['progress'] = 5
+        
+        # Determina extensão
+        ext = 'ogg'
+        output_filename = f'job_{job_id}.{ext}'
+        output_path = os.path.join(TEMP_DIR, output_filename)
+        
+        print(f"🚀 Job {job_id}: Iniciando geração de áudio ({len(text)} caracteres)")
+        
+        # Gera o áudio
+        generate_audio(text, voice, output_path)
+        
+        # Verifica se foi criado
+        if os.path.exists(output_path):
+            JOBS[job_id]['status'] = 'done'
+            JOBS[job_id]['progress'] = 100
+            JOBS[job_id]['file_path'] = output_path
+            print(f"✅ Job {job_id}: Áudio gerado com sucesso!")
+        else:
+            JOBS[job_id]['status'] = 'error'
+            JOBS[job_id]['error'] = 'Falha ao gerar arquivo de áudio'
+            
+    except Exception as e:
+        print(f"❌ Job {job_id}: Erro - {str(e)}")
+        JOBS[job_id]['status'] = 'error'
+        JOBS[job_id]['error'] = str(e)
+
+
+@app.route('/api/generate/start', methods=['POST'])
+def start_generation_job():
+    """
+    Inicia um job de geração de áudio em background.
+    Retorna imediatamente com o ID do job.
+    """
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'Dados não fornecidos'}), 400
+        
+        text = data.get('text', '').strip()
+        voice = data.get('voice', 'pt-BR-AntonioNeural')
+        
+        if not text:
+            return jsonify({'error': 'Texto não pode estar vazio'}), 400
+        
+        if voice not in AVAILABLE_VOICES:
+            return jsonify({'error': f'Voz {voice} não suportada'}), 400
+        
+        # Cria o job
+        job_id = str(uuid.uuid4())
+        JOBS[job_id] = {
+            'status': 'pending',
+            'progress': 0,
+            'file_path': None,
+            'error': None,
+            'created_at': time.time()
+        }
+        
+        print(f"📝 Job {job_id}: Criado para {len(text)} caracteres")
+        
+        # Inicia o processamento em background
+        thread = threading.Thread(target=process_audio_job, args=(job_id, text, voice))
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'job_id': job_id,
+            'status': 'pending',
+            'message': 'Geração iniciada em background'
+        })
+        
+    except Exception as e:
+        print(f'❌ Erro ao iniciar job: {e}')
+        return jsonify({'error': f'Erro interno: {str(e)}'}), 500
+
+
+@app.route('/api/generate/status/<job_id>', methods=['GET'])
+def get_job_status(job_id):
+    """
+    Retorna o status atual de um job de geração.
+    """
+    if job_id not in JOBS:
+        return jsonify({'error': 'Job não encontrado'}), 404
+    
+    job = JOBS[job_id]
+    return jsonify({
+        'job_id': job_id,
+        'status': job['status'],
+        'progress': job['progress'],
+        'error': job['error']
+    })
+
+
+@app.route('/api/generate/download/<job_id>', methods=['GET'])
+def download_job_result(job_id):
+    """
+    Baixa o áudio gerado por um job concluído.
+    """
+    if job_id not in JOBS:
+        return jsonify({'error': 'Job não encontrado'}), 404
+    
+    job = JOBS[job_id]
+    
+    if job['status'] != 'done':
+        return jsonify({'error': 'Áudio ainda não está pronto', 'status': job['status']}), 400
+    
+    if not job['file_path'] or not os.path.exists(job['file_path']):
+        return jsonify({'error': 'Arquivo não encontrado'}), 404
+    
+    # Limpa o job da memória após 1 hora
+    def cleanup_job():
+        try:
+            if job_id in JOBS:
+                file_path = JOBS[job_id].get('file_path')
+                if file_path and os.path.exists(file_path):
+                    os.remove(file_path)
+                del JOBS[job_id]
+                print(f"🧹 Job {job_id} limpo da memória")
+        except Exception as e:
+            print(f"Erro ao limpar job: {e}")
+    
+    timer = threading.Timer(3600.0, cleanup_job)  # 1 hora
+    timer.daemon = True
+    timer.start()
+    
+    return send_file(
+        job['file_path'],
+        mimetype='audio/ogg',
+        as_attachment=True,
+        download_name='audiobook.ogg'
+    )
+
+
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """Endpoint de verificação de saúde do servidor"""
-    return jsonify({'status': 'ok', 'message': 'Servidor funcionando'})
+    return jsonify({'status': 'ok', 'message': 'Servidor funcionando', 'jobs_ativos': len(JOBS)})
 
 
 @app.route('/api/extract', methods=['POST'])

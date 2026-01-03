@@ -252,41 +252,66 @@ export default function HomePage({ user, isAdmin }) {
         const estimatedSeconds = Math.max(3, 3 + (text.length * 0.02))
         setTimeLeft(estimatedSeconds)
 
-        const interval = setInterval(() => {
-            setGenerationProgress(prev => {
-                if (prev >= 95) return 95
-                return prev + (100 / (estimatedSeconds * 10))
-            })
-            setTimeLeft(prev => Math.max(0, prev - 0.1))
-        }, 100)
-
         try {
-            const res = await fetch(`${API_URL}/api/generate`, {
+            // 1. Inicia o job em background
+            const startRes = await fetch(`${API_URL}/api/generate/start`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text, voice })
             })
 
-            clearInterval(interval)
-
-            if (!res.ok) {
-                const err = await res.json()
-                throw new Error(err.error || 'Erro ao gerar áudio')
+            if (!startRes.ok) {
+                const err = await startRes.json()
+                throw new Error(err.error || 'Erro ao iniciar geração')
             }
 
-            setGenerationProgress(100)
-            setTimeLeft(0)
+            const { job_id } = await startRes.json()
+            console.log('Job iniciado:', job_id)
 
-            const blob = await res.blob()
-            const url = URL.createObjectURL(blob)
+            // 2. Polling para verificar status
+            const pollInterval = setInterval(async () => {
+                try {
+                    const statusRes = await fetch(`${API_URL}/api/generate/status/${job_id}`)
+                    const statusData = await statusRes.json()
 
-            setTimeout(() => {
-                setAudioUrl(url)
-                setIsLoading(false)
-            }, 500)
+                    console.log('Status do job:', statusData)
+
+                    if (statusData.status === 'done') {
+                        clearInterval(pollInterval)
+                        setGenerationProgress(100)
+                        setTimeLeft(0)
+
+                        // 3. Baixa o áudio
+                        const audioRes = await fetch(`${API_URL}/api/generate/download/${job_id}`)
+                        if (!audioRes.ok) throw new Error('Falha ao baixar áudio')
+
+                        const blob = await audioRes.blob()
+                        const url = URL.createObjectURL(blob)
+
+                        setTimeout(() => {
+                            setAudioUrl(url)
+                            setIsLoading(false)
+                        }, 500)
+
+                    } else if (statusData.status === 'error') {
+                        clearInterval(pollInterval)
+                        setIsLoading(false)
+                        alert(`Erro: ${statusData.error || 'Erro desconhecido'}`)
+
+                    } else {
+                        // Atualiza progresso estimado
+                        setGenerationProgress(prev => {
+                            if (prev >= 95) return 95
+                            return prev + 0.5
+                        })
+                        setTimeLeft(prev => Math.max(0, prev - 5))
+                    }
+                } catch (pollError) {
+                    console.error('Erro no polling:', pollError)
+                }
+            }, 5000) // Verifica a cada 5 segundos
 
         } catch (e) {
-            clearInterval(interval)
             setIsLoading(false)
             alert(e.message)
         }
