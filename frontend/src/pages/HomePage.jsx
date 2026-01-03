@@ -249,84 +249,44 @@ export default function HomePage({ user, isAdmin }) {
         setAudioUrl(null)
         setGenerationProgress(0)
 
-        // Estima tempo baseado no tamanho do texto (aproximadamente 150 palavras por minuto)
-        const words = text.trim().split(/\s+/).length
-        const estimatedMinutes = Math.ceil(words / 150)
-        const estimatedSeconds = Math.max(10, estimatedMinutes * 60)
+        const estimatedSeconds = Math.max(3, 3 + (text.length * 0.02))
         setTimeLeft(estimatedSeconds)
 
+        const interval = setInterval(() => {
+            setGenerationProgress(prev => {
+                if (prev >= 95) return 95
+                return prev + (100 / (estimatedSeconds * 10))
+            })
+            setTimeLeft(prev => Math.max(0, prev - 0.1))
+        }, 100)
+
         try {
-            // 1. Inicia o job em background
-            console.log('🚀 Iniciando job de geração...')
-            const startRes = await fetch(`${API_URL}/api/generate/start`, {
+            const res = await fetch(`${API_URL}/api/generate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text, voice })
             })
 
-            if (!startRes.ok) {
-                const err = await startRes.json()
-                throw new Error(err.error || 'Erro ao iniciar geração')
+            clearInterval(interval)
+
+            if (!res.ok) {
+                const err = await res.json()
+                throw new Error(err.error || 'Erro ao gerar áudio')
             }
 
-            const { job_id } = await startRes.json()
-            console.log('📝 Job iniciado:', job_id)
+            setGenerationProgress(100)
+            setTimeLeft(0)
 
-            // 2. Polling para verificar status a cada 3 segundos
-            const pollStatus = async () => {
-                try {
-                    const statusRes = await fetch(`${API_URL}/api/generate/status/${job_id}`)
-                    const statusData = await statusRes.json()
+            const blob = await res.blob()
+            const url = URL.createObjectURL(blob)
 
-                    console.log('📊 Status:', statusData)
-
-                    if (statusData.status === 'done') {
-                        // Áudio pronto! Baixar
-                        setGenerationProgress(100)
-                        setTimeLeft(0)
-
-                        console.log('✅ Áudio pronto! Baixando...')
-                        const audioRes = await fetch(`${API_URL}/api/generate/download/${job_id}`)
-
-                        if (!audioRes.ok) {
-                            throw new Error('Falha ao baixar áudio')
-                        }
-
-                        const blob = await audioRes.blob()
-                        const url = URL.createObjectURL(blob)
-
-                        setTimeout(() => {
-                            setAudioUrl(url)
-                            setIsLoading(false)
-                        }, 500)
-
-                    } else if (statusData.status === 'error') {
-                        // Erro na geração
-                        throw new Error(statusData.error || 'Erro na geração do áudio')
-
-                    } else {
-                        // Ainda processando - atualiza progresso
-                        setGenerationProgress(prev => {
-                            if (prev >= 95) return 95
-                            return Math.min(95, prev + 2)
-                        })
-                        setTimeLeft(prev => Math.max(0, prev - 3))
-
-                        // Continua polling
-                        setTimeout(pollStatus, 3000)
-                    }
-                } catch (pollError) {
-                    console.error('Erro no polling:', pollError)
-                    setIsLoading(false)
-                    alert(pollError.message || 'Erro ao verificar status')
-                }
-            }
-
-            // Inicia o polling após 2 segundos
-            setTimeout(pollStatus, 2000)
+            setTimeout(() => {
+                setAudioUrl(url)
+                setIsLoading(false)
+            }, 500)
 
         } catch (e) {
-            console.error('Erro:', e)
+            clearInterval(interval)
             setIsLoading(false)
             alert(e.message)
         }
