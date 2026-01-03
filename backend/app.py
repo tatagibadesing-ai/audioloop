@@ -26,26 +26,47 @@ except ImportError:
     GOOGLE_TTS_ENABLED = False
     print("⚠️ Google Cloud TTS não instalado.")
 
-# Supabase Client
-try:
-    from supabase import create_client, Client
-    SUPABASE_URL = os.environ.get('SUPABASE_URL', '')
-    SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY', '')
-    SUPABASE_SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '')
-    SUPABASE_JWT_SECRET = os.environ.get('SUPABASE_JWT_SECRET', '')
-    
-    if SUPABASE_URL and SUPABASE_SERVICE_KEY:
-        supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-        SUPABASE_ENABLED = True
-        print("✅ Supabase conectado com sucesso!")
-    else:
-        supabase = None
-        SUPABASE_ENABLED = False
-        print("⚠️ Supabase não configurado. Funcionalidades de admin desabilitadas.")
-except ImportError:
-    supabase = None
-    SUPABASE_ENABLED = False
-    print("⚠️ Biblioteca Supabase não instalada.")
+import sqlite3
+from datetime import datetime
+
+# Configuração de Armazenamento Local
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOADS_DIR = os.path.join(BASE_DIR, 'uploads')
+COVERS_DIR = os.path.join(UPLOADS_DIR, 'covers')
+AUDIO_UPLOADS_DIR = os.path.join(UPLOADS_DIR, 'audiobooks')
+DB_PATH = os.path.join(BASE_DIR, 'audiobooks.db')
+
+# Cria diretórios se não existirem
+os.makedirs(COVERS_DIR, exist_ok=True)
+os.makedirs(AUDIO_UPLOADS_DIR, exist_ok=True)
+
+def init_db():
+    """Inicializa o banco de dados SQLite local"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS audiobooks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            description TEXT,
+            audio_url TEXT NOT NULL,
+            cover_url TEXT,
+            duration_seconds REAL DEFAULT 0,
+            author_email TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    conn.commit()
+    conn.close()
+    print("✅ Banco de dados SQLite inicializado!")
+
+init_db()
+
+# Mantemos as variáveis SUPABASE apenas para não quebrar referências se houverem, 
+# mas marcamos como False para desativar a lógica antiga.
+SUPABASE_ENABLED = False
+# O JWT Secret será mantido fixo para o login de admin continuar funcionando sem o Supabase
+SUPABASE_JWT_SECRET = os.environ.get('SUPABASE_JWT_SECRET', 'xt9aS00eMoQzMeJrL5z8xi1P6FecByFu1eGmjV/K6/gcOanQ4vPNc5wDM+7w0TG7/dzpuuFZWMK4I265CEp/iw==')
 
 # Imports para leitura de documentos
 try:
@@ -822,13 +843,6 @@ def verify_user():
     Recebe: Authorization header com JWT
     Retorna: { authenticated: bool, is_admin: bool, email: string }
     """
-    if not SUPABASE_ENABLED:
-        return jsonify({
-            'authenticated': False,
-            'is_admin': False,
-            'error': 'Supabase não configurado'
-        }), 503
-    
     token = request.headers.get('Authorization', '')
     if not token:
         return jsonify({
@@ -836,6 +850,10 @@ def verify_user():
             'is_admin': False
         })
     
+    # Remove 'Bearer ' se existir
+    if token.startswith('Bearer '):
+        token = token[7:]
+        
     user_data = verify_token(token)
     if not user_data:
         return jsonify({
@@ -855,32 +873,26 @@ def verify_user():
 
 @app.route('/api/audiobooks', methods=['GET'])
 def list_audiobooks():
-    """
-    Lista todos os audiobooks publicados (público)
-    """
-    if not SUPABASE_ENABLED:
-        return jsonify({'audiobooks': [], 'error': 'Banco de dados não configurado'}), 503
-    
+    """Lista todos os audiobooks do SQLite local"""
     try:
-        result = supabase.table('audiobooks').select('*').order('created_at', desc=True).execute()
-        return jsonify({'audiobooks': result.data})
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM audiobooks ORDER BY created_at DESC')
+        rows = cursor.fetchall()
+        audiobooks = [dict(row) for row in rows]
+        conn.close()
+        return jsonify({'audiobooks': audiobooks})
     except Exception as e:
-        print(f"Erro ao listar audiobooks: {e}")
-        return jsonify({'error': 'Erro ao carregar audiobooks'}), 500
-
+        print(f"Erro ao listar: {e}")
+        return jsonify({'error': 'Erro ao carregar'}), 500
 
 @app.route('/api/audiobooks', methods=['POST'])
 @require_admin
 def create_audiobook():
-    """
-    Publica um novo audiobook (apenas admin)
-    Recebe: { title, description, audio_url, cover_url?, duration_seconds? }
-    """
+    """Publica um novo audiobook no banco local"""
     try:
         data = request.get_json()
-        if not data:
-            return jsonify({'error': 'Dados não fornecidos'}), 400
-        
         title = data.get('title', '').strip()
         description = data.get('description', '').strip()
         audio_url = data.get('audio_url', '').strip()
@@ -888,157 +900,72 @@ def create_audiobook():
         duration_seconds = data.get('duration_seconds', 0)
         
         if not title or not audio_url:
-            return jsonify({'error': 'Título e URL do áudio são obrigatórios'}), 400
+            return jsonify({'error': 'Título e Áudio obrigatórios'}), 400
         
-        # Insere no banco
-        new_audiobook = {
-            'title': title,
-            'description': description,
-            'audio_url': audio_url,
-            'cover_url': cover_url,
-            'duration_seconds': duration_seconds,
-            'author_email': request.user.get('email', 'admin')
-        }
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO audiobooks (title, description, audio_url, cover_url, duration_seconds, author_email)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (title, description, audio_url, cover_url, duration_seconds, request.user.get('email', 'admin')))
+        conn.commit()
+        last_id = cursor.lastrowid
+        conn.close()
         
-        result = supabase.table('audiobooks').insert(new_audiobook).execute()
-        
-        return jsonify({
-            'success': True,
-            'audiobook': result.data[0] if result.data else new_audiobook
-        }), 201
-    
+        return jsonify({'success': True, 'id': last_id}), 201
     except Exception as e:
-        print(f"Erro ao criar audiobook: {e}")
-        return jsonify({'error': f'Erro ao publicar: {str(e)}'}), 500
+        return jsonify({'error': str(e)}), 500
 
-
-@app.route('/api/audiobooks/<audiobook_id>', methods=['DELETE'])
+@app.route('/api/audiobooks/<int:audiobook_id>', methods=['DELETE'])
 @require_admin
 def delete_audiobook(audiobook_id):
-    """
-    Remove um audiobook (apenas admin)
-    """
+    """Remove do SQLite"""
     try:
-        result = supabase.table('audiobooks').delete().eq('id', audiobook_id).execute()
-        return jsonify({'success': True, 'deleted_id': audiobook_id})
+        conn = sqlite3.connect(DB_PATH)
+        conn.cursor().execute('DELETE FROM audiobooks WHERE id = ?', (audiobook_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
     except Exception as e:
-        print(f"Erro ao deletar audiobook: {e}")
-        return jsonify({'error': f'Erro ao deletar: {str(e)}'}), 500
-
-
-@app.route('/api/audiobooks/<audiobook_id>', methods=['PUT'])
-@require_admin
-def update_audiobook(audiobook_id):
-    """
-    Atualiza um audiobook existente (apenas admin)
-    Recebe: { title, description, audio_url?, cover_url?, duration_seconds? }
-    """
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({'error': 'Dados não fornecidos'}), 400
-        
-        # Filtra apenas os campos permitidos e que foram enviados
-        updates = {}
-        allowed_fields = ['title', 'description', 'audio_url', 'cover_url', 'duration_seconds']
-        for field in allowed_fields:
-            if field in data:
-                updates[field] = data[field]
-        
-        if not updates:
-            return jsonify({'error': 'Nenhum campo para atualizar'}), 400
-        
-        updates['updated_at'] = 'now()' # Ou deixa o Supabase lidar com isso
-        
-        result = supabase.table('audiobooks').update(updates).eq('id', audiobook_id).execute()
-        
-        return jsonify({
-            'success': True,
-            'audiobook': result.data[0] if result.data else {}
-        })
-    except Exception as e:
-        print(f"Erro ao atualizar audiobook: {e}")
-        return jsonify({'error': f'Erro ao atualizar: {str(e)}'}), 500
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/upload/cover', methods=['POST'])
 @require_admin
 def upload_cover():
-    """
-    Faz upload de uma capa para o Supabase Storage (apenas admin)
-    """
+    """Upload de capa para disco local"""
     if 'file' not in request.files:
-        return jsonify({'error': 'Nenhum arquivo enviado'}), 400
-    
+        return jsonify({'error': 'Sem arquivo'}), 400
     file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'Nome de arquivo vazio'}), 400
+    filename = f"{uuid.uuid4()}_{file.filename}"
+    file_path = os.path.join(COVERS_DIR, filename)
+    file.save(file_path)
     
-    try:
-        # Gera nome único
-        ext = file.filename.rsplit('.', 1)[-1].lower()
-        filename = f"{uuid.uuid4()}.{ext}"
-        
-        # Upload para Supabase Storage
-        file_bytes = file.read()
-        result = supabase.storage.from_('covers').upload(filename, file_bytes)
-        
-        # Gera URL pública
-        public_url = f"{SUPABASE_URL}/storage/v1/object/public/covers/{filename}"
-        
-        return jsonify({
-            'success': True,
-            'url': public_url,
-            'filename': filename
-        })
-    
-    except Exception as e:
-        print(f"Erro ao fazer upload: {e}")
-        return jsonify({'error': f'Erro no upload: {str(e)}'}), 500
-
+    # URL aponta para o nosso próprio domínio
+    public_url = f"/api/uploads/covers/{filename}"
+    return jsonify({'success': True, 'url': public_url})
 
 @app.route('/api/upload/audio', methods=['POST'])
 @require_admin
 def upload_audio_file():
-    """
-    Faz upload de um arquivo de áudio para o Supabase Storage (apenas admin)
-    """
+    """Upload de áudio para disco local"""
     if 'file' not in request.files:
-        return jsonify({'error': 'Nenhum arquivo enviado'}), 400
-    
+        return jsonify({'error': 'Sem arquivo'}), 400
     file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'Nome de arquivo vazio'}), 400
+    filename = f"{uuid.uuid4()}_{file.filename}"
+    file_path = os.path.join(AUDIO_UPLOADS_DIR, filename)
+    file.save(file_path)
     
-    try:
-        # Gera nome único
-        ext = 'mp3'
-        if '.' in file.filename:
-            ext = file.filename.rsplit('.', 1)[-1].lower()
-            
-        filename = f"{uuid.uuid4()}.{ext}"
-        
-        # Upload para Supabase Storage (bucket 'audiobooks')
-        # Tenta criar o bucket se não existir? Não, a lib não faz isso fácil.
-        file_bytes = file.read()
-        
-        # Define content-type explicitamente
-        file_options = {"content-type": "audio/mpeg"}
-        
-        result = supabase.storage.from_('audiobooks').upload(filename, file_bytes, file_options)
-        
-        # Gera URL pública
-        public_url = f"{SUPABASE_URL}/storage/v1/object/public/audiobooks/{filename}"
-        
-        return jsonify({
-            'success': True,
-            'url': public_url,
-            'filename': filename
-        })
-    
-    except Exception as e:
-        print(f"Erro ao fazer upload de áudio: {e}")
-        return jsonify({'error': f'Erro no upload de áudio: {str(e)}'}), 500
+    public_url = f"/api/uploads/audiobooks/{filename}"
+    return jsonify({'success': True, 'url': public_url})
+
+@app.route('/api/uploads/<folder>/<filename>')
+def serve_uploads(folder, filename):
+    """Serve arquivos da pasta uploads"""
+    folder_path = os.path.join(UPLOADS_DIR, folder)
+    return send_from_directory(folder_path, filename)
+
+from flask import send_from_directory
 
 
 @app.route('/', methods=['GET'])

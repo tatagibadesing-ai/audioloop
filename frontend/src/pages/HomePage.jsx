@@ -114,6 +114,12 @@ export default function HomePage({ user, isAdmin }) {
             }
             const audioData = await audioRes.json()
 
+            // Corrige URL se for relativa
+            let finalAudioUrl = audioData.url
+            if (finalAudioUrl.startsWith('/')) {
+                finalAudioUrl = `${API_URL}${finalAudioUrl}`
+            }
+
             let coverUrl = ''
             if (publishCover) {
                 const coverFormData = new FormData()
@@ -126,6 +132,9 @@ export default function HomePage({ user, isAdmin }) {
                 if (coverRes.ok) {
                     const coverData = await coverRes.json()
                     coverUrl = coverData.url
+                    if (coverUrl.startsWith('/')) {
+                        coverUrl = `${API_URL}${coverUrl}`
+                    }
                 }
             }
 
@@ -138,7 +147,7 @@ export default function HomePage({ user, isAdmin }) {
                 body: JSON.stringify({
                     title: publishTitle,
                     description: publishDesc,
-                    audio_url: audioData.url,
+                    audio_url: finalAudioUrl,
                     cover_url: coverUrl,
                     duration_seconds: playerRef.current?.audio?.current?.duration || 0
                 })
