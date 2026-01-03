@@ -785,16 +785,10 @@ def verify_token(token):
 
 
 def is_admin(email):
-    """Verifica no banco de dados se o email é de um admin"""
-    if not SUPABASE_ENABLED or not supabase:
-        return False
-    
-    try:
-        result = supabase.table('admins').select('email').eq('email', email).execute()
-        return len(result.data) > 0
-    except Exception as e:
-        print(f"Erro ao verificar admin: {e}")
-        return False
+    """Verifica se o email pertence a um administrador"""
+    # Email padrão do admin conforme configurado no seu frontend
+    ADMIN_EMAILS = ['2closett@gmail.com']
+    return email in ADMIN_EMAILS
 
 
 def require_auth(f):
