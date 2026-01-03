@@ -267,7 +267,15 @@ export default function HomePage({ user, isAdmin }) {
             // 2. Polling de Status
             const pollInterval = setInterval(async () => {
                 try {
-                    const statusRes = await fetch(`${API_URL}/api/generate/status/${job_id}`)
+                    const statusRes = await fetch(`${API_URL.replace(/\/$/, '')}/api/generate/status/${job_id}`)
+
+                    if (statusRes.status === 404) {
+                        clearInterval(pollInterval)
+                        setIsLoading(false)
+                        console.warn("Job expirado ou servidor reiniciado.")
+                        return
+                    }
+
                     const statusData = await statusRes.json()
 
                     if (statusData.status === 'done') {
@@ -275,7 +283,8 @@ export default function HomePage({ user, isAdmin }) {
                         setGenerationProgress(100)
 
                         // Busca o arquivo final
-                        const audioBlob = await fetch(`${API_URL}/api/generate/download/${job_id}`).then(r => r.blob())
+                        const downloadUrl = `${API_URL.replace(/\/$/, '')}/api/generate/download/${job_id}`
+                        const audioBlob = await fetch(downloadUrl).then(r => r.blob())
                         const url = URL.createObjectURL(audioBlob)
                         setAudioUrl(url)
                         setIsLoading(false)
@@ -284,7 +293,7 @@ export default function HomePage({ user, isAdmin }) {
                         setIsLoading(false)
                         alert(`Erro na geração: ${statusData.error}`)
                     } else {
-                        // Progresso fictício mas suavizado baseado no status
+                        // Atualiza progresso se o backend enviar, senão usa o atual
                         setGenerationProgress(statusData.progress || 10)
                     }
                 } catch (e) {
