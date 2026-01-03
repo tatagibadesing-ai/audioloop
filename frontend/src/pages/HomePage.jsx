@@ -271,11 +271,21 @@ export default function HomePage({ user, isAdmin }) {
             // 2. Polling de Status
             const startTime = Date.now()
 
-            // Timer visual para decréscimo segundo a segundo
+            // Timer visual para decréscimo de tempo e incremento de progresso linear
             const visualTimer = setInterval(() => {
-                setTimeLeft(prev => {
-                    if (prev <= 1) return 1 // Mantém 1s até o backend confirmar conclusão
-                    return prev - 1
+                setTimeLeft(prevTime => {
+                    const newTime = prevTime <= 1 ? 1 : prevTime - 1
+
+                    // Incrementa o progresso de forma suave baseada no tempo restante
+                    setGenerationProgress(prevProg => {
+                        if (prevProg >= 99) return 99
+                        // Calcula quanto falta para preencher e divide pelo tempo que resta
+                        const remainingToFill = 100 - prevProg
+                        const step = remainingToFill / (newTime > 0 ? newTime + 5 : 10) // +5 para ser conservador
+                        return Math.min(99, prevProg + step)
+                    })
+
+                    return newTime
                 })
             }, 1000)
 
@@ -291,8 +301,7 @@ export default function HomePage({ user, isAdmin }) {
                     }
 
                     const statusData = await statusRes.json()
-                    const currentProgress = statusData.progress || 0
-                    setGenerationProgress(currentProgress)
+                    const backendProgress = statusData.progress || 0
 
                     if (statusData.status === 'done') {
                         clearInterval(pollInterval)
@@ -310,13 +319,14 @@ export default function HomePage({ user, isAdmin }) {
                         clearInterval(visualTimer)
                         setIsLoading(false)
                         alert(`Erro na geração: ${statusData.error}`)
-                    } else if (currentProgress > 5) { // Sincroniza com a realidade após o primeiro chunk
+                    } else if (backendProgress > 5) {
                         const elapsedMs = Date.now() - startTime
-                        const estimatedTotalMs = (elapsedMs / currentProgress) * 100
+                        const estimatedTotalMs = (elapsedMs / backendProgress) * 100
                         const realRemainingSeconds = Math.max(1, (estimatedTotalMs - elapsedMs) / 1000)
 
-                        // Sincroniza o timer visual com o cálculo real do servidor
                         setTimeLeft(realRemainingSeconds)
+                        // Sincroniza o progresso visual com o real do backend se o real estiver à frente
+                        setGenerationProgress(prev => Math.max(prev, backendProgress))
                     }
                 } catch (e) {
                     console.error("Erro no polling:", e)
