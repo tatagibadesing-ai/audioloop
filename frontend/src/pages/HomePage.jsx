@@ -296,7 +296,7 @@ export default function HomePage({ user, isAdmin }) {
         if (!audioUrl) return
         const a = document.createElement('a')
         a.href = audioUrl
-        a.download = `audiobook-${Date.now()}.ogg`
+        a.download = `audiobook-${Date.now()}.mp3`
         a.click()
     }
 
