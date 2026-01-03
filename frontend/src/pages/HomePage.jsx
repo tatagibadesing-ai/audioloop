@@ -53,18 +53,18 @@ export default function HomePage({ user, isAdmin }) {
 
     // Sincronização suave do player (estilo idêntico ao loading bar)
     useEffect(() => {
-        let intervalId
-        if (isPlaying) {
-            intervalId = setInterval(() => {
-                if (playerRef.current?.audio?.current) {
-                    const audio = playerRef.current.audio.current
-                    if (!audio.paused && audio.duration) {
-                        setPlayerProgress((audio.currentTime / audio.duration) * 100)
-                    }
+        let rafId
+        const update = () => {
+            if (isPlaying && playerRef.current?.audio?.current) {
+                const audio = playerRef.current.audio.current
+                if (!audio.paused && audio.duration) {
+                    setPlayerProgress((audio.currentTime / audio.duration) * 100)
                 }
-            }, 100) // Atualiza a cada 100ms, igual à barra de loading
+            }
+            rafId = requestAnimationFrame(update)
         }
-        return () => clearInterval(intervalId)
+        rafId = requestAnimationFrame(update)
+        return () => cancelAnimationFrame(rafId)
     }, [isPlaying])
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -876,6 +876,7 @@ export default function HomePage({ user, isAdmin }) {
                                                 showJumpControls={false} showDownloadProgress={false}
                                                 showFilledProgress={true} showFilledVolume={true}
                                                 hasDefaultKeyBindings={false} autoPlayAfterSrcChange={false}
+                                                progressUpdateInterval={10}
                                                 layout="horizontal"
                                                 customProgressBarSection={['CURRENT_TIME', 'PROGRESS_BAR', 'DURATION']}
                                                 customControlsSection={['MAIN_CONTROLS']}
