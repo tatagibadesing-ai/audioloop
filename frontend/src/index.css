@@ -163,7 +163,8 @@ body {
 .rhap_progress-filled {
   background: #FCFBF8 !important;
   border-radius: 2px !important;
-  transition: width 0.05s linear !important;
+  transition: none !important;
+  /* Desativa delay para permitir updates de 10ms sem rastro */
 }
 
 .rhap_progress-indicator {

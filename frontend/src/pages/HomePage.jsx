@@ -51,14 +51,25 @@ export default function HomePage({ user, isAdmin }) {
     const [isPlayerHovered, setIsPlayerHovered] = useState(false)
     const [playerProgress, setPlayerProgress] = useState(0)
 
-    // Sincronização suave do player (estilo idêntico ao loading bar)
+    // Sincronização ultra-suave do player (60 FPS reais via RAF)
     useEffect(() => {
         let rafId
         const update = () => {
             if (isPlaying && playerRef.current?.audio?.current) {
                 const audio = playerRef.current.audio.current
                 if (!audio.paused && audio.duration) {
-                    setPlayerProgress((audio.currentTime / audio.duration) * 100)
+                    const progress = (audio.currentTime / audio.duration) * 100
+                    setPlayerProgress(progress)
+
+                    // FORÇA a barra do player principal a atualizar instantaneamente (Bypass React/Library lag)
+                    const mainProgressBar = document.querySelector('.rhap_progress-filled')
+                    if (mainProgressBar) {
+                        mainProgressBar.style.width = `${progress}%`
+                    }
+                    const indicator = document.querySelector('.rhap_progress-indicator')
+                    if (indicator) {
+                        indicator.style.left = `${progress}%`
+                    }
                 }
             }
             rafId = requestAnimationFrame(update)
