@@ -62,15 +62,7 @@ except ImportError:
 
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*", "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"], "allow_headers": "*"}})  # CORS permissivo para Cloudflare Tunnel
-
-# Hook para garantir CORS em todas as respostas
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    return response
+CORS(app)  # Permite requisições do frontend
 
 # Diretório para arquivos temporários
 TEMP_DIR = os.path.join(os.path.dirname(__file__), 'temp_audio')
