@@ -240,8 +240,9 @@ def generate_audio_google(text: str, voice_name: str, output_path: str):
             combined_audio += chunk_content
             
             # Log de progresso
+            print(f"✅ Chunk {i+1}/{len(chunks)} recebido ({len(chunk_content)} bytes)", flush=True)
             if (i + 1) % 10 == 0:
-                print(f"✅ Processado {i+1}/{len(chunks)} partes...", flush=True)
+                print(f"📊 Processado {i+1}/{len(chunks)} partes...", flush=True)
             
         # Salva o arquivo final
         with open(output_path, "wb") as out:
