@@ -220,7 +220,7 @@ def generate_audio_google(text: str, voice_name: str, output_path: str):
                     "name": voice_name
                 },
                 "audioConfig": {
-                    "audioEncoding": "OGG_OPUS",
+                    "audioEncoding": "MP3",
                     "sampleRateHertz": 24000,
                     "speakingRate": 1.0,
                     "pitch": 0.0
@@ -408,10 +408,8 @@ def generate_audiobook():
         if voice not in AVAILABLE_VOICES:
             return jsonify({'error': f'Voz {voice} não suportada'}), 400
         
-        # Gera um nome único para o arquivo
-        file_id = str(uuid.uuid4())
-        # Ambos os provedores agora usam OGG Opus (mais leve e compatível)
-        ext = 'ogg'
+        # Mudamos para MP3 para maior compatibilidade na concatenação
+        ext = 'mp3'
         output_filename = f'audiobook_{file_id}.{ext}'
         output_path = os.path.join(TEMP_DIR, output_filename)
         
@@ -451,8 +449,8 @@ def generate_audiobook():
         
         # Retorna o arquivo para download
         # Ambos os provedores agora usam ogg para economia de espaço
-        mimetype = 'audio/ogg'
-        download_name = 'audiobook.ogg'
+        mimetype = 'audio/mpeg'
+        download_name = 'audiobook.mp3'
         
         return send_file(
             output_path,
@@ -475,7 +473,7 @@ def process_audio_job(job_id: str, text: str, voice: str):
         JOBS[job_id]['progress'] = 5
         
         # Determina extensão
-        ext = 'ogg'
+        ext = 'mp3'
         output_filename = f'job_{job_id}.{ext}'
         output_path = os.path.join(TEMP_DIR, output_filename)
         
@@ -600,9 +598,9 @@ def download_job_result(job_id):
     
     return send_file(
         job['file_path'],
-        mimetype='audio/ogg',
+        mimetype='audio/mpeg',
         as_attachment=True,
-        download_name='audiobook.ogg'
+        download_name='audiobook.mp3'
     )
 
 
