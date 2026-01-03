@@ -264,14 +264,28 @@ export default function HomePage({ user, isAdmin }) {
 
             const { job_id } = await startRes.json()
 
+            // Estimativa inicial baseada no tamanho do texto (ajustada para ser conservadora)
+            const initialEstimation = Math.max(10, text.length * 0.015)
+            setTimeLeft(initialEstimation)
+
             // 2. Polling de Status
             const startTime = Date.now()
+
+            // Timer visual para decréscimo segundo a segundo
+            const visualTimer = setInterval(() => {
+                setTimeLeft(prev => {
+                    if (prev <= 1) return 1 // Mantém 1s até o backend confirmar conclusão
+                    return prev - 1
+                })
+            }, 1000)
+
             const pollInterval = setInterval(async () => {
                 try {
                     const statusRes = await fetch(`${API_URL.replace(/\/$/, '')}/api/generate/status/${job_id}`)
 
                     if (statusRes.status === 404) {
                         clearInterval(pollInterval)
+                        clearInterval(visualTimer)
                         setIsLoading(false)
                         return
                     }
@@ -282,6 +296,7 @@ export default function HomePage({ user, isAdmin }) {
 
                     if (statusData.status === 'done') {
                         clearInterval(pollInterval)
+                        clearInterval(visualTimer)
                         setGenerationProgress(100)
                         setTimeLeft(0)
 
@@ -292,21 +307,16 @@ export default function HomePage({ user, isAdmin }) {
                         setIsLoading(false)
                     } else if (statusData.status === 'error') {
                         clearInterval(pollInterval)
+                        clearInterval(visualTimer)
                         setIsLoading(false)
                         alert(`Erro na geração: ${statusData.error}`)
-                    } else if (currentProgress > 0) {
-                        // Cálculo de tempo restante real:
-                        // tempo_decorrido / progresso = tempo_total_estimado
-                        // tempo_restante = tempo_total_estimado - tempo_decorrido
+                    } else if (currentProgress > 5) { // Sincroniza com a realidade após o primeiro chunk
                         const elapsedMs = Date.now() - startTime
                         const estimatedTotalMs = (elapsedMs / currentProgress) * 100
-                        const remainingSeconds = Math.max(0, (estimatedTotalMs - elapsedMs) / 1000)
+                        const realRemainingSeconds = Math.max(1, (estimatedTotalMs - elapsedMs) / 1000)
 
-                        // Não permite que o tempo suba bruscamente, apenas desça suavemente
-                        setTimeLeft(prev => {
-                            if (prev === 0) return remainingSeconds
-                            return Math.min(prev, remainingSeconds)
-                        })
+                        // Sincroniza o timer visual com o cálculo real do servidor
+                        setTimeLeft(realRemainingSeconds)
                     }
                 } catch (e) {
                     console.error("Erro no polling:", e)
