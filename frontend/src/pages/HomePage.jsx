@@ -264,30 +264,28 @@ export default function HomePage({ user, isAdmin }) {
 
             const { job_id } = await startRes.json()
 
-            // Estimativa inicial baseada no tamanho do texto (ajustada para ser conservadora)
-            const initialEstimation = Math.max(10, text.length * 0.015)
+            // Estimativa inicial mais agressiva (aproximadamente 0.01s por caractere)
+            const initialEstimation = Math.max(5, text.length * 0.01)
             setTimeLeft(initialEstimation)
 
             // 2. Polling de Status
             const startTime = Date.now()
 
-            // Timer visual para decréscimo de tempo e incremento de progresso linear
+            // Timer visual para decréscimo de tempo e incremento de progresso linear (60 FPS feel)
             const visualTimer = setInterval(() => {
                 setTimeLeft(prevTime => {
-                    const newTime = prevTime <= 1 ? 1 : prevTime - 1
-
-                    // Incrementa o progresso de forma suave baseada no tempo restante
-                    setGenerationProgress(prevProg => {
-                        if (prevProg >= 99) return 99
-                        // Calcula quanto falta para preencher e divide pelo tempo que resta
-                        const remainingToFill = 100 - prevProg
-                        const step = remainingToFill / (newTime > 0 ? newTime + 5 : 10) // +5 para ser conservador
-                        return Math.min(99, prevProg + step)
-                    })
-
-                    return newTime
+                    if (prevTime <= 0.1) return 0.1
+                    return prevTime - 0.05
                 })
-            }, 1000)
+
+                setGenerationProgress(prevProg => {
+                    if (prevProg >= 99.5) return 99.5
+                    // Incremento suave: tenta chegar em 100% no tempo estimado
+                    const remainingToFill = 100 - prevProg
+                    const step = (0.05 * remainingToFill) / Math.max(1, timeLeft)
+                    return prevProg + step
+                })
+            }, 50)
 
             const pollInterval = setInterval(async () => {
                 try {
@@ -322,9 +320,11 @@ export default function HomePage({ user, isAdmin }) {
                     } else if (backendProgress > 5) {
                         const elapsedMs = Date.now() - startTime
                         const estimatedTotalMs = (elapsedMs / backendProgress) * 100
-                        const realRemainingSeconds = Math.max(1, (estimatedTotalMs - elapsedMs) / 1000)
+                        const realRemainingSeconds = Math.max(0.2, (estimatedTotalMs - elapsedMs) / 1000)
 
-                        setTimeLeft(realRemainingSeconds)
+                        // Sincronização suave amortecida (Exponential Moving Average)
+                        setTimeLeft(prev => prev * 0.7 + realRemainingSeconds * 0.3)
+
                         // Sincroniza o progresso visual com o real do backend se o real estiver à frente
                         setGenerationProgress(prev => Math.max(prev, backendProgress))
                     }
@@ -772,7 +772,7 @@ export default function HomePage({ user, isAdmin }) {
                                             <motion.div
                                                 initial={{ width: 0 }}
                                                 animate={{ width: `${generationProgress}%` }}
-                                                transition={{ ease: 'linear', duration: 0.1 }}
+                                                transition={{ ease: 'linear', duration: 0.05 }}
                                                 style={{ height: '100%', background: '#FCFBF8' }}
                                             />
                                         </div>
