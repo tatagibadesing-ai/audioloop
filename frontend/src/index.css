@@ -338,6 +338,36 @@ textarea::-webkit-scrollbar-thumb:hover {
     opacity: 1;
     pointer-events: auto;
   }
+
+  /* Compact Player for Mobile */
+  .rhap_main-controls-button {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .rhap_main-controls-button svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+
+  .rhap_time {
+    font-size: 10px !important;
+    min-width: 28px !important;
+  }
+
+  .rhap_progress-section {
+    gap: 8px !important;
+  }
+
+  /* Audiobooks Grid for Mobile (2 columns) */
+  .audiobooks-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  .mobile-hide-text {
+    display: none !important;
+  }
 }
 
 /* Typography Classes */

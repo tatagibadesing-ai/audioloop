@@ -747,7 +747,7 @@ export default function HomePage({ user, isAdmin }) {
                             style={{
                                 position: 'fixed', bottom: 0, left: window.innerWidth < 1024 ? 0 : '260px', right: 0,
                                 background: '#0a0a0a', boxShadow: '0 -10px 40px rgba(0,0,0,0.6)',
-                                padding: isPlayerMinimized && !isLoading ? '8px 32px' : '16px 32px',
+                                padding: window.innerWidth < 768 ? '8px 12px' : (isPlayerMinimized && !isLoading ? '8px 32px' : '16px 32px'),
                                 zIndex: 1000, boxSizing: 'border-box',
                                 transition: 'padding 0.3s ease, left 0.3s ease',
                                 cursor: isPlayerMinimized && !isLoading ? 'pointer' : 'default'
@@ -845,12 +845,12 @@ export default function HomePage({ user, isAdmin }) {
                                     <div style={{
                                         maxWidth: '1200px', width: '100%', margin: '0 auto',
                                         display: !isPlayerMinimized ? 'flex' : 'none',
-                                        flexDirection: window.innerWidth < 768 ? 'column' : 'row',
+                                        flexDirection: 'row',
                                         alignItems: 'center', justifyContent: 'space-between', gap: '16px'
                                     }}>
                                         <div style={{
-                                            width: window.innerWidth < 768 ? '100%' : '230px',
-                                            display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0
+                                            width: 'auto',
+                                            display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0
                                         }}>
                                             {(() => {
                                                 const selected = VOICES.find(v => v.value === voice)
@@ -859,10 +859,14 @@ export default function HomePage({ user, isAdmin }) {
                                                         {selected?.image && (
                                                             <img
                                                                 src={selected.image} alt=""
-                                                                style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #1a1a1a' }}
+                                                                style={{
+                                                                    width: window.innerWidth < 768 ? '32px' : '38px',
+                                                                    height: window.innerWidth < 768 ? '32px' : '38px',
+                                                                    borderRadius: '50%', objectFit: 'cover', border: '2px solid #1a1a1a'
+                                                                }}
                                                             />
                                                         )}
-                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                        <div className="mobile-hide-text" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                                                             <span style={{ fontSize: '15px', color: '#FCFBF8', fontWeight: '400' }}>
                                                                 {selected?.label || 'Audio'}
                                                             </span>
@@ -887,8 +891,8 @@ export default function HomePage({ user, isAdmin }) {
                                                 customControlsSection={['MAIN_CONTROLS']}
                                                 customVolumeControls={[]}
                                                 customIcons={{
-                                                    play: <Play size={16} weight="fill" color="#0a0a0a" />,
-                                                    pause: <Pause size={16} weight="fill" color="#0a0a0a" />
+                                                    play: <Play size={window.innerWidth < 768 ? 14 : 16} weight="fill" color="#0a0a0a" />,
+                                                    pause: <Pause size={window.innerWidth < 768 ? 14 : 16} weight="fill" color="#0a0a0a" />
                                                 }}
                                                 onPlay={() => setIsPlaying(true)}
                                                 onPause={() => setIsPlaying(false)}
@@ -897,26 +901,29 @@ export default function HomePage({ user, isAdmin }) {
                                         </div>
 
                                         <div style={{
-                                            width: window.innerWidth < 768 ? '100%' : '230px',
+                                            width: 'auto',
                                             display: 'flex', alignItems: 'center',
-                                            justifyContent: window.innerWidth < 768 ? 'center' : 'flex-end',
+                                            justifyContent: 'flex-end',
                                             gap: '4px', flexShrink: 0
                                         }}>
                                             {isAdmin && (
                                                 <HoverActionButton
                                                     icon={UploadSimple}
                                                     label="Publicar"
+                                                    size={window.innerWidth < 768 ? 20 : 24}
                                                     onClick={() => setIsPublishModalOpen(true)}
                                                 />
                                             )}
                                             <HoverActionButton
                                                 icon={DownloadSimple}
                                                 label="Baixar"
+                                                size={window.innerWidth < 768 ? 20 : 24}
                                                 onClick={handleDownload}
                                             />
                                             <HoverActionButton
                                                 icon={CaretDown}
                                                 label="Minimizar"
+                                                size={window.innerWidth < 768 ? 20 : 24}
                                                 onClick={() => setIsPlayerMinimized(true)}
                                             />
                                         </div>
@@ -954,7 +961,7 @@ export default function HomePage({ user, isAdmin }) {
                     ) : audiobooks.length === 0 ? (
                         <p style={{ color: 'rgba(255,255,255,0.5)' }}>Nenhum audiobook publicado ainda.</p>
                     ) : (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
+                        <div className="audiobooks-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
                             {audiobooks.map((book) => (
                                 <div key={book.id} style={{
                                     background: 'rgba(255,255,255,0.03)',
