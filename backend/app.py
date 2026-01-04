@@ -83,7 +83,14 @@ except ImportError:
 
 
 app = Flask(__name__)
-CORS(app)  # Permite requisições do frontend
+CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
+
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
 
 # Diretório para arquivos temporários
 TEMP_DIR = os.path.join(os.path.dirname(__file__), 'temp_audio')
