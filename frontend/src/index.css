@@ -257,14 +257,57 @@ textarea::-webkit-scrollbar-thumb:hover {
 
   .mobile-nav-toggle {
     display: flex !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #444 !important;
+    padding: 0 !important;
+    width: 32px !important;
+    height: 32px !important;
   }
 
   h1 {
-    font-size: 32px !important;
+    font-size: 26px !important;
   }
 
   h2 {
-    font-size: 24px !important;
+    font-size: 22px !important;
+  }
+
+  .hero-container {
+    padding: 80px 20px 48px !important;
+  }
+
+  .hero-title {
+    font-size: 26px !important;
+  }
+
+  .hero-subtitle {
+    font-size: 15px !important;
+  }
+
+  .section-title {
+    font-size: 22px !important;
+  }
+
+  .generator-card {
+    padding: 8px !important;
+    border-radius: 20px !important;
+  }
+
+  .generator-textarea {
+    font-size: 14px !important;
+    min-height: 80px !important;
+  }
+
+  .generator-badge {
+    padding: 2px 8px !important;
+    font-size: 10px !important;
+  }
+
+  .generator-button {
+    width: 32px !important;
+    height: 32px !important;
   }
 
   .sidebar-mobile {
@@ -319,18 +362,4 @@ textarea::-webkit-scrollbar-thumb:hover {
   font-weight: 600;
   margin-bottom: 32px;
   color: #ffffff;
-}
-
-@media (max-width: 768px) {
-  .hero-title {
-    font-size: 32px;
-  }
-
-  .hero-subtitle {
-    font-size: 18px;
-  }
-
-  .section-title {
-    font-size: 24px;
-  }
 }

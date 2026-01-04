@@ -38,34 +38,37 @@ function AppLayout({ children }) {
                 <Sidebar user={user} isAdmin={isAdmin} setShowLoginModal={setShowLoginModal} supabase={supabase} />
             </div>
 
-            {/* Botão de Menu Mobile */}
-            <button
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="mobile-nav-toggle"
-                style={{
-                    position: 'fixed',
-                    top: '16px',
-                    left: '16px',
-                    zIndex: 1001,
-                    background: '#0a0a0a',
-                    color: '#fff',
-                    border: '1px solid #222',
-                    borderRadius: '8px',
-                    width: '40px',
-                    height: '40px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
-                }}
-            >
-                {isSidebarOpen ? <X size={20} weight="bold" /> : <List size={20} weight="bold" />}
-            </button>
+            {/* Botão de Menu Mobile - Minimalista com Framer Motion */}
+            {!isSidebarOpen && (
+                <motion.button
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setIsSidebarOpen(true)}
+                    className="mobile-nav-toggle"
+                    style={{
+                        position: 'absolute', // Não fica fixo atrapalhando o scroll
+                        top: '20px',
+                        left: '20px',
+                        zIndex: 1001,
+                        background: 'transparent',
+                        color: '#333',
+                        border: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer'
+                    }}
+                >
+                    <List size={26} weight="bold" />
+                </motion.button>
+            )}
 
             <main className="main-content" style={{ flex: 1, position: 'relative' }}>
                 {children({ user, isAdmin, setShowLoginModal })}
             </main>
+
 
 
             <AnimatePresence>

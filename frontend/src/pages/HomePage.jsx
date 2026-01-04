@@ -393,12 +393,15 @@ export default function HomePage({ user, isAdmin }) {
                 </div>
 
                 {/* Card Gerador */}
-                <div style={{
-                    maxWidth: '850px', width: '100%', margin: '0 auto 24px',
-                    background: '#1a1a1a', borderRadius: '32px',
-                    boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
-                    padding: '12px', boxSizing: 'border-box'
-                }}>
+                <div
+                    className="generator-card"
+                    style={{
+                        maxWidth: '850px', width: '100%', margin: '0 auto 24px',
+                        background: '#1a1a1a', borderRadius: '32px',
+                        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
+                        padding: '12px', boxSizing: 'border-box'
+                    }}
+                >
                     <div style={{ padding: '16px 20px 8px', position: 'relative' }}>
                         {!text && (
                             <div style={{
@@ -410,7 +413,7 @@ export default function HomePage({ user, isAdmin }) {
                                 lineHeight: '1.6',
                                 color: '#666',
                                 fontFamily: "'Figtree', sans-serif"
-                            }}>
+                            }} className="generator-textarea">
                                 <TypeAnimation
                                     sequence={[
                                         'Peça para gerar um audiobook de seu Texto...',
@@ -440,6 +443,7 @@ export default function HomePage({ user, isAdmin }) {
                             rows={1}
                             placeholder=""
                             disabled={isLoading}
+                            className="generator-textarea"
                             style={{
                                 width: '100%', minHeight: '120px', maxHeight: '480px',
                                 background: 'transparent', border: 'none',
@@ -456,22 +460,15 @@ export default function HomePage({ user, isAdmin }) {
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <input ref={fileInputRef} type="file" accept=".pdf,.docx,.txt" onChange={handleFileUpload} style={{ display: 'none' }} />
-                            <button onClick={() => fileInputRef.current?.click()} disabled={isLoading}
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isLoading}
+                                className="generator-badge"
                                 style={{
                                     display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px',
                                     background: 'transparent', border: '1px solid #333332',
                                     borderRadius: '20px', color: '#91918E', cursor: 'pointer', fontSize: '14px', fontWeight: '600',
                                     fontFamily: "'Figtree', sans-serif", transition: 'all 0.2s'
-                                }}
-                                onMouseEnter={e => {
-                                    e.currentTarget.style.borderColor = '#40403F'
-                                    e.currentTarget.style.color = '#FCFBF8'
-                                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)'
-                                }}
-                                onMouseLeave={e => {
-                                    e.currentTarget.style.borderColor = '#333332'
-                                    e.currentTarget.style.color = '#91918E'
-                                    e.currentTarget.style.background = 'transparent'
                                 }}
                             >
                                 <Paperclip size={18} weight="bold" />
@@ -482,6 +479,7 @@ export default function HomePage({ user, isAdmin }) {
                                 <button
                                     onClick={() => setIsVoiceModalOpen(!isVoiceModalOpen)}
                                     disabled={isLoading}
+                                    className="generator-badge"
                                     style={{
                                         display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px',
                                         background: 'transparent',
@@ -490,16 +488,6 @@ export default function HomePage({ user, isAdmin }) {
                                         color: isVoiceModalOpen ? '#FCFBF8' : '#91918E',
                                         fontSize: '14px', fontWeight: '600',
                                         cursor: 'pointer', fontFamily: "'Figtree', sans-serif", transition: 'all 0.2s'
-                                    }}
-                                    onMouseEnter={e => {
-                                        e.currentTarget.style.borderColor = '#40403F'
-                                        e.currentTarget.style.color = '#FCFBF8'
-                                    }}
-                                    onMouseLeave={e => {
-                                        if (!isVoiceModalOpen) {
-                                            e.currentTarget.style.borderColor = '#333332'
-                                            e.currentTarget.style.color = '#91918E'
-                                        }
                                     }}
                                 >
                                     {(() => {
@@ -513,18 +501,12 @@ export default function HomePage({ user, isAdmin }) {
                                                         style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover' }}
                                                     />
                                                 )}
-                                                {selected?.label}
+                                                {selected?.label.split(' ')[0]}
+                                                <CaretDown size={14} weight="bold" color="#666" />
                                             </div>
                                         )
                                     })()}
-                                    <CaretDown
-                                        size={14} weight="bold"
-                                        style={{
-                                            color: isVoiceModalOpen ? '#FCFBF8' : '#91918E',
-                                            transition: 'transform 0.3s, color 0.2s',
-                                            transform: isVoiceModalOpen ? 'rotate(180deg)' : 'rotate(0)'
-                                        }}
-                                    />
+
                                 </button>
 
                                 <AnimatePresence>
@@ -590,26 +572,23 @@ export default function HomePage({ user, isAdmin }) {
                                 ~{estimateAudioDuration(text)}
                             </span>}
 
-                            <button onClick={handleGenerate} disabled={isLoading || !text.trim()}
+                            <button
+                                onClick={handleGenerate}
+                                disabled={isLoading || !text.trim()}
+                                className="generator-button"
                                 style={{
                                     width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center',
                                     background: isLoading || !text.trim() ? '#91918e' : '#FCFBF8',
                                     border: 'none', borderRadius: '50%',
                                     color: '#03030D',
                                     cursor: isLoading || !text.trim() ? 'not-allowed' : 'pointer',
-                                    transition: 'transform 0.1s, background 0.2s',
-                                    boxShadow: text.trim() ? '0 4px 12px rgba(255,255,255,0.1)' : 'none'
+                                    transition: 'all 0.2s',
                                 }}
-                                onMouseEnter={e => { if (!isLoading && text.trim()) e.currentTarget.style.transform = 'scale(1.05)' }}
-                                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)' }}
                             >
                                 {isLoading ? (
-                                    <svg style={{ animation: 'spin 1s linear infinite' }} width="20" height="20" fill="none" viewBox="0 0 24 24">
-                                        <circle opacity="0.1" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                        <path opacity="1" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                    </svg>
+                                    <CircleNotch size={20} weight="bold" className="animate-spin" />
                                 ) : (
-                                    <ArrowUp size={24} weight="bold" />
+                                    <ArrowUp size={22} weight="bold" />
                                 )}
                             </button>
                         </div>
@@ -766,11 +745,11 @@ export default function HomePage({ user, isAdmin }) {
                             onMouseLeave={() => setIsPlayerHovered(false)}
                             onClick={isPlayerMinimized && !isLoading ? () => { setIsPlayerMinimized(false); setIsPlayerHovered(false) } : undefined}
                             style={{
-                                position: 'fixed', bottom: 0, left: '260px', right: 0,
+                                position: 'fixed', bottom: 0, left: window.innerWidth < 1024 ? 0 : '260px', right: 0,
                                 background: '#0a0a0a', boxShadow: '0 -10px 40px rgba(0,0,0,0.6)',
                                 padding: isPlayerMinimized && !isLoading ? '8px 32px' : '16px 32px',
                                 zIndex: 1000, boxSizing: 'border-box',
-                                transition: 'padding 0.3s ease',
+                                transition: 'padding 0.3s ease, left 0.3s ease',
                                 cursor: isPlayerMinimized && !isLoading ? 'pointer' : 'default'
                             }}
                         >
@@ -866,9 +845,13 @@ export default function HomePage({ user, isAdmin }) {
                                     <div style={{
                                         maxWidth: '1200px', width: '100%', margin: '0 auto',
                                         display: !isPlayerMinimized ? 'flex' : 'none',
+                                        flexDirection: window.innerWidth < 768 ? 'column' : 'row',
                                         alignItems: 'center', justifyContent: 'space-between', gap: '16px'
                                     }}>
-                                        <div style={{ width: '230px', display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+                                        <div style={{
+                                            width: window.innerWidth < 768 ? '100%' : '230px',
+                                            display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0
+                                        }}>
                                             {(() => {
                                                 const selected = VOICES.find(v => v.value === voice)
                                                 return (
@@ -910,13 +893,15 @@ export default function HomePage({ user, isAdmin }) {
                                                 onPlay={() => setIsPlaying(true)}
                                                 onPause={() => setIsPlaying(false)}
                                                 onEnded={() => setIsPlaying(false)}
-                                                onListen={(e) => {
-                                                    // Sincronização é feita via requestAnimationFrame para fluidez
-                                                }}
                                             />
                                         </div>
 
-                                        <div style={{ width: '230px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px', flexShrink: 0 }}>
+                                        <div style={{
+                                            width: window.innerWidth < 768 ? '100%' : '230px',
+                                            display: 'flex', alignItems: 'center',
+                                            justifyContent: window.innerWidth < 768 ? 'center' : 'flex-end',
+                                            gap: '4px', flexShrink: 0
+                                        }}>
                                             {isAdmin && (
                                                 <HoverActionButton
                                                     icon={UploadSimple}
