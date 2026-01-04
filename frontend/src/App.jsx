@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { BrowserRouter, Routes, Route } from "react-router-dom"
-import { AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 
 // Componentes
 import Sidebar from './components/layout/Sidebar'
