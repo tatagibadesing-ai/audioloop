@@ -1,7 +1,7 @@
 // API URL - VPS Vultr com timeout ilimitado
 export const API_URL = import.meta.env.VITE_API_URL ||
     (window.location.hostname === 'localhost' ? 'http://localhost:5000' :
-        'https://audioloop.duckdns.org')
+        'https://api.audioloop.com.br')
 
 // Email do admin (hardcoded para segurança - verificação dupla no backend)
 export const ADMIN_EMAIL = '2closett@gmail.com'
