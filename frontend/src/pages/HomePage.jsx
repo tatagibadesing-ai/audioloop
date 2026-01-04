@@ -368,24 +368,26 @@ export default function HomePage({ user, isAdmin }) {
 
     return (
         <>
-            <div style={{
-                minHeight: '100vh',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                padding: '80px 24px 64px',
-                backgroundImage: "url('/background.jpg')",
-                backgroundSize: 'cover',
-                backgroundPosition: 'bottom',
-                boxSizing: 'border-box'
-            }}>
+            <div
+                className="hero-container"
+                style={{
+                    minHeight: '100vh',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundImage: "url('/background.jpg')",
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'bottom',
+                    boxSizing: 'border-box'
+                }}
+            >
                 {/* Título */}
                 <div style={{ textAlign: 'center', marginBottom: '48px', maxWidth: '900px', width: '100%', margin: '0 auto 48px' }}>
-                    <h1 style={{ fontSize: '48px', fontWeight: '600', marginBottom: '16px', color: '#0f172a', letterSpacing: '-0.02em' }}>
+                    <h1 className="hero-title">
                         Gerador de Audiobook Profissional
                     </h1>
-                    <p style={{ fontSize: '22px', color: 'rgba(15,23,42,0.7)', fontWeight: '400' }}>
+                    <p className="hero-subtitle">
                         Transforme qualquer texto em audiobook de forma ilimitada e gratuita.
                     </p>
                 </div>
@@ -949,13 +951,16 @@ export default function HomePage({ user, isAdmin }) {
             </div>
 
             {/* Seção Audiobooks */}
-            <div style={{
-                width: '100%',
-                background: '#03030D',
-                padding: '64px 24px'
-            }}>
+            <div
+                className="section-container"
+                style={{
+                    width: '100%',
+                    background: '#03030D',
+                    padding: window.innerWidth < 768 ? '40px 16px' : '64px 24px'
+                }}
+            >
                 <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-                    <h2 style={{ fontSize: '28px', fontWeight: '600', marginBottom: '32px', color: '#ffffff' }}>
+                    <h2 className="section-title">
                         Audiobooks Disponíveis
                     </h2>
 
