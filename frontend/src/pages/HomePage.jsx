@@ -969,8 +969,10 @@ export default function HomePage({ user, isAdmin }) {
                                     border: 'none',
                                     overflow: 'hidden',
                                     boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-                                    transition: 'transform 0.2s, box-shadow 0.2s, background 0.2s'
+                                    transition: 'transform 0.2s, box-shadow 0.2s, background 0.2s',
+                                    cursor: book.audio_url ? 'pointer' : 'default'
                                 }}
+                                    onClick={() => book.audio_url && window.open(book.audio_url, '_blank')}
                                     onMouseEnter={e => {
                                         e.currentTarget.style.transform = 'translateY(-6px)'
                                         e.currentTarget.style.boxShadow = '0 12px 30px rgba(0,0,0,0.5)'
@@ -1003,16 +1005,6 @@ export default function HomePage({ user, isAdmin }) {
                                                     {formatTime(book.duration_seconds || 0)}
                                                 </div>
                                             ) : <span />}
-                                            {book.audio_url && (
-                                                <button onClick={() => window.open(book.audio_url, '_blank')}
-                                                    style={{
-                                                        background: '#2546C7', color: '#fff', border: 'none', padding: '8px 16px',
-                                                        borderRadius: '8px', fontSize: '14px', fontWeight: '500', cursor: 'pointer',
-                                                        display: 'flex', alignItems: 'center', gap: '6px'
-                                                    }}>
-                                                    <Play size={16} weight="fill" /> Ouvir
-                                                </button>
-                                            )}
                                         </div>
                                     </div>
                                 </div>
