@@ -267,23 +267,23 @@ textarea::-webkit-scrollbar-thumb:hover {
   }
 
   h1 {
-    font-size: 26px !important;
+    font-size: 20px !important;
   }
 
   h2 {
-    font-size: 22px !important;
+    font-size: 18px !important;
   }
 
   .hero-container {
-    padding: 80px 20px 48px !important;
+    padding: 60px 20px 32px !important;
   }
 
   .hero-title {
-    font-size: 26px !important;
+    font-size: 20px !important;
   }
 
   .hero-subtitle {
-    font-size: 15px !important;
+    font-size: 13px !important;
   }
 
   .section-title {
@@ -367,6 +367,19 @@ textarea::-webkit-scrollbar-thumb:hover {
 
   .mobile-hide-text {
     display: none !important;
+  }
+
+  .audiobook-card-title {
+    font-size: 14px !important;
+  }
+
+  .audiobook-card-desc {
+    font-size: 11px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .audiobook-card-content {
+    padding: 12px !important;
   }
 }
 

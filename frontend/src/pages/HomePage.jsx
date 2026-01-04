@@ -989,10 +989,10 @@ export default function HomePage({ user, isAdmin }) {
                                             <span style={{ fontSize: '48px' }}>🎧</span>
                                         </div>
                                     )}
-                                    <div style={{ padding: '24px' }}>
-                                        <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px', color: '#ffffff' }}>{book.title}</h3>
+                                    <div className="audiobook-card-content" style={{ padding: '24px' }}>
+                                        <h3 className="audiobook-card-title" style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px', color: '#ffffff' }}>{book.title}</h3>
                                         {book.description && (
-                                            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', marginBottom: '20px', lineHeight: '1.6' }}>
+                                            <p className="audiobook-card-desc" style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', marginBottom: '20px', lineHeight: '1.6' }}>
                                                 {book.description.slice(0, 100)}{book.description.length > 100 ? '...' : ''}
                                             </p>
                                         )}
