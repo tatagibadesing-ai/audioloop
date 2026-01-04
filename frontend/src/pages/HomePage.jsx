@@ -516,6 +516,7 @@ export default function HomePage({ user, isAdmin }) {
                                             animate={{ opacity: 1, y: 0, scale: 1 }}
                                             exit={{ opacity: 0, y: -10, scale: 0.95 }}
                                             transition={{ duration: 0.2, ease: "easeOut" }}
+                                            className="voice-modal"
                                             style={{
                                                 position: 'absolute', top: 'calc(100% + 12px)', left: 0,
                                                 minWidth: '220px', background: '#1a1a1a',
@@ -535,6 +536,7 @@ export default function HomePage({ user, isAdmin }) {
                                                         setVoice(v.value)
                                                         playVoicePreview(v.value)
                                                     }}
+                                                    className="voice-item"
                                                     style={{
                                                         padding: '10px 12px', borderRadius: '10px',
                                                         color: voice === v.value ? '#FCFBF8' : '#91918E',
@@ -553,7 +555,7 @@ export default function HomePage({ user, isAdmin }) {
                                                         )}
                                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                                                             <span>{v.label}</span>
-                                                            <span style={{ fontSize: '10px', color: '#666', marginTop: '2px' }}>
+                                                            <span className="voice-item-provider" style={{ fontSize: '10px', color: '#666', marginTop: '2px' }}>
                                                                 {v.provider === 'google' ? 'Google Cloud' : 'Microsoft Azure'}
                                                             </span>
                                                         </div>

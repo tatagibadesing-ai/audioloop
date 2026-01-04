@@ -381,6 +381,26 @@ textarea::-webkit-scrollbar-thumb:hover {
   .audiobook-card-content {
     padding: 10px !important;
   }
+
+  /* Compact Voice Modal for Mobile */
+  .voice-modal {
+    min-width: 160px !important;
+    padding: 4px !important;
+  }
+
+  .voice-item {
+    padding: 6px 8px !important;
+    font-size: 11px !important;
+  }
+
+  .voice-item img {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .voice-item-provider {
+    font-size: 8px !important;
+  }
 }
 
 /* Typography Classes */
