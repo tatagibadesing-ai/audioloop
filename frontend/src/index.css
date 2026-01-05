@@ -224,12 +224,6 @@ textarea::-webkit-scrollbar-thumb:hover {
 /* Responsive Layout Utilities */
 .sidebar-desktop {
   display: flex !important;
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: 260px;
-  z-index: 1000;
 }
 
 .sidebar-mobile {
@@ -237,10 +231,9 @@ textarea::-webkit-scrollbar-thumb:hover {
   position: fixed;
   top: 0;
   left: 0;
-  height: 100dvh;
+  bottom: 0;
   width: 260px;
-  z-index: 1050;
-  overflow: hidden;
+  z-index: 1000;
 }
 
 .main-content {
