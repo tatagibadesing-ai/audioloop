@@ -427,7 +427,7 @@ export default function HomePage({ user, isAdmin }) {
                         boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
                         padding: '12px', boxSizing: 'border-box',
                         position: 'relative',
-                        overflow: 'hidden'
+                        overflow: 'visible'
                     }}
                 >
                     <input {...dropzoneGenerator.getInputProps()} />
