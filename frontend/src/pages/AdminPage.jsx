@@ -34,6 +34,7 @@ import {
     MusicNotes,
     Image as ImageIcon,
     CaretLeft,
+    CaretDown,
     CircleNotch,
     FileAudio,
     Monitor,
