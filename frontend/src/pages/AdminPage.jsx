@@ -19,7 +19,9 @@ import {
     CaretLeft,
     CircleNotch,
     FileAudio,
-    Monitor
+    Monitor,
+    Play,
+    Pause
 } from "@phosphor-icons/react"
 
 export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
@@ -37,6 +39,7 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
     const [existingAudioUrl, setExistingAudioUrl] = useState('')
     const [existingCoverUrl, setExistingCoverUrl] = useState('')
     const [isFormVisible, setIsFormVisible] = useState(false)
+    const [isPreviewPlaying, setIsPreviewPlaying] = useState(false)
 
     const audioInputRef = useRef(null)
     const coverInputRef = useRef(null)
@@ -370,8 +373,32 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                                                     {audioFile ? (
                                                         <>
                                                             <CheckCircle size={24} color="#FCFBF8" weight="fill" />
-                                                            <span style={{ fontSize: '12px', marginTop: '4px', color: '#FCFBF8' }}>Áudio selecionado</span>
+                                                            <span style={{ fontSize: '10px', marginTop: '4px', color: '#FCFBF8', maxWidth: '80%', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                                {audioFile.name}
+                                                            </span>
                                                         </>
+                                                    ) : editingId && existingAudioUrl ? (
+                                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                                                            <div
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    const audio = document.getElementById('preview-audio-element');
+                                                                    if (isPreviewPlaying) audio.pause();
+                                                                    else audio.play();
+                                                                    setIsPreviewPlaying(!isPreviewPlaying);
+                                                                }}
+                                                                style={{ background: 'rgba(252, 251, 248, 0.1)', padding: '8px', borderRadius: '50%', color: '#FCFBF8' }}
+                                                            >
+                                                                {isPreviewPlaying ? <Pause size={20} weight="fill" /> : <Play size={20} weight="fill" />}
+                                                            </div>
+                                                            <span style={{ fontSize: '10px', color: '#91918E' }}>Áudio atual detectado</span>
+                                                            <audio
+                                                                id="preview-audio-element"
+                                                                src={existingAudioUrl}
+                                                                onEnded={() => setIsPreviewPlaying(false)}
+                                                                style={{ display: 'none' }}
+                                                            />
+                                                        </div>
                                                     ) : (
                                                         <>
                                                             <MusicNotes size={24} color="#91918E" />
@@ -407,8 +434,23 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                                                     />
                                                     {coverFile ? (
                                                         <>
-                                                            <CheckCircle size={24} color="#FCFBF8" weight="fill" />
-                                                            <span style={{ fontSize: '12px', marginTop: '4px', color: '#FCFBF8' }}>Capa selecionada</span>
+                                                            <img
+                                                                src={URL.createObjectURL(coverFile)}
+                                                                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.3 }}
+                                                                alt=""
+                                                            />
+                                                            <CheckCircle size={24} color="#FCFBF8" weight="fill" style={{ position: 'relative' }} />
+                                                            <span style={{ fontSize: '12px', marginTop: '4px', color: '#FCFBF8', position: 'relative' }}>Nova capa</span>
+                                                        </>
+                                                    ) : editingId && existingCoverUrl ? (
+                                                        <>
+                                                            <img
+                                                                src={existingCoverUrl}
+                                                                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4 }}
+                                                                alt=""
+                                                            />
+                                                            <ImageIcon size={24} color="#FCFBF8" style={{ position: 'relative' }} />
+                                                            <span style={{ fontSize: '10px', marginTop: '4px', color: '#FCFBF8', position: 'relative' }}>Capa atual</span>
                                                         </>
                                                     ) : (
                                                         <>
