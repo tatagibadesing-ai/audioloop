@@ -1,0 +1,69 @@
+
+# ----------------------------------------------------------------------
+# COMANDOS PARA COPIAR E COLAR NO TERMINAL DO SERVIDOR (VULTR)
+# ----------------------------------------------------------------------
+
+# 1. PRIMEIRO, GERE O CERTIFICADO DE SEGURANÇA (SSL):
+# Copie e cole este comando e aperte ENTER.
+# Se ele perguntar alguma coisa, digite '1' (reinstalar) ou '2' (renovar), e depois '2' (Redirect).
+sudo certbot --nginx -d api.audioloop.com.br
+
+# ----------------------------------------------------------------------
+
+# 2. AGORA, ATUALIZE A CONFIGURAÇÃO DO NGINX (O "PORTEIRO"):
+# Copie TODO o bloco abaixo de uma vez só e cole no terminal, depois aperte ENTER.
+# Isso vai reescrever o arquivo de configuração com o domínio novo e as regras certas.
+
+cat <<EOF | sudo tee /etc/nginx/sites-available/audioloop
+server {
+    listen 80;
+    server_name api.audioloop.com.br;
+    return 301 https://\$host\$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name api.audioloop.com.br;
+
+    ssl_certificate /etc/letsencrypt/live/api.audioloop.com.br/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.audioloop.com.br/privkey.pem;
+
+    client_max_body_size 500M;
+
+    location / {
+        proxy_pass http://localhost:5000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_cache_bypass \$http_upgrade;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+
+        # CORS (Permite que seu site acesse a API)
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE' always;
+        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization' always;
+
+        if (\$request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' '*';
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE';
+            add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization';
+            add_header 'Access-Control-Max-Age' 1728000;
+            add_header 'Content-Type' 'text/plain; charset=utf-8';
+            add_header 'Content-Length' 0;
+            return 204;
+        }
+    }
+}
+EOF
+
+# ----------------------------------------------------------------------
+
+# 3. POR FIM, REINICIE TUDO E ATUALIZE O CÓDIGO:
+# Copie e cole esta linha final para aplicar as mudanças:
+
+sudo ln -sf /etc/nginx/sites-available/audioloop /etc/nginx/sites-enabled/ && sudo nginx -t && sudo systemctl restart nginx && cd ~/audioloop && git pull origin main && sudo systemctl restart audioloop-backend
+
+# SE TUDO DEU CERTO, APARECERÁ "syntax is ok" E O SITE JÁ ESTARÁ NO AR! 🚀
