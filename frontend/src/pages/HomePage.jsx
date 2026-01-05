@@ -1031,12 +1031,11 @@ export default function HomePage({ user, isAdmin }) {
                                     onMouseEnter={e => {
                                         e.currentTarget.style.transform = 'translateY(-6px)'
                                         e.currentTarget.style.boxShadow = '0 12px 30px rgba(0,0,0,0.5)'
-                                        e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
                                     }}
                                     onMouseLeave={e => {
                                         e.currentTarget.style.transform = 'translateY(0)'
                                         e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)'
-                                        e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
+                                        e.currentTarget.style.background = '#1a1a1a'
                                     }}
                                 >
                                     {book.cover_url ? (
