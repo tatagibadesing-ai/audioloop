@@ -433,25 +433,30 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                                                         style={{ display: 'none' }}
                                                     />
                                                     {coverFile ? (
-                                                        <>
-                                                            <img
-                                                                src={URL.createObjectURL(coverFile)}
-                                                                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.3 }}
-                                                                alt=""
-                                                            />
-                                                            <CheckCircle size={24} color="#FCFBF8" weight="fill" style={{ position: 'relative' }} />
-                                                            <span style={{ fontSize: '12px', marginTop: '4px', color: '#FCFBF8', position: 'relative' }}>Nova capa</span>
-                                                        </>
+                                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                                                            <div style={{ width: '48px', height: '48px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #FCFBF8' }}>
+                                                                <img
+                                                                    src={URL.createObjectURL(coverFile)}
+                                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                                    alt=""
+                                                                />
+                                                            </div>
+                                                            <span style={{ fontSize: '10px', color: '#FCFBF8', fontWeight: '600' }}>Nova capa selecionada</span>
+                                                        </div>
                                                     ) : editingId && existingCoverUrl ? (
-                                                        <>
-                                                            <img
-                                                                src={existingCoverUrl}
-                                                                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4 }}
-                                                                alt=""
-                                                            />
-                                                            <ImageIcon size={24} color="#FCFBF8" style={{ position: 'relative' }} />
-                                                            <span style={{ fontSize: '10px', marginTop: '4px', color: '#FCFBF8', position: 'relative' }}>Capa atual</span>
-                                                        </>
+                                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                                                            <div style={{ width: '48px', height: '48px', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                                                <img
+                                                                    src={existingCoverUrl}
+                                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                                    alt=""
+                                                                />
+                                                            </div>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                                <PencilSimple size={12} color="#91918E" />
+                                                                <span style={{ fontSize: '10px', color: '#91918E' }}>Alterar capa atual</span>
+                                                            </div>
+                                                        </div>
                                                     ) : (
                                                         <>
                                                             <ImageIcon size={24} color="#91918E" />
