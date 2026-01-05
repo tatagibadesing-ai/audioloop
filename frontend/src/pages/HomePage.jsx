@@ -79,11 +79,26 @@ export default function HomePage({ user, isAdmin }) {
         return () => cancelAnimationFrame(rafId)
     }, [isPlaying])
 
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    const dropzonePublish = useDropzone({
         accept: { 'image/*': [] },
         maxFiles: 1,
         onDrop: acceptedFiles => {
             setPublishCover(acceptedFiles[0])
+        }
+    })
+
+    const dropzoneGenerator = useDropzone({
+        accept: {
+            'application/pdf': ['.pdf'],
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+            'text/plain': ['.txt']
+        },
+        maxFiles: 1,
+        noClick: true, // Para não interferir com o textarea
+        onDrop: acceptedFiles => {
+            if (acceptedFiles.length > 0) {
+                handleFileUpload({ target: { files: acceptedFiles } })
+            }
         }
     })
 
@@ -399,14 +414,50 @@ export default function HomePage({ user, isAdmin }) {
 
                 {/* Card Gerador */}
                 <div
+                    {...dropzoneGenerator.getRootProps()}
                     className="generator-card"
                     style={{
                         maxWidth: '850px', width: '100%', margin: '0 auto 24px',
                         background: '#1a1a1a', borderRadius: '32px',
                         boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
-                        padding: '12px', boxSizing: 'border-box'
+                        padding: '12px', boxSizing: 'border-box',
+                        position: 'relative',
+                        overflow: 'hidden'
                     }}
                 >
+                    <input {...dropzoneGenerator.getInputProps()} />
+
+                    {/* Visual sinalizando o drag */}
+                    <AnimatePresence>
+                        {dropzoneGenerator.isDragActive && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                style={{
+                                    position: 'absolute', inset: 0,
+                                    background: 'rgba(37, 70, 199, 0.15)',
+                                    backdropFilter: 'blur(8px)',
+                                    border: '2px dashed #2546C7',
+                                    borderRadius: '32px',
+                                    zIndex: 10,
+                                    display: 'flex', flexDirection: 'column',
+                                    alignItems: 'center', justifyContent: 'center',
+                                    color: '#FCFBF8', gap: '12px'
+                                }}
+                            >
+                                <motion.div
+                                    animate={{ y: [0, -10, 0] }}
+                                    transition={{ duration: 1.5, repeat: Infinity }}
+                                >
+                                    <UploadSimple size={48} weight="bold" />
+                                </motion.div>
+                                <span style={{ fontWeight: '600', fontSize: '18px' }}>Solte para carregar seu arquivo</span>
+                                <span style={{ fontSize: '14px', color: 'rgba(252, 251, 248, 0.6)' }}>PDF, DOCX ou TXT</span>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
                     <div className="generator-input-wrapper" style={{ padding: '16px 20px 8px', position: 'relative' }}>
                         {!text && (
                             <div style={{
@@ -727,16 +778,16 @@ export default function HomePage({ user, isAdmin }) {
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                         <label style={{ color: '#888', fontSize: '13px', fontWeight: '500', marginLeft: '4px' }}>Capa</label>
                                         <div
-                                            {...getRootProps()}
+                                            {...dropzonePublish.getRootProps()}
                                             style={{
                                                 width: '200px', height: '266px', background: 'rgba(255,255,255,0.03)',
-                                                borderRadius: '16px', border: isDragActive ? '2px dashed #FCFBF8' : '2px dashed rgba(255,255,255,0.1)',
+                                                borderRadius: '16px', border: dropzonePublish.isDragActive ? '2px dashed #FCFBF8' : '2px dashed rgba(255,255,255,0.1)',
                                                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                                                 cursor: 'pointer', overflow: 'hidden', position: 'relative',
                                                 transition: 'all 0.2s'
                                             }}
                                         >
-                                            <input {...getInputProps()} />
+                                            <input {...dropzonePublish.getInputProps()} />
                                             {publishCover ? (
                                                 <>
                                                     <img
