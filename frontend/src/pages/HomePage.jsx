@@ -52,6 +52,7 @@ export default function HomePage({ user, isAdmin }) {
     const [playerProgress, setPlayerProgress] = useState(0)
     const [isReadingFile, setIsReadingFile] = useState(false)
     const [categories, setCategories] = useState([])
+    const [isPublishCategoryDropdownOpen, setIsPublishCategoryDropdownOpen] = useState(false)
 
     // Detalhes do Audiobook
     const [selectedBookModal, setSelectedBookModal] = useState(null)
@@ -244,6 +245,17 @@ export default function HomePage({ user, isAdmin }) {
         const handleClickOutside = (event) => {
             if (voiceSelectRef.current && !voiceSelectRef.current.contains(event.target)) {
                 setIsVoiceModalOpen(false)
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside)
+        return () => document.removeEventListener("mousedown", handleClickOutside)
+    }, [])
+
+    const publishCategoryDropdownRef = useRef(null)
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (publishCategoryDropdownRef.current && !publishCategoryDropdownRef.current.contains(event.target)) {
+                setIsPublishCategoryDropdownOpen(false)
             }
         }
         document.addEventListener("mousedown", handleClickOutside)
@@ -774,25 +786,78 @@ export default function HomePage({ user, isAdmin }) {
                                             />
                                         </div>
 
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }} ref={publishCategoryDropdownRef}>
                                             <label style={{ color: '#888', fontSize: '13px', fontWeight: '500', marginLeft: '4px' }}>Categoria</label>
-                                            <select
-                                                value={publishCategoryId}
-                                                onChange={e => setPublishCategoryId(e.target.value)}
+                                            <div
+                                                onClick={() => setIsPublishCategoryDropdownOpen(!isPublishCategoryDropdownOpen)}
                                                 style={{
                                                     width: '100%', padding: '16px', background: 'rgba(255,255,255,0.03)',
                                                     border: 'none', borderRadius: '16px', color: '#FCFBF8',
                                                     fontSize: '15px', boxSizing: 'border-box', outline: 'none',
-                                                    cursor: 'pointer', appearance: 'none'
+                                                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
                                                 }}
                                             >
-                                                <option value="" style={{ background: '#1a1a1a' }}>Sem Categoria</option>
-                                                {categories.map(cat => (
-                                                    <option key={cat.id} value={cat.id} style={{ background: '#1a1a1a' }}>
-                                                        {cat.name}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                                <span>
+                                                    {categories.find(c => c.id === parseInt(publishCategoryId))?.name || 'Sem Categoria'}
+                                                </span>
+                                                <CaretDown size={14} weight="bold" style={{ transform: isPublishCategoryDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', color: '#666' }} />
+                                            </div>
+
+                                            <AnimatePresence>
+                                                {isPublishCategoryDropdownOpen && (
+                                                    <motion.div
+                                                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                                                        style={{
+                                                            position: 'absolute',
+                                                            top: '100%',
+                                                            left: 0,
+                                                            right: 0,
+                                                            marginTop: '8px',
+                                                            background: '#1a1a1a',
+                                                            border: '1px solid rgba(255,255,255,0.05)',
+                                                            borderRadius: '16px',
+                                                            boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+                                                            zIndex: 2100,
+                                                            overflow: 'hidden',
+                                                            padding: '8px'
+                                                        }}
+                                                    >
+                                                        <div
+                                                            onClick={() => { setPublishCategoryId(''); setIsPublishCategoryDropdownOpen(false); }}
+                                                            style={{
+                                                                padding: '12px 16px',
+                                                                borderRadius: '8px',
+                                                                cursor: 'pointer',
+                                                                background: publishCategoryId === '' ? 'rgba(255,255,255,0.05)' : 'transparent',
+                                                                color: publishCategoryId === '' ? '#FCFBF8' : '#91918E',
+                                                                transition: 'all 0.2s',
+                                                                fontSize: '14px'
+                                                            }}
+                                                        >
+                                                            Sem Categoria
+                                                        </div>
+                                                        {categories.map(cat => (
+                                                            <div
+                                                                key={cat.id}
+                                                                onClick={() => { setPublishCategoryId(cat.id.toString()); setIsPublishCategoryDropdownOpen(false); }}
+                                                                style={{
+                                                                    padding: '12px 16px',
+                                                                    borderRadius: '8px',
+                                                                    cursor: 'pointer',
+                                                                    background: parseInt(publishCategoryId) === cat.id ? 'rgba(255,255,255,0.05)' : 'transparent',
+                                                                    color: parseInt(publishCategoryId) === cat.id ? '#FCFBF8' : '#91918E',
+                                                                    transition: 'all 0.2s',
+                                                                    fontSize: '14px'
+                                                                }}
+                                                            >
+                                                                {cat.name}
+                                                            </div>
+                                                        ))}
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
                                         </div>
 
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

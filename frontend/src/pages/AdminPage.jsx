@@ -224,6 +224,7 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
     const [existingCoverUrl, setExistingCoverUrl] = useState('')
     const [isFormVisible, setIsFormVisible] = useState(false)
     const [isPreviewPlaying, setIsPreviewPlaying] = useState(false)
+    const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false)
 
     // Form Categoria
     const [newCategoryName, setNewCategoryName] = useState('')
@@ -231,6 +232,17 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
 
     const audioInputRef = useRef(null)
     const coverInputRef = useRef(null)
+    const categoryDropdownRef = useRef(null)
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target)) {
+                setIsCategoryDropdownOpen(false)
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside)
+        return () => document.removeEventListener("mousedown", handleClickOutside)
+    }, [])
 
     useEffect(() => {
         if (isAdmin) {
@@ -637,11 +649,10 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                                             />
                                         </div>
 
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }} ref={categoryDropdownRef}>
                                             <label style={{ color: '#91918E', fontSize: '14px', fontWeight: '500' }}>Categoria</label>
-                                            <select
-                                                value={categoryId}
-                                                onChange={e => setCategoryId(e.target.value)}
+                                            <div
+                                                onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
                                                 style={{
                                                     background: 'rgba(255,255,255,0.03)',
                                                     border: '1px solid rgba(255,255,255,0.05)',
@@ -649,18 +660,71 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                                                     padding: '16px',
                                                     color: '#FCFBF8',
                                                     fontSize: '16px',
-                                                    outline: 'none',
-                                                    appearance: 'none',
-                                                    cursor: 'pointer'
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'space-between'
                                                 }}
                                             >
-                                                <option value="" style={{ background: '#1a1a1a' }}>Sem Categoria</option>
-                                                {categories.map(cat => (
-                                                    <option key={cat.id} value={cat.id} style={{ background: '#1a1a1a' }}>
-                                                        {cat.name}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                                <span>
+                                                    {categories.find(c => c.id === parseInt(categoryId))?.name || 'Sem Categoria'}
+                                                </span>
+                                                <CaretDown size={18} weight="bold" style={{ transform: isCategoryDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', color: '#666' }} />
+                                            </div>
+
+                                            <AnimatePresence>
+                                                {isCategoryDropdownOpen && (
+                                                    <motion.div
+                                                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                                                        style={{
+                                                            position: 'absolute',
+                                                            top: '100%',
+                                                            left: 0,
+                                                            right: 0,
+                                                            marginTop: '8px',
+                                                            background: '#1a1a1a',
+                                                            border: '1px solid rgba(255,255,255,0.05)',
+                                                            borderRadius: '16px',
+                                                            boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+                                                            zIndex: 100,
+                                                            overflow: 'hidden',
+                                                            padding: '8px'
+                                                        }}
+                                                    >
+                                                        <div
+                                                            onClick={() => { setCategoryId(''); setIsCategoryDropdownOpen(false); }}
+                                                            style={{
+                                                                padding: '12px 16px',
+                                                                borderRadius: '8px',
+                                                                cursor: 'pointer',
+                                                                background: categoryId === '' ? 'rgba(255,255,255,0.05)' : 'transparent',
+                                                                color: categoryId === '' ? '#FCFBF8' : '#91918E',
+                                                                transition: 'all 0.2s'
+                                                            }}
+                                                        >
+                                                            Sem Categoria
+                                                        </div>
+                                                        {categories.map(cat => (
+                                                            <div
+                                                                key={cat.id}
+                                                                onClick={() => { setCategoryId(cat.id.toString()); setIsCategoryDropdownOpen(false); }}
+                                                                style={{
+                                                                    padding: '12px 16px',
+                                                                    borderRadius: '8px',
+                                                                    cursor: 'pointer',
+                                                                    background: parseInt(categoryId) === cat.id ? 'rgba(255,255,255,0.05)' : 'transparent',
+                                                                    color: parseInt(categoryId) === cat.id ? '#FCFBF8' : '#91918E',
+                                                                    transition: 'all 0.2s'
+                                                                }}
+                                                            >
+                                                                {cat.name}
+                                                            </div>
+                                                        ))}
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
                                         </div>
 
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
