@@ -411,12 +411,31 @@ export default function HomePage({ user, isAdmin }) {
         }
     }
 
-    const handleDownload = () => {
+    const handleDownload = async () => {
         if (!audioUrl) return
-        const a = document.createElement('a')
-        a.href = audioUrl
-        a.download = `audiobook - ${Date.now()}.mp3`
-        a.click()
+        try {
+            // Se for um blob URL criado localmente, o download comum funciona
+            if (audioUrl.startsWith('blob:')) {
+                const a = document.createElement('a')
+                a.href = audioUrl
+                a.download = `audiobook-${Date.now()}.mp3`
+                a.click()
+                return
+            }
+
+            // Para URLs remotas, buscamos como blob para forçar o download
+            const res = await fetch(audioUrl)
+            const blob = await res.blob()
+            const url = window.URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `audiobook-${Date.now()}.mp3`
+            a.click()
+            window.URL.revokeObjectURL(url)
+        } catch (e) {
+            console.error("Erro no download:", e)
+            window.open(audioUrl, '_blank')
+        }
     }
 
     return (
@@ -1015,11 +1034,22 @@ export default function HomePage({ user, isAdmin }) {
                                             Ouvir Agora
                                         </button>
                                         <button
-                                            onClick={() => {
-                                                const a = document.createElement('a');
-                                                a.href = selectedBookModal.audio_url;
-                                                a.download = `${selectedBookModal.title}.mp3`;
-                                                a.click();
+                                            onClick={async () => {
+                                                const url = selectedBookModal.audio_url;
+                                                const title = selectedBookModal.title;
+                                                try {
+                                                    const res = await fetch(url);
+                                                    const blob = await res.blob();
+                                                    const blobUrl = window.URL.createObjectURL(blob);
+                                                    const a = document.createElement('a');
+                                                    a.href = blobUrl;
+                                                    a.download = `${title}.mp3`;
+                                                    a.click();
+                                                    window.URL.revokeObjectURL(blobUrl);
+                                                } catch (e) {
+                                                    console.error("Erro no download modal:", e);
+                                                    window.open(url, '_blank');
+                                                }
                                             }}
                                             style={{
                                                 padding: '18px', background: 'rgba(255,255,255,0.05)', color: '#FCFBF8',
