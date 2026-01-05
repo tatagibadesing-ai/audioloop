@@ -262,6 +262,60 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
         }
     }
 
+    const handleCategorySubmit = async (e) => {
+        e.preventDefault()
+        if (!newCategoryName.trim()) return
+
+        setSavingCategory(true)
+        try {
+            const session = await supabase.auth.getSession()
+            const token = session.data.session?.access_token
+
+            const res = await fetch(`${API_URL}/api/categories`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name: newCategoryName })
+            })
+
+            if (res.ok) {
+                setNewCategoryName('')
+                loadCategories()
+            } else {
+                const data = await res.json()
+                alert(data.error || 'Erro ao criar categoria')
+            }
+        } catch (e) {
+            alert('Erro ao criar categoria')
+        } finally {
+            setSavingCategory(false)
+        }
+    }
+
+    const handleDeleteCategory = async (id) => {
+        if (!confirm('Tem certeza? Isso desvinculará todos os audiobooks desta categoria.')) return
+
+        try {
+            const session = await supabase.auth.getSession()
+            const token = session.data.session?.access_token
+
+            const res = await fetch(`${API_URL}/api/categories/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+
+            if (res.ok) {
+                loadCategories()
+            } else {
+                alert('Erro ao deletar categoria')
+            }
+        } catch (e) {
+            alert('Erro ao deletar categoria')
+        }
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault()
         if (!title) return alert('Título é obrigatório')
