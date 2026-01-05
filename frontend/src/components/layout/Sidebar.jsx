@@ -69,10 +69,10 @@ export default function Sidebar({ user, isAdmin, setShowLoginModal, supabase }) 
 
     const SectionTitle = ({ label }) => (
         <div style={{
-            fontSize: '12px',
+            fontSize: '11px',
             fontWeight: '600',
             color: '#444',
-            marginTop: '24px',
+            marginTop: window.innerWidth < 768 ? '12px' : '24px',
             marginBottom: '8px',
             paddingLeft: '12px',
             textTransform: 'uppercase',
@@ -84,22 +84,22 @@ export default function Sidebar({ user, isAdmin, setShowLoginModal, supabase }) 
 
     return (
         <aside style={{
-            width: '260px',
-            height: '100vh',
+            width: '100%',
+            height: '100dvh', // Modern dynamic viewport height
+            maxHeight: '100%', // Fallback
             background: '#0a0a0a',
             borderRight: '1px solid #222',
             display: 'flex',
             flexDirection: 'column',
-            padding: '24px 16px',
+            padding: window.innerWidth < 768 ? '16px 12px' : '24px 16px',
             boxSizing: 'border-box',
-            position: 'fixed',
-            left: 0,
-            top: 0,
+            position: 'relative',
             zIndex: 1000,
-            color: '#fff'
+            color: '#fff',
+            overflow: 'hidden'
         }}>
             {/* Logo Area */}
-            <div style={{ marginBottom: '24px', paddingLeft: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ marginBottom: window.innerWidth < 768 ? '12px' : '24px', paddingLeft: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <img
                     src="https://rlbaboiwngviskgsaomb.supabase.co/storage/v1/object/sign/imagens/audiolooplogo.webp?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8zMGJmN2E4Ny00MDc3LTQ5ZWItYjc1Ni1lNDk2M2Y5MmMzMTciLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZW5zL2F1ZGlvbG9vcGxvZ28ud2VicCIsImlhdCI6MTc2NzI5NzAwMywiZXhwIjoyNTczMzIyNjAzfQ.VQQrRWT3AqlUcUaWXToP7ZoGSvnKIqr3l-Q9HZp-FdI"
                     alt="AudioLoop"
@@ -110,7 +110,7 @@ export default function Sidebar({ user, isAdmin, setShowLoginModal, supabase }) 
 
             {/* Workspace Selector Mockup */}
             <div style={{
-                marginBottom: '24px',
+                marginBottom: window.innerWidth < 768 ? '12px' : '24px',
                 background: '#161616',
                 border: '1px solid #2a2a2a',
                 borderRadius: '8px',
@@ -150,7 +150,7 @@ export default function Sidebar({ user, isAdmin, setShowLoginModal, supabase }) 
             </nav>
 
             {/* Footer */}
-            <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid #222' }}>
+            <div style={{ marginTop: 'auto', paddingTop: window.innerWidth < 768 ? '12px' : '16px', borderTop: '1px solid #222' }}>
                 <MenuItem icon={Gift} label="Compartilhar" />
 
                 <div style={{
