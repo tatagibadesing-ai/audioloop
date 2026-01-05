@@ -50,6 +50,7 @@ export default function HomePage({ user, isAdmin }) {
     const [isPublishing, setIsPublishing] = useState(false)
     const [isPlayerHovered, setIsPlayerHovered] = useState(false)
     const [playerProgress, setPlayerProgress] = useState(0)
+    const [isReadingFile, setIsReadingFile] = useState(false)
 
     // Sincronização ultra-suave do player (60 FPS reais via RAF)
     useEffect(() => {
@@ -250,6 +251,8 @@ export default function HomePage({ user, isAdmin }) {
     const handleFileUpload = async (e) => {
         const file = e.target.files?.[0]
         if (!file) return
+
+        setIsReadingFile(true)
         try {
             const formData = new FormData()
             formData.append('file', file)
@@ -259,8 +262,10 @@ export default function HomePage({ user, isAdmin }) {
             setText(data.text)
         } catch (e) {
             alert(`Erro: ${e.message}`)
+        } finally {
+            setIsReadingFile(false)
+            if (fileInputRef.current) fileInputRef.current.value = ''
         }
-        if (fileInputRef.current) fileInputRef.current.value = ''
     }
 
     const handleGenerate = async () => {
@@ -596,6 +601,54 @@ export default function HomePage({ user, isAdmin }) {
                         </div>
                     </div>
                 </div>
+
+                {/* Loading Overlay para Leitura de Arquivos */}
+                <AnimatePresence>
+                    {isReadingFile && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            style={{
+                                position: 'fixed', inset: 0,
+                                background: 'rgba(3, 3, 13, 0.85)',
+                                backdropFilter: 'blur(10px)',
+                                zIndex: 9999,
+                                display: 'flex', flexDirection: 'column',
+                                alignItems: 'center', justifyContent: 'center',
+                                gap: '24px'
+                            }}
+                        >
+                            <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                                style={{
+                                    width: '64px', height: '64px',
+                                    border: '3px solid rgba(252, 251, 248, 0.1)',
+                                    borderTop: '3px solid #FCFBF8',
+                                    borderRadius: '50%'
+                                }}
+                            />
+                            <div style={{ textAlign: 'center' }}>
+                                <motion.h3
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    style={{ color: '#FCFBF8', fontSize: '20px', fontWeight: '600', marginBottom: '8px' }}
+                                >
+                                    Lendo seu arquivo...
+                                </motion.h3>
+                                <motion.p
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 0.2 }}
+                                    style={{ color: '#91918E', fontSize: '14px' }}
+                                >
+                                    Extraindo o melhor do seu conteúdo para o audiobook.
+                                </motion.p>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* Modal de Publicação */}
                 <AnimatePresence>
