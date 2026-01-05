@@ -22,7 +22,8 @@ function AppLayout({ children }) {
     const { user, isAdmin, supabase } = useAuth()
 
     return (
-        <div style={{ display: 'flex', minHeight: '100vh', background: '#e9e9e9' }}>
+        <div style={{ display: 'flex', minHeight: '100vh', background: '#0a0a0a' }}>
+
             {/* Overlay para fechar o menu no mobile */}
             <div
                 className={`overlay ${isSidebarOpen ? 'show' : ''}`}
