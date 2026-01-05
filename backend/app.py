@@ -45,6 +45,14 @@ def init_db():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('''
+        CREATE TABLE IF NOT EXISTS categories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    cursor.execute('''
         CREATE TABLE IF NOT EXISTS audiobooks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
@@ -54,15 +62,22 @@ def init_db():
             duration_seconds REAL DEFAULT 0,
             author_email TEXT,
             display_order INTEGER DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            category_id INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (category_id) REFERENCES categories(id)
         )
     ''')
     
-    # Migração: Adiciona display_order se não existir
+    # Migrações
     try:
         cursor.execute("ALTER TABLE audiobooks ADD COLUMN display_order INTEGER DEFAULT 0")
     except sqlite3.OperationalError:
-        pass # Coluna já existe
+        pass
+        
+    try:
+        cursor.execute("ALTER TABLE audiobooks ADD COLUMN category_id INTEGER")
+    except sqlite3.OperationalError:
+        pass
         
     conn.commit()
     conn.close()
@@ -882,15 +897,77 @@ def verify_user():
     })
 
 
-@app.route('/api/audiobooks', methods=['GET'])
-def list_audiobooks():
-    """Lista todos os audiobooks do SQLite local"""
+# =============================================
+# CATEGORIAS
+# =============================================
+
+@app.route('/api/categories', methods=['GET'])
+def list_categories():
+    """Lista todas as categorias"""
     try:
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        # Ordenamos por display_order (menores primeiro) e depois por data
-        cursor.execute('SELECT * FROM audiobooks ORDER BY display_order ASC, created_at DESC')
+        cursor.execute('SELECT * FROM categories ORDER BY name ASC')
+        rows = cursor.fetchall()
+        categories = [dict(row) for row in rows]
+        conn.close()
+        return jsonify({'categories': categories})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/categories', methods=['POST'])
+@require_admin
+def create_category():
+    """Cria uma nova categoria"""
+    try:
+        data = request.get_json()
+        name = data.get('name', '').strip()
+        if not name:
+            return jsonify({'error': 'Nome da categoria é obrigatório'}), 400
+        
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute('INSERT INTO categories (name) VALUES (?)', (name,))
+        conn.commit()
+        last_id = cursor.lastrowid
+        conn.close()
+        return jsonify({'success': True, 'id': last_id}), 201
+    except sqlite3.IntegrityError:
+        return jsonify({'error': 'Esta categoria já existe'}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/categories/<int:category_id>', methods=['DELETE'])
+@require_admin
+def delete_category(category_id):
+    """Remove uma categoria e desvincula os audiobooks dela"""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        # Desvincula os audiobooks primeiro
+        conn.execute('UPDATE audiobooks SET category_id = NULL WHERE category_id = ?', (category_id,))
+        # Deleta a categoria
+        conn.execute('DELETE FROM categories WHERE id = ?', (category_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/audiobooks', methods=['GET'])
+def list_audiobooks():
+    """Lista todos os audiobooks do SQLite local com info de categoria"""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        # Join com categorias
+        cursor.execute('''
+            SELECT a.*, c.name as category_name 
+            FROM audiobooks a 
+            LEFT JOIN categories c ON a.category_id = c.id
+            ORDER BY a.display_order ASC, a.created_at DESC
+        ''')
         rows = cursor.fetchall()
         audiobooks = [dict(row) for row in rows]
         conn.close()
@@ -934,6 +1011,7 @@ def create_audiobook():
         audio_url = data.get('audio_url', '').strip()
         cover_url = data.get('cover_url', '')
         duration_seconds = data.get('duration_seconds', 0)
+        category_id = data.get('category_id')
         
         if not title or not audio_url:
             return jsonify({'error': 'Título e Áudio obrigatórios'}), 400
@@ -941,9 +1019,9 @@ def create_audiobook():
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute('''
-            INSERT INTO audiobooks (title, description, audio_url, cover_url, duration_seconds, author_email)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (title, description, audio_url, cover_url, duration_seconds, request.user.get('email', 'admin')))
+            INSERT INTO audiobooks (title, description, audio_url, cover_url, duration_seconds, author_email, category_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (title, description, audio_url, cover_url, duration_seconds, request.user.get('email', 'admin'), category_id))
         conn.commit()
         last_id = cursor.lastrowid
         conn.close()
@@ -973,7 +1051,7 @@ def update_audiobook(audiobook_id):
         data = request.get_json()
         fields = []
         values = []
-        for key in ['title', 'description', 'audio_url', 'cover_url', 'duration_seconds']:
+        for key in ['title', 'description', 'audio_url', 'cover_url', 'duration_seconds', 'category_id']:
             if key in data:
                 fields.append(f"{key} = ?")
                 values.append(data[key])

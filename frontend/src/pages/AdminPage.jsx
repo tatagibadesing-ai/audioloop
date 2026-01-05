@@ -124,17 +124,20 @@ function SortableBook({ book, startEdit, handleDelete }) {
                     }}>
                         {book.title}
                     </h3>
-                    <p style={{
-                        fontSize: '14px',
-                        color: '#91918E',
-                        lineHeight: '1.5',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden'
-                    }}>
-                        {book.description || 'Sem descrição cadastrada.'}
-                    </p>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                        {book.category_name && (
+                            <span style={{
+                                fontSize: '10px',
+                                background: 'rgba(37, 70, 199, 0.2)',
+                                color: '#FCFBF8',
+                                padding: '2px 8px',
+                                borderRadius: '100px',
+                                border: '1px solid rgba(37, 70, 199, 0.3)'
+                            }}>
+                                {book.category_name}
+                            </span>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -205,11 +208,14 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
     )
 
     const [audiobooks, setAudiobooks] = useState([])
+    const [categories, setCategories] = useState([])
     const [loading, setLoading] = useState(true)
+    const [activeTab, setActiveTab] = useState('audiobooks') // 'audiobooks' | 'categories'
 
-    // Form
+    // Form Audiobook
     const [title, setTitle] = useState('')
     const [description, setDescription] = useState('')
+    const [categoryId, setCategoryId] = useState('')
     const [audioFile, setAudioFile] = useState(null)
     const [coverFile, setCoverFile] = useState(null)
     const [saving, setSaving] = useState(false)
@@ -219,12 +225,29 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
     const [isFormVisible, setIsFormVisible] = useState(false)
     const [isPreviewPlaying, setIsPreviewPlaying] = useState(false)
 
+    // Form Categoria
+    const [newCategoryName, setNewCategoryName] = useState('')
+    const [savingCategory, setSavingCategory] = useState(false)
+
     const audioInputRef = useRef(null)
     const coverInputRef = useRef(null)
 
     useEffect(() => {
-        if (isAdmin) loadAudiobooks()
+        if (isAdmin) {
+            loadAudiobooks()
+            loadCategories()
+        }
     }, [isAdmin])
+
+    const loadCategories = async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/categories`)
+            const data = await res.json()
+            setCategories(data.categories || [])
+        } catch (e) {
+            console.error(e)
+        }
+    }
 
     const loadAudiobooks = async () => {
         setLoading(true)
@@ -284,7 +307,13 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                 }
             }
 
-            const body = { title, description, audio_url: audioUrl, cover_url: coverUrl }
+            const body = {
+                title,
+                description,
+                audio_url: audioUrl,
+                cover_url: coverUrl,
+                category_id: categoryId || null
+            }
 
             const res = await fetch(`${API_URL}/api/audiobooks${editingId ? `/${editingId}` : ''}`, {
                 method: editingId ? 'PUT' : 'POST',
@@ -308,6 +337,7 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
     const resetForm = () => {
         setTitle('')
         setDescription('')
+        setCategoryId('')
         setAudioFile(null)
         setCoverFile(null)
         setEditingId(null)
@@ -318,6 +348,7 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
     const startEdit = (book) => {
         setTitle(book.title)
         setDescription(book.description || '')
+        setCategoryId(book.category_id || '')
         setEditingId(book.id)
         setExistingAudioUrl(book.audio_url)
         setExistingCoverUrl(book.cover_url || '')
@@ -438,7 +469,6 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
         }}>
             <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
 
-                {/* Header do Painel */}
                 <div style={{
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -447,7 +477,7 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                     flexWrap: 'wrap',
                     gap: '24px'
                 }}>
-                    <div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <motion.h1
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
@@ -455,14 +485,32 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                         >
                             Painel de Controle
                         </motion.h1>
-                        <motion.p
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.1 }}
-                            style={{ color: '#91918E', marginTop: '8px', fontSize: '18px' }}
-                        >
-                            Gerencie todos os audiobooks da plataforma.
-                        </motion.p>
+                        <div style={{ display: 'flex', gap: '32px', marginTop: '12px' }}>
+                            <button
+                                onClick={() => setActiveTab('audiobooks')}
+                                style={{
+                                    background: 'none', border: 'none',
+                                    color: activeTab === 'audiobooks' ? '#FCFBF8' : '#91918E',
+                                    fontSize: '18px', fontWeight: '600', cursor: 'pointer',
+                                    padding: '8px 0', borderBottom: `2px solid ${activeTab === 'audiobooks' ? '#FCFBF8' : 'transparent'}`,
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                Audiobooks
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('categories')}
+                                style={{
+                                    background: 'none', border: 'none',
+                                    color: activeTab === 'categories' ? '#FCFBF8' : '#91918E',
+                                    fontSize: '18px', fontWeight: '600', cursor: 'pointer',
+                                    padding: '8px 0', borderBottom: `2px solid ${activeTab === 'categories' ? '#FCFBF8' : 'transparent'}`,
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                Categorias
+                            </button>
+                        </div>
                     </div>
 
                     <motion.button
@@ -536,12 +584,38 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                                         </div>
 
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            <label style={{ color: '#91918E', fontSize: '14px', fontWeight: '500' }}>Categoria</label>
+                                            <select
+                                                value={categoryId}
+                                                onChange={e => setCategoryId(e.target.value)}
+                                                style={{
+                                                    background: 'rgba(255,255,255,0.03)',
+                                                    border: '1px solid rgba(255,255,255,0.05)',
+                                                    borderRadius: '16px',
+                                                    padding: '16px',
+                                                    color: '#FCFBF8',
+                                                    fontSize: '16px',
+                                                    outline: 'none',
+                                                    appearance: 'none',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                <option value="" style={{ background: '#1a1a1a' }}>Sem Categoria</option>
+                                                {categories.map(cat => (
+                                                    <option key={cat.id} value={cat.id} style={{ background: '#1a1a1a' }}>
+                                                        {cat.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                             <label style={{ color: '#91918E', fontSize: '14px', fontWeight: '500' }}>Descrição</label>
                                             <textarea
                                                 value={description}
                                                 onChange={e => setDescription(e.target.value)}
                                                 placeholder="Breve resumo para os ouvintes..."
-                                                rows={5}
+                                                rows={4}
                                                 style={{
                                                     background: 'rgba(255,255,255,0.03)',
                                                     border: '1px solid rgba(255,255,255,0.05)',
@@ -738,40 +812,133 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                     </div>
                 </div>
 
-                {loading ? (
-                    <div style={{ padding: '100px 0', textAlign: 'center' }}>
-                        <CircleNotch size={48} className="animate-spin" color="#91918E" />
-                    </div>
-                ) : (
-                    <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragEnd={handleDragEnd}
-                    >
-                        <SortableContext
-                            items={audiobooks.map(b => b.id)}
-                            strategy={rectSortingStrategy}
-                        >
-                            <div className="admin-grid" style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-                                gap: '24px'
-                            }}>
-                                {audiobooks.map((book) => (
-                                    <SortableBook
-                                        key={book.id}
-                                        book={book}
-                                        startEdit={startEdit}
-                                        handleDelete={handleDelete}
-                                    />
-                                ))}
+                {/* Content based on Active Tab */}
+                {activeTab === 'audiobooks' ? (
+                    <>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px' }}>
+                            <p style={{ color: '#91918E', fontSize: '14px' }}>
+                                {audiobooks.length} audiobooks encontrados
+                            </p>
+                        </div>
+
+                        {loading ? (
+                            <div style={{ display: 'flex', justifyContent: 'center', padding: '100px 0' }}>
+                                <CircleNotch size={48} className="animate-spin" color="#FCFBF8" />
                             </div>
-                        </SortableContext>
-                    </DndContext>
+                        ) : (
+                            <DndContext
+                                sensors={sensors}
+                                collisionDetection={closestCenter}
+                                onDragEnd={handleDragEnd}
+                            >
+                                <SortableContext
+                                    items={audiobooks.map(b => b.id)}
+                                    strategy={rectSortingStrategy}
+                                >
+                                    <div className="admin-grid" style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+                                        gap: '24px'
+                                    }}>
+                                        {audiobooks.map((book) => (
+                                            <SortableBook
+                                                key={book.id}
+                                                book={book}
+                                                startEdit={startEdit}
+                                                handleDelete={handleDelete}
+                                            />
+                                        ))}
+                                    </div>
+                                </SortableContext>
+                            </DndContext>
+                        )}
+                    </>
+                ) : (
+                    /* ABA DE CATEGORIAS */
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                    >
+                        <div style={{
+                            background: '#1a1a1a',
+                            borderRadius: '32px',
+                            padding: '40px',
+                            border: '1px solid rgba(255,255,255,0.05)',
+                            marginBottom: '48px'
+                        }}>
+                            <h2 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '24px' }}>Nova Categoria</h2>
+                            <form onSubmit={handleCategorySubmit} style={{ display: 'flex', gap: '16px' }}>
+                                <input
+                                    type="text"
+                                    value={newCategoryName}
+                                    onChange={e => setNewCategoryName(e.target.value)}
+                                    placeholder="Nome da categoria (ex: Romance, Negócios...)"
+                                    style={{
+                                        flex: 1,
+                                        background: 'rgba(255,255,255,0.03)',
+                                        border: '1px solid rgba(255,255,255,0.05)',
+                                        borderRadius: '16px',
+                                        padding: '16px',
+                                        color: '#FCFBF8',
+                                        fontSize: '16px',
+                                        outline: 'none'
+                                    }}
+                                />
+                                <button
+                                    disabled={savingCategory}
+                                    style={{
+                                        background: '#FCFBF8',
+                                        color: '#0a0a0a',
+                                        border: 'none',
+                                        borderRadius: '16px',
+                                        padding: '0 32px',
+                                        fontWeight: '700',
+                                        cursor: 'pointer',
+                                        opacity: savingCategory ? 0.7 : 1
+                                    }}
+                                >
+                                    {savingCategory ? 'Criando...' : 'Criar Categoria'}
+                                </button>
+                            </form>
+                        </div>
+
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                            gap: '16px'
+                        }}>
+                            {categories.map(cat => (
+                                <div key={cat.id} style={{
+                                    background: 'rgba(255,255,255,0.02)',
+                                    borderRadius: '16px',
+                                    padding: '20px',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    border: '1px solid rgba(255,255,255,0.05)'
+                                }}>
+                                    <span style={{ fontSize: '18px', fontWeight: '500' }}>{cat.name}</span>
+                                    <button
+                                        onClick={() => handleDeleteCategory(cat.id)}
+                                        style={{
+                                            background: 'rgba(255, 68, 68, 0.1)',
+                                            color: '#ff4444',
+                                            border: 'none',
+                                            borderRadius: '8px',
+                                            padding: '8px',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <Trash size={18} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
                 )}
 
                 {/* Empty State */}
-                {!loading && audiobooks.length === 0 && (
+                {!loading && audiobooks.length === 0 && activeTab === 'audiobooks' && (
                     <div style={{
                         padding: '120px 0',
                         textAlign: 'center',
@@ -807,6 +974,6 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                     }
                 }
             `}} />
-        </div>
+        </div >
     )
 }

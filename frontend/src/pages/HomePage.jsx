@@ -47,10 +47,11 @@ export default function HomePage({ user, isAdmin }) {
     const [publishTitle, setPublishTitle] = useState('')
     const [publishDesc, setPublishDesc] = useState('')
     const [publishCover, setPublishCover] = useState(null)
-    const [isPublishing, setIsPublishing] = useState(false)
+    const [publishCategoryId, setPublishCategoryId] = useState('')
     const [isPlayerHovered, setIsPlayerHovered] = useState(false)
     const [playerProgress, setPlayerProgress] = useState(0)
     const [isReadingFile, setIsReadingFile] = useState(false)
+    const [categories, setCategories] = useState([])
 
     // Detalhes do Audiobook
     const [selectedBookModal, setSelectedBookModal] = useState(null)
@@ -169,6 +170,7 @@ export default function HomePage({ user, isAdmin }) {
                     description: publishDesc,
                     audio_url: finalAudioUrl,
                     cover_url: coverUrl,
+                    category_id: publishCategoryId || null,
                     duration_seconds: playerRef.current?.audio?.current?.duration || 0
                 })
             })
@@ -180,6 +182,7 @@ export default function HomePage({ user, isAdmin }) {
             setPublishTitle('')
             setPublishDesc('')
             setPublishCover(null)
+            setPublishCategoryId('')
             loadAudiobooks()
 
         } catch (e) {
@@ -251,9 +254,15 @@ export default function HomePage({ user, isAdmin }) {
     const [loadingBooks, setLoadingBooks] = useState(true)
     const fileInputRef = useRef(null)
 
-    useEffect(() => {
-        loadAudiobooks()
-    }, [])
+    const loadCategories = async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/categories`)
+            const data = await res.json()
+            setCategories(data.categories || [])
+        } catch (e) {
+            console.error("Erro ao carregar categorias:", e)
+        }
+    }
 
     const loadAudiobooks = async () => {
         try {
@@ -266,6 +275,11 @@ export default function HomePage({ user, isAdmin }) {
             setLoadingBooks(false)
         }
     }
+
+    useEffect(() => {
+        loadAudiobooks()
+        loadCategories()
+    }, [])
 
     const handleFileUpload = async (e) => {
         const file = e.target.files?.[0]
@@ -296,7 +310,7 @@ export default function HomePage({ user, isAdmin }) {
 
         try {
             // 1. Inicia o Job
-            const startRes = await fetch(`${API_URL}/api/generate/start`, {
+            const startRes = await fetch(`${API_URL} /api/generate / start`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text, voice })
@@ -336,7 +350,7 @@ export default function HomePage({ user, isAdmin }) {
 
             const pollInterval = setInterval(async () => {
                 try {
-                    const statusRes = await fetch(`${API_URL.replace(/\/$/, '')}/api/generate/status/${job_id}`)
+                    const statusRes = await fetch(`${API_URL.replace(/\/$/, '')} /api/generate / status / ${job_id} `)
 
                     if (statusRes.status === 404) {
                         clearInterval(pollInterval)
@@ -354,7 +368,7 @@ export default function HomePage({ user, isAdmin }) {
                         setGenerationProgress(100)
                         setTimeLeft(0)
 
-                        const downloadUrl = `${API_URL.replace(/\/$/, '')}/api/generate/download/${job_id}`
+                        const downloadUrl = `${API_URL.replace(/\/$/, '')} /api/generate / download / ${job_id} `
                         const audioBlob = await fetch(downloadUrl).then(r => r.blob())
                         const url = URL.createObjectURL(audioBlob)
                         setAudioUrl(url)
@@ -363,7 +377,7 @@ export default function HomePage({ user, isAdmin }) {
                         clearInterval(pollInterval)
                         clearInterval(visualTimer)
                         setIsLoading(false)
-                        alert(`Erro na geração: ${statusData.error}`)
+                        alert(`Erro na geração: ${statusData.error} `)
                     } else if (backendProgress > 5) {
                         // RECALCULA A ESTIMATIVA REAL BASEADA NA VELOCIDADE DO BACKEND
                         const elapsedMs = Date.now() - startTime
@@ -387,7 +401,7 @@ export default function HomePage({ user, isAdmin }) {
         if (!audioUrl) return
         const a = document.createElement('a')
         a.href = audioUrl
-        a.download = `audiobook-${Date.now()}.mp3`
+        a.download = `audiobook - ${Date.now()}.mp3`
         a.click()
     }
 
@@ -539,7 +553,7 @@ export default function HomePage({ user, isAdmin }) {
                                     style={{
                                         display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px',
                                         background: 'transparent',
-                                        border: `1px solid ${isVoiceModalOpen ? '#40403F' : '#333332'}`,
+                                        border: `1px solid ${isVoiceModalOpen ? '#40403F' : '#333332'} `,
                                         borderRadius: '20px',
                                         color: isVoiceModalOpen ? '#FCFBF8' : '#91918E',
                                         fontSize: '14px', fontWeight: '600',
@@ -761,9 +775,30 @@ export default function HomePage({ user, isAdmin }) {
                                         </div>
 
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            <label style={{ color: '#888', fontSize: '13px', fontWeight: '500', marginLeft: '4px' }}>Categoria</label>
+                                            <select
+                                                value={publishCategoryId}
+                                                onChange={e => setPublishCategoryId(e.target.value)}
+                                                style={{
+                                                    width: '100%', padding: '16px', background: 'rgba(255,255,255,0.03)',
+                                                    border: 'none', borderRadius: '16px', color: '#FCFBF8',
+                                                    fontSize: '15px', boxSizing: 'border-box', outline: 'none',
+                                                    cursor: 'pointer', appearance: 'none'
+                                                }}
+                                            >
+                                                <option value="" style={{ background: '#1a1a1a' }}>Sem Categoria</option>
+                                                {categories.map(cat => (
+                                                    <option key={cat.id} value={cat.id} style={{ background: '#1a1a1a' }}>
+                                                        {cat.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                             <label style={{ color: '#888', fontSize: '13px', fontWeight: '500', marginLeft: '4px' }}>Descrição</label>
                                             <textarea
-                                                placeholder="O que os ouvintes devem saber?" rows={5}
+                                                placeholder="O que os ouvintes devem saber?" rows={4}
                                                 value={publishDesc} onChange={e => setPublishDesc(e.target.value)}
                                                 style={{
                                                     width: '100%', padding: '16px', background: 'rgba(255,255,255,0.03)',
@@ -1162,11 +1197,11 @@ export default function HomePage({ user, isAdmin }) {
                 </AnimatePresence>
 
                 <style>{`
-                @keyframes spin {
+        @keyframes spin {
                     from { transform: rotate(0deg); }
                     to { transform: rotate(360deg); }
-                }
-            `}</style>
+        }
+        `}</style>
             </div>
 
             {/* Seção Audiobooks */}
@@ -1219,10 +1254,17 @@ export default function HomePage({ user, isAdmin }) {
                                     )}
                                     <div className="audiobook-card-content" style={{ padding: '24px' }}>
                                         <h3 className="audiobook-card-title" style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px', color: '#ffffff' }}>{book.title}</h3>
-                                        {book.description && (
-                                            <p className="audiobook-card-desc" style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', marginBottom: '20px', lineHeight: '1.6' }}>
-                                                {book.description.slice(0, 100)}{book.description.length > 100 ? '...' : ''}
-                                            </p>
+                                        {book.category_name && (
+                                            <div style={{
+                                                fontSize: '11px',
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '0.05em',
+                                                color: '#2546C7',
+                                                fontWeight: '700',
+                                                marginBottom: '12px'
+                                            }}>
+                                                {book.category_name}
+                                            </div>
                                         )}
                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                             <span />
