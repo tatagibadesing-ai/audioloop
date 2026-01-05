@@ -130,12 +130,12 @@ function SortableBook({ book, startEdit, handleDelete }) {
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
                         {book.category_name && (
                             <span style={{
-                                fontSize: '10px',
-                                background: 'rgba(37, 70, 199, 0.2)',
-                                color: '#FCFBF8',
-                                padding: '2px 8px',
-                                borderRadius: '100px',
-                                border: '1px solid rgba(37, 70, 199, 0.3)'
+                                fontSize: '11px',
+                                color: '#3b82f6',
+                                fontWeight: '700',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em',
+                                display: 'inline-block'
                             }}>
                                 {book.category_name}
                             </span>
