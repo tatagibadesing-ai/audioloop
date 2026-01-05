@@ -1324,7 +1324,7 @@ export default function HomePage({ user, isAdmin }) {
                                         {book.category_name && (
                                             <div style={{
                                                 fontSize: '11px',
-                                                color: '#3b82f6',
+                                                color: '#7f7f7f',
                                                 fontWeight: '700',
                                                 textTransform: 'uppercase',
                                                 letterSpacing: '0.05em',

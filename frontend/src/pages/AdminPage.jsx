@@ -131,7 +131,7 @@ function SortableBook({ book, startEdit, handleDelete }) {
                         {book.category_name && (
                             <span style={{
                                 fontSize: '11px',
-                                color: '#3b82f6',
+                                color: '#7f7f7f',
                                 fontWeight: '700',
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.05em',
