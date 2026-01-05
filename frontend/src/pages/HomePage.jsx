@@ -383,7 +383,7 @@ export default function HomePage({ user, isAdmin }) {
                 }}
             >
                 {/* Título */}
-                <div style={{ textAlign: 'center', marginBottom: '48px', maxWidth: '900px', width: '100%', margin: '0 auto 48px' }}>
+                <div className="hero-header" style={{ textAlign: 'center', marginBottom: '48px', maxWidth: '900px', width: '100%', margin: '0 auto 48px' }}>
                     <h1 className="hero-title">
                         Gerador de Audiobook Profissional
                     </h1>
@@ -402,14 +402,14 @@ export default function HomePage({ user, isAdmin }) {
                         padding: '12px', boxSizing: 'border-box'
                     }}
                 >
-                    <div style={{ padding: '16px 20px 8px', position: 'relative' }}>
+                    <div className="generator-input-wrapper" style={{ padding: '16px 20px 8px', position: 'relative' }}>
                         {!text && (
                             <div style={{
                                 position: 'absolute',
                                 top: '16px',
                                 left: '20px',
                                 pointerEvents: 'none',
-                                fontSize: '18px',
+                                fontSize: window.innerWidth < 1024 ? '14px' : '18px',
                                 lineHeight: '1.6',
                                 color: '#666',
                                 fontFamily: "'Figtree', sans-serif"
@@ -445,7 +445,7 @@ export default function HomePage({ user, isAdmin }) {
                             disabled={isLoading}
                             className="generator-textarea"
                             style={{
-                                width: '100%', minHeight: '120px', maxHeight: '480px',
+                                width: '100%', minHeight: window.innerWidth < 1024 ? '60px' : '120px', maxHeight: '480px',
                                 background: 'transparent', border: 'none',
                                 outline: 'none', resize: 'none', fontSize: '18px', lineHeight: '1.6', color: '#FCFBF8',
                                 fontFamily: "'Figtree', sans-serif", boxSizing: 'border-box',

@@ -278,6 +278,10 @@ textarea::-webkit-scrollbar-thumb:hover {
     padding: 60px 20px 32px !important;
   }
 
+  .hero-header {
+    margin-bottom: 24px !important;
+  }
+
   .hero-title {
     font-size: 22px !important;
   }
@@ -297,7 +301,11 @@ textarea::-webkit-scrollbar-thumb:hover {
 
   .generator-textarea {
     font-size: 14px !important;
-    min-height: 80px !important;
+    min-height: 60px !important;
+  }
+
+  .generator-input-wrapper {
+    padding: 10px 12px 4px !important;
   }
 
   .generator-badge {
