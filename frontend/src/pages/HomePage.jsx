@@ -1019,7 +1019,7 @@ export default function HomePage({ user, isAdmin }) {
                         <div className="audiobooks-grid">
                             {audiobooks.map((book) => (
                                 <div key={book.id} style={{
-                                    background: '#1a1a1a',
+                                    background: '#0a0a0a',
                                     borderRadius: '16px',
                                     border: 'none',
                                     overflow: 'hidden',
@@ -1035,7 +1035,7 @@ export default function HomePage({ user, isAdmin }) {
                                     onMouseLeave={e => {
                                         e.currentTarget.style.transform = 'translateY(0)'
                                         e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)'
-                                        e.currentTarget.style.background = '#1a1a1a'
+                                        e.currentTarget.style.background = '#0a0a0a'
                                     }}
                                 >
                                     {book.cover_url ? (
