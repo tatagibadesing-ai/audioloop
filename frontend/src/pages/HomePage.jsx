@@ -1019,7 +1019,7 @@ export default function HomePage({ user, isAdmin }) {
                         <div className="audiobooks-grid">
                             {audiobooks.map((book) => (
                                 <div key={book.id} style={{
-                                    background: 'rgba(255,255,255,0.03)',
+                                    background: '#1a1a1a',
                                     borderRadius: '16px',
                                     border: 'none',
                                     overflow: 'hidden',
