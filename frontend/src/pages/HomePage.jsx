@@ -52,6 +52,10 @@ export default function HomePage({ user, isAdmin }) {
     const [playerProgress, setPlayerProgress] = useState(0)
     const [isReadingFile, setIsReadingFile] = useState(false)
 
+    // Detalhes do Audiobook
+    const [selectedBookModal, setSelectedBookModal] = useState(null)
+    const [currentPlayingBook, setCurrentPlayingBook] = useState(null)
+
     // Sincronização ultra-suave do player (60 FPS reais via RAF)
     useEffect(() => {
         let rafId
@@ -287,6 +291,7 @@ export default function HomePage({ user, isAdmin }) {
         if (!text.trim()) return
         setIsLoading(true)
         setAudioUrl(null)
+        setCurrentPlayingBook(null)
         setGenerationProgress(0)
 
         try {
@@ -834,6 +839,100 @@ export default function HomePage({ user, isAdmin }) {
                     )}
                 </AnimatePresence>
 
+                {/* Modal de Detalhes do Audiobook */}
+                <AnimatePresence>
+                    {selectedBookModal && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            style={{
+                                position: 'fixed', inset: 0,
+                                background: 'rgba(0,0,0,0.85)',
+                                backdropFilter: 'blur(10px)',
+                                zIndex: 2000,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                padding: '24px'
+                            }}
+                            onClick={() => setSelectedBookModal(null)}
+                        >
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                                onClick={e => e.stopPropagation()}
+                                style={{
+                                    maxWidth: '500px', width: '100%',
+                                    background: '#1a1a1a', borderRadius: '32px',
+                                    border: '1px solid rgba(255,255,255,0.05)',
+                                    overflow: 'hidden',
+                                    boxShadow: '0 50px 100px -20px rgba(0,0,0,0.7)'
+                                }}
+                            >
+                                <div style={{ position: 'relative', height: '300px' }}>
+                                    {selectedBookModal.cover_url ? (
+                                        <img src={selectedBookModal.cover_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                                    ) : (
+                                        <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #2546C7 0%, #1a3399 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <MusicNotes size={80} color="rgba(255,255,255,0.2)" />
+                                        </div>
+                                    )}
+                                    <button
+                                        onClick={() => setSelectedBookModal(null)}
+                                        style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff' }}
+                                    >
+                                        <X size={20} weight="bold" />
+                                    </button>
+                                </div>
+                                <div style={{ padding: '32px' }}>
+                                    <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#FCFBF8', marginBottom: '12px' }}>{selectedBookModal.title}</h2>
+                                    <p style={{ color: '#91918E', fontSize: '16px', lineHeight: '1.6', marginBottom: '32px' }}>
+                                        {selectedBookModal.description || "Nenhuma descrição disponível para este audiobook."}
+                                    </p>
+                                    <div style={{ display: 'flex', gap: '16px' }}>
+                                        <button
+                                            onClick={() => {
+                                                setAudioUrl(selectedBookModal.audio_url);
+                                                setCurrentPlayingBook(selectedBookModal);
+                                                setSelectedBookModal(null);
+                                                setIsPlayerMinimized(false);
+                                                // Pequeno delay para garantir que o playerRef já pegou o novo SRC
+                                                setTimeout(() => {
+                                                    if (playerRef.current?.audio?.current) {
+                                                        playerRef.current.audio.current.play();
+                                                    }
+                                                }, 100);
+                                            }}
+                                            style={{
+                                                flex: 1, padding: '18px', background: '#FCFBF8', color: '#0a0a0a',
+                                                border: 'none', borderRadius: '18px', fontWeight: '700', fontSize: '16px',
+                                                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'
+                                            }}
+                                        >
+                                            <Play size={20} weight="fill" />
+                                            Ouvir Agora
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                const a = document.createElement('a');
+                                                a.href = selectedBookModal.audio_url;
+                                                a.download = `${selectedBookModal.title}.mp3`;
+                                                a.click();
+                                            }}
+                                            style={{
+                                                padding: '18px', background: 'rgba(255,255,255,0.05)', color: '#FCFBF8',
+                                                border: 'none', borderRadius: '18px', cursor: 'pointer'
+                                            }}
+                                        >
+                                            <DownloadSimple size={24} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 {/* Player de Áudio */}
                 <AnimatePresence>
                     {(audioUrl || isLoading) && (
@@ -953,31 +1052,58 @@ export default function HomePage({ user, isAdmin }) {
                                             width: 'auto',
                                             display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0
                                         }}>
-                                            {(() => {
-                                                const selected = VOICES.find(v => v.value === voice)
-                                                return (
-                                                    <>
-                                                        {selected?.image && (
-                                                            <img
-                                                                src={selected.image} alt=""
-                                                                style={{
-                                                                    width: window.innerWidth < 768 ? '32px' : '38px',
-                                                                    height: window.innerWidth < 768 ? '32px' : '38px',
-                                                                    borderRadius: '50%', objectFit: 'cover', border: '2px solid #1a1a1a'
-                                                                }}
-                                                            />
-                                                        )}
-                                                        <div className="mobile-hide-text" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                                            <span style={{ fontSize: '15px', color: '#FCFBF8', fontWeight: '400' }}>
-                                                                {selected?.label || 'Audio'}
-                                                            </span>
-                                                            <span style={{ fontSize: '11px', color: '#666' }}>
-                                                                Áudio gerado
-                                                            </span>
+                                            {currentPlayingBook ? (
+                                                <>
+                                                    {currentPlayingBook.cover_url ? (
+                                                        <img
+                                                            src={currentPlayingBook.cover_url} alt=""
+                                                            style={{
+                                                                width: window.innerWidth < 768 ? '32px' : '38px',
+                                                                height: window.innerWidth < 768 ? '32px' : '38px',
+                                                                borderRadius: '8px', objectFit: 'cover', border: '2px solid #1a1a1a'
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        <div style={{ width: '38px', height: '38px', background: '#2546C7', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                            <MusicNotes size={20} color="#fff" />
                                                         </div>
-                                                    </>
-                                                )
-                                            })()}
+                                                    )}
+                                                    <div className="mobile-hide-text" style={{ display: 'flex', flexDirection: 'column', gap: '2px', maxWidth: '150px' }}>
+                                                        <span style={{ fontSize: '14px', color: '#FCFBF8', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                            {currentPlayingBook.title}
+                                                        </span>
+                                                        <span style={{ fontSize: '11px', color: '#666' }}>
+                                                            Audiobook
+                                                        </span>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                (() => {
+                                                    const selected = VOICES.find(v => v.value === voice)
+                                                    return (
+                                                        <>
+                                                            {selected?.image && (
+                                                                <img
+                                                                    src={selected.image} alt=""
+                                                                    style={{
+                                                                        width: window.innerWidth < 768 ? '32px' : '38px',
+                                                                        height: window.innerWidth < 768 ? '32px' : '38px',
+                                                                        borderRadius: '50%', objectFit: 'cover', border: '2px solid #1a1a1a'
+                                                                    }}
+                                                                />
+                                                            )}
+                                                            <div className="mobile-hide-text" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                                <span style={{ fontSize: '15px', color: '#FCFBF8', fontWeight: '400' }}>
+                                                                    {selected?.label || 'Audio'}
+                                                                </span>
+                                                                <span style={{ fontSize: '11px', color: '#666' }}>
+                                                                    Áudio gerado
+                                                                </span>
+                                                            </div>
+                                                        </>
+                                                    )
+                                                })()
+                                            )}
                                         </div>
 
                                         <div style={{ flex: 1, maxWidth: '800px', width: '100%' }}>
@@ -1073,7 +1199,7 @@ export default function HomePage({ user, isAdmin }) {
                                     transition: 'transform 0.2s, box-shadow 0.2s, background 0.2s',
                                     cursor: book.audio_url ? 'pointer' : 'default'
                                 }}
-                                    onClick={() => book.audio_url && window.open(book.audio_url, '_blank')}
+                                    onClick={() => book.audio_url && setSelectedBookModal(book)}
                                     onMouseEnter={e => {
                                         e.currentTarget.style.transform = 'translateY(-6px)'
                                         e.currentTarget.style.boxShadow = '0 12px 30px rgba(0,0,0,0.5)'
