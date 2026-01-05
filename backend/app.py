@@ -882,7 +882,30 @@ def list_audiobooks():
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM audiobooks ORDER BY created_at DESC')
         rows = cursor.fetchall()
-        audiobooks = [dict(row) for row in rows]
+        audiobooks = []
+        # Domínio atual da requisição para substituição
+        current_host = request.host_url.rstrip('/')
+        
+        for row in rows:
+            book = dict(row)
+            # Corrige URLs antigas para o domínio atual
+            if book.get('audio_url'):
+                book['audio_url'] = book['audio_url'].replace('http://audioloop.duckdns.org', 'https://api.audioloop.com.br')
+                book['audio_url'] = book['audio_url'].replace('https://audioloop.duckdns.org', 'https://api.audioloop.com.br')
+                
+                # Se for URL relativa, garante o domínio completo
+                if book['audio_url'].startswith('/api/'):
+                    book['audio_url'] = f"https://api.audioloop.com.br{book['audio_url']}"
+            
+            if book.get('cover_url'):
+                book['cover_url'] = book['cover_url'].replace('http://audioloop.duckdns.org', 'https://api.audioloop.com.br')
+                book['cover_url'] = book['cover_url'].replace('https://audioloop.duckdns.org', 'https://api.audioloop.com.br')
+                 # Se for URL relativa, garante o domínio completo
+                if book['cover_url'].startswith('/api/'):
+                    book['cover_url'] = f"https://api.audioloop.com.br{book['cover_url']}"
+
+            audiobooks.append(book)
+            
         conn.close()
         return jsonify({'audiobooks': audiobooks})
     except Exception as e:
