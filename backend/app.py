@@ -1104,7 +1104,9 @@ def upload_audio_file():
 def serve_uploads(folder, filename):
     """Serve arquivos da pasta uploads"""
     folder_path = os.path.join(UPLOADS_DIR, folder)
-    return send_from_directory(folder_path, filename)
+    # Se passar ?download=true, força o download no navegador
+    download = request.args.get('download', '').lower() == 'true'
+    return send_from_directory(folder_path, filename, as_attachment=download, download_name=filename)
 
 from flask import send_from_directory
 

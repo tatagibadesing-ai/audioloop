@@ -382,7 +382,7 @@ export default function HomePage({ user, isAdmin }) {
                         setGenerationProgress(100)
                         setTimeLeft(0)
 
-                        const downloadUrl = `${API_URL.replace(/\/$/, '')} /api/generate / download / ${job_id} `
+                        const downloadUrl = `${API_URL.replace(/\/$/, '')}/api/generate/download/${job_id}`
                         const audioBlob = await fetch(downloadUrl).then(r => r.blob())
                         const url = URL.createObjectURL(audioBlob)
                         setAudioUrl(url)
@@ -425,6 +425,7 @@ export default function HomePage({ user, isAdmin }) {
 
             // Para URLs remotas, buscamos como blob para forçar o download
             const res = await fetch(audioUrl)
+            if (!res.ok) throw new Error("Fetch failed")
             const blob = await res.blob()
             const url = window.URL.createObjectURL(blob)
             const a = document.createElement('a')
@@ -434,7 +435,11 @@ export default function HomePage({ user, isAdmin }) {
             window.URL.revokeObjectURL(url)
         } catch (e) {
             console.error("Erro no download:", e)
-            window.open(audioUrl, '_blank')
+            // Fallback: usar o parâmetro download=true que acabamos de adicionar no backend
+            const downloadUrl = audioUrl.includes('?')
+                ? `${audioUrl}&download=true`
+                : `${audioUrl}?download=true`
+            window.location.href = downloadUrl
         }
     }
 
@@ -1039,6 +1044,7 @@ export default function HomePage({ user, isAdmin }) {
                                                 const title = selectedBookModal.title;
                                                 try {
                                                     const res = await fetch(url);
+                                                    if (!res.ok) throw new Error("Fetch failed");
                                                     const blob = await res.blob();
                                                     const blobUrl = window.URL.createObjectURL(blob);
                                                     const a = document.createElement('a');
@@ -1048,7 +1054,11 @@ export default function HomePage({ user, isAdmin }) {
                                                     window.URL.revokeObjectURL(blobUrl);
                                                 } catch (e) {
                                                     console.error("Erro no download modal:", e);
-                                                    window.open(url, '_blank');
+                                                    // Fallback: usar o parâmetro download=true que acabamos de adicionar no backend
+                                                    const downloadUrl = url.includes('?')
+                                                        ? `${url}&download=true`
+                                                        : `${url}?download=true`;
+                                                    window.location.href = downloadUrl;
                                                 }
                                             }}
                                             style={{
