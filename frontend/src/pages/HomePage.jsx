@@ -438,7 +438,7 @@ export default function HomePage({ user, isAdmin }) {
                                     position: 'absolute', inset: 0,
                                     background: 'rgba(37, 70, 199, 0.15)',
                                     backdropFilter: 'blur(8px)',
-                                    border: '2px dashed #2546C7',
+                                    border: '2px dashed #FCFBF8',
                                     borderRadius: '32px',
                                     zIndex: 10,
                                     display: 'flex', flexDirection: 'column',
@@ -446,12 +446,7 @@ export default function HomePage({ user, isAdmin }) {
                                     color: '#FCFBF8', gap: '12px'
                                 }}
                             >
-                                <motion.div
-                                    animate={{ y: [0, -10, 0] }}
-                                    transition={{ duration: 1.5, repeat: Infinity }}
-                                >
-                                    <UploadSimple size={48} weight="bold" />
-                                </motion.div>
+                                <UploadSimple size={48} weight="bold" />
                                 <span style={{ fontWeight: '600', fontSize: '18px' }}>Solte para carregar seu arquivo</span>
                                 <span style={{ fontSize: '14px', color: 'rgba(252, 251, 248, 0.6)' }}>PDF, DOCX ou TXT</span>
                             </motion.div>
