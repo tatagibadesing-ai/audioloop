@@ -276,7 +276,7 @@ textarea::-webkit-scrollbar-thumb:hover {
 
   .hero-container {
     padding: 60px 20px 32px !important;
-    min-height: 85vh !important;
+    min-height: 78vh !important;
     background-position: center top !important;
   }
 
@@ -401,6 +401,10 @@ textarea::-webkit-scrollbar-thumb:hover {
   .voice-item {
     padding: 6px 8px !important;
     font-size: 11px !important;
+  }
+
+  .audiobooks-section-mobile {
+    padding-top: 4px !important;
   }
 
   .voice-item img {

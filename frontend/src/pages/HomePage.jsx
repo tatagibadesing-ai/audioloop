@@ -946,7 +946,7 @@ export default function HomePage({ user, isAdmin }) {
 
             {/* Seção Audiobooks */}
             <div
-                className="section-container"
+                className="section-container audiobooks-section-mobile"
                 style={{
                     width: '100%',
                     background: '#03030D',
