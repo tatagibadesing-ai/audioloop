@@ -14,7 +14,7 @@ import base64
 import threading
 from functools import wraps
 from flask import Flask, request, jsonify, send_file, after_this_request
-from flask_cors import CORS
+# from flask_cors import CORS
 import edge_tts
 
 # Google Cloud TTS
@@ -83,7 +83,8 @@ except ImportError:
 
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
+# CORS desativado no Flask pois o Nginx já gerencia os headers (evita erro '*, *')
+# CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 
 # CORS já é tratado pela extensão flask_cors na linha 86
 # Removido o after_request manual para evitar duplicação de headers (erro de "multiple values '*, *'")
