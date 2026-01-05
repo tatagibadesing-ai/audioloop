@@ -245,6 +245,12 @@ textarea::-webkit-scrollbar-thumb:hover {
   display: none !important;
 }
 
+.audiobooks-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 24px !important;
+}
+
 @media (max-width: 1024px) {
   .sidebar-desktop {
     display: none !important;

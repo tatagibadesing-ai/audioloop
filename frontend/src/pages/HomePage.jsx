@@ -1016,7 +1016,7 @@ export default function HomePage({ user, isAdmin }) {
                     ) : audiobooks.length === 0 ? (
                         <p style={{ color: 'rgba(255,255,255,0.5)' }}>Nenhum audiobook publicado ainda.</p>
                     ) : (
-                        <div className="audiobooks-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
+                        <div className="audiobooks-grid">
                             {audiobooks.map((book) => (
                                 <div key={book.id} style={{
                                     background: 'rgba(255,255,255,0.03)',
@@ -1054,12 +1054,7 @@ export default function HomePage({ user, isAdmin }) {
                                             </p>
                                         )}
                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                            {book.duration_seconds ? (
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'rgba(255,255,255,0.7)', fontWeight: '500' }}>
-                                                    <Clock size={16} weight="bold" />
-                                                    {formatTime(book.duration_seconds || 0)}
-                                                </div>
-                                            ) : <span />}
+                                            <span />
                                         </div>
                                     </div>
                                 </div>
