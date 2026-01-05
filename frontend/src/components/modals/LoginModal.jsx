@@ -1,4 +1,6 @@
 import { useState } from "react"
+import { toast } from "react-hot-toast"
+import { showToast } from "../ui/PremiumToast"
 
 export default function LoginModal({ onClose, supabase }) {
     const [email, setEmail] = useState('')
@@ -9,7 +11,7 @@ export default function LoginModal({ onClose, supabase }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        if (!supabase) return alert('Supabase não configurado')
+        if (!supabase) return showToast.error('Supabase não configurado')
 
         setLoading(true)
         setError('')

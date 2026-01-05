@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from "react"
+import { toast } from "react-hot-toast"
+import { showToast } from "../components/ui/PremiumToast"
 import { motion, AnimatePresence } from "framer-motion"
 import { TypeAnimation } from 'react-type-animation'
 import AudioPlayer from 'react-h5-audio-player'
@@ -109,8 +111,8 @@ export default function HomePage({ user, isAdmin }) {
     })
 
     const handlePublish = async () => {
-        if (!publishTitle.trim()) return alert('Digite um título')
-        if (!audioUrl) return alert('Nenhum áudio para publicar')
+        if (!publishTitle.trim()) return showToast.error('Digite um título')
+        if (!audioUrl) return showToast.error('Nenhum áudio para publicar')
 
         setIsPublishing(true)
         try {
@@ -178,7 +180,7 @@ export default function HomePage({ user, isAdmin }) {
 
             if (!createRes.ok) throw new Error('Falha ao criar registro')
 
-            alert('Audiobook publicado com sucesso!')
+            showToast.success('Audiobook publicado!')
             setIsPublishModalOpen(false)
             setPublishTitle('')
             setPublishDesc('')
@@ -187,7 +189,7 @@ export default function HomePage({ user, isAdmin }) {
             loadAudiobooks()
 
         } catch (e) {
-            alert(`Erro ao publicar: ${e.message}`)
+            showToast.error(`Erro ao publicar: ${e.message}`)
         } finally {
             setIsPublishing(false)
         }
@@ -306,7 +308,7 @@ export default function HomePage({ user, isAdmin }) {
             const data = await res.json()
             setText(data.text)
         } catch (e) {
-            alert(`Erro: ${e.message}`)
+            showToast.error(`Erro: ${e.message}`)
         } finally {
             setIsReadingFile(false)
             if (fileInputRef.current) fileInputRef.current.value = ''
@@ -322,7 +324,7 @@ export default function HomePage({ user, isAdmin }) {
 
         try {
             // 1. Inicia o Job
-            const startRes = await fetch(`${API_URL} /api/generate / start`, {
+            const startRes = await fetch(`${API_URL}/api/generate/start`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text, voice })
@@ -362,7 +364,7 @@ export default function HomePage({ user, isAdmin }) {
 
             const pollInterval = setInterval(async () => {
                 try {
-                    const statusRes = await fetch(`${API_URL.replace(/\/$/, '')} /api/generate / status / ${job_id} `)
+                    const statusRes = await fetch(`${API_URL.replace(/\/$/, '')}/api/generate/status/${job_id}`)
 
                     if (statusRes.status === 404) {
                         clearInterval(pollInterval)
@@ -389,7 +391,7 @@ export default function HomePage({ user, isAdmin }) {
                         clearInterval(pollInterval)
                         clearInterval(visualTimer)
                         setIsLoading(false)
-                        alert(`Erro na geração: ${statusData.error} `)
+                        showToast.error(`Erro na geração: ${statusData.error}`)
                     } else if (backendProgress > 5) {
                         // RECALCULA A ESTIMATIVA REAL BASEADA NA VELOCIDADE DO BACKEND
                         const elapsedMs = Date.now() - startTime
@@ -405,7 +407,7 @@ export default function HomePage({ user, isAdmin }) {
 
         } catch (e) {
             setIsLoading(false)
-            alert(e.message)
+            showToast.error(e.message)
         }
     }
 

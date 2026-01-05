@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 // Componentes
 import Sidebar from './components/layout/Sidebar'
 import LoginModal from './components/modals/LoginModal'
+import { Toaster } from 'react-hot-toast'
 
 // Páginas
 import HomePage from './pages/HomePage'
@@ -86,6 +87,41 @@ function AppLayout({ children }) {
 export default function App() {
     return (
         <BrowserRouter>
+            <Toaster
+                position="top-right"
+                toastOptions={{
+                    duration: 4000,
+                    style: {
+                        background: '#1a1a1a',
+                        color: '#FCFBF8',
+                        borderRadius: '16px',
+                        border: '1px solid rgba(255,255,255,0.05)',
+                        backdropFilter: 'blur(10px)',
+                        padding: '16px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+                    },
+                    success: {
+                        iconTheme: {
+                            primary: '#10b981',
+                            secondary: '#fff',
+                        },
+                        style: {
+                            border: '1px solid rgba(16, 185, 129, 0.2)',
+                        }
+                    },
+                    error: {
+                        iconTheme: {
+                            primary: '#ef4444',
+                            secondary: '#fff',
+                        },
+                        style: {
+                            border: '1px solid rgba(239, 68, 68, 0.2)',
+                        }
+                    }
+                }}
+            />
             <AppLayout>
                 {({ user, isAdmin, setShowLoginModal }) => (
                     <Routes>

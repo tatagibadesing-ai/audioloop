@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
+import { toast } from "react-hot-toast"
+import { showToast } from "../components/ui/PremiumToast"
 import { motion, AnimatePresence } from "framer-motion"
 import {
     DndContext,
@@ -298,10 +300,10 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                 loadCategories()
             } else {
                 const data = await res.json()
-                alert(data.error || 'Erro ao criar categoria')
+                showToast.error(data.error || 'Erro ao criar categoria')
             }
         } catch (e) {
-            alert('Erro ao criar categoria')
+            showToast.error('Erro ao criar categoria')
         } finally {
             setSavingCategory(false)
         }
@@ -320,19 +322,20 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
             })
 
             if (res.ok) {
+                showToast.success('Categoria removida')
                 loadCategories()
             } else {
-                alert('Erro ao deletar categoria')
+                showToast.error('Erro ao deletar categoria')
             }
         } catch (e) {
-            alert('Erro ao deletar categoria')
+            showToast.error('Erro ao deletar categoria')
         }
     }
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        if (!title) return alert('Título é obrigatório')
-        if (!editingId && !audioFile) return alert('O arquivo de áudio é obrigatório')
+        if (!title) return showToast.error('Título é obrigatório')
+        if (!editingId && !audioFile) return showToast.error('O arquivo de áudio é obrigatório')
 
         setSaving(true)
         try {
@@ -390,12 +393,12 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
 
             if (!res.ok) throw new Error((await res.json()).error || 'Erro ao salvar')
 
-            alert(editingId ? 'Audiobook atualizado!' : 'Audiobook publicado!')
+            showToast.success(editingId ? 'Audiobook atualizado!' : 'Audiobook publicado!')
             resetForm()
             setIsFormVisible(false)
             loadAudiobooks()
         } catch (e) {
-            alert(`Erro: ${e.message}`)
+            showToast.error(`Erro: ${e.message}`)
         } finally {
             setSaving(false)
         }
@@ -432,9 +435,10 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             })
+            showToast.success('Audiobook excluído')
             loadAudiobooks()
         } catch (e) {
-            alert('Erro ao deletar')
+            showToast.error('Erro ao deletar')
         }
     }
 
