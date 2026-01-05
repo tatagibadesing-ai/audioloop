@@ -1,6 +1,23 @@
 import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core'
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+    rectSortingStrategy,
+    useSortable
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 // Serviços e constantes
 import { supabase } from '../services/supabase'
@@ -21,7 +38,8 @@ import {
     FileAudio,
     Monitor,
     Play,
-    Pause
+    Pause,
+    DotsSixVertical
 } from "@phosphor-icons/react"
 
 export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
@@ -193,6 +211,200 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                         Voltar para o site
                     </button>
                 </motion.div>
+            </div>
+        )
+    }
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    )
+
+    const handleDragEnd = async (event) => {
+        const { active, over } = event
+
+        if (active.id !== over?.id) {
+            setAudiobooks((items) => {
+                const oldIndex = items.findIndex((i) => i.id === active.id)
+                const newIndex = items.findIndex((i) => i.id === over.id)
+                const newItems = arrayMove(items, oldIndex, newIndex)
+
+                // Salva no backend após a mudança local
+                saveNewOrder(newItems.map(b => b.id))
+
+                return newItems
+            })
+        }
+    }
+
+    const saveNewOrder = async (ids) => {
+        try {
+            const session = await supabase.auth.getSession()
+            const token = session.data.session?.access_token
+            await fetch(`${API_URL}/api/audiobooks/reorder`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ ids })
+            })
+        } catch (e) {
+            console.error('Erro ao salvar ordem:', e)
+        }
+    }
+
+    // Componente interno para item arrastável
+    function SortableBook({ book, startEdit, handleDelete }) {
+        const {
+            attributes,
+            listeners,
+            setNodeRef,
+            transform,
+            transition,
+            isDragging
+        } = useSortable({ id: book.id })
+
+        const style = {
+            transform: CSS.Transform.toString(transform),
+            transition,
+            zIndex: isDragging ? 2 : 1,
+            opacity: isDragging ? 0.5 : 1,
+        }
+
+        return (
+            <div
+                ref={setNodeRef}
+                style={{
+                    ...style,
+                    background: '#1a1a1a',
+                    borderRadius: '24px',
+                    padding: '20px',
+                    border: '1px solid rgba(255,255,255,0.05)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '20px',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    touchAction: 'none'
+                }}
+            >
+                {/* Drag Handle */}
+                <div
+                    {...attributes}
+                    {...listeners}
+                    style={{
+                        position: 'absolute',
+                        top: '12px',
+                        right: '12px',
+                        padding: '8px',
+                        cursor: 'grab',
+                        color: 'rgba(255,255,255,0.2)',
+                        zIndex: 10
+                    }}
+                >
+                    <DotsSixVertical size={24} weight="bold" />
+                </div>
+
+                <div style={{ display: 'flex', gap: '16px' }}>
+                    <div style={{
+                        width: '100px',
+                        height: '100px',
+                        borderRadius: '16px',
+                        background: 'rgba(255,255,255,0.03)',
+                        flexShrink: 0,
+                        overflow: 'hidden'
+                    }}>
+                        {book.cover_url ? (
+                            <img src={book.cover_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <FileAudio size={40} color="rgba(255,255,255,0.1)" />
+                            </div>
+                        )}
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                        <h3 style={{
+                            fontSize: '18px',
+                            fontWeight: '600',
+                            marginBottom: '8px',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            paddingRight: '32px'
+                        }}>
+                            {book.title}
+                        </h3>
+                        <p style={{
+                            fontSize: '14px',
+                            color: '#91918E',
+                            lineHeight: '1.5',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden'
+                        }}>
+                            {book.description || 'Sem descrição cadastrada.'}
+                        </p>
+                    </div>
+                </div>
+
+                <div style={{
+                    display: 'flex',
+                    gap: '12px',
+                    paddingTop: '12px',
+                    borderTop: '1px solid rgba(255,255,255,0.05)'
+                }}>
+                    <button
+                        onClick={() => startEdit(book)}
+                        style={{
+                            flex: 1,
+                            background: 'rgba(255,255,255,0.03)',
+                            color: '#FCFBF8',
+                            border: 'none',
+                            padding: '12px',
+                            borderRadius: '12px',
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        <PencilSimple size={18} />
+                        Editar
+                    </button>
+                    <button
+                        onClick={() => handleDelete(book.id)}
+                        style={{
+                            background: 'rgba(255, 68, 68, 0.1)',
+                            color: '#ff4444',
+                            border: 'none',
+                            padding: '12px',
+                            borderRadius: '12px',
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        <Trash size={18} />
+                    </button>
+                </div>
             </div>
         )
     }
@@ -530,124 +742,31 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                         <CircleNotch size={48} className="animate-spin" color="#91918E" />
                     </div>
                 ) : (
-                    <div className="admin-grid" style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-                        gap: '24px'
-                    }}>
-                        {audiobooks.map((book, idx) => (
-                            <motion.div
-                                key={book.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: idx * 0.05 }}
-                                style={{
-                                    background: '#1a1a1a',
-                                    borderRadius: '24px',
-                                    padding: '20px',
-                                    border: '1px solid rgba(255,255,255,0.05)',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '20px',
-                                    position: 'relative',
-                                    overflow: 'hidden'
-                                }}
-                            >
-                                <div style={{ display: 'flex', gap: '16px' }}>
-                                    <div style={{
-                                        width: '100px',
-                                        height: '100px',
-                                        borderRadius: '16px',
-                                        background: 'rgba(255,255,255,0.03)',
-                                        flexShrink: 0,
-                                        overflow: 'hidden'
-                                    }}>
-                                        {book.cover_url ? (
-                                            <img src={book.cover_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                        ) : (
-                                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                <FileAudio size={40} color="rgba(255,255,255,0.1)" />
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                        <h3 style={{
-                                            fontSize: '18px',
-                                            fontWeight: '600',
-                                            marginBottom: '8px',
-                                            whiteSpace: 'nowrap',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis'
-                                        }}>
-                                            {book.title}
-                                        </h3>
-                                        <p style={{
-                                            fontSize: '14px',
-                                            color: '#91918E',
-                                            lineHeight: '1.5',
-                                            display: '-webkit-box',
-                                            WebkitLineClamp: 2,
-                                            WebkitBoxOrient: 'vertical',
-                                            overflow: 'hidden'
-                                        }}>
-                                            {book.description || 'Sem descrição cadastrada.'}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div style={{
-                                    display: 'flex',
-                                    gap: '12px',
-                                    paddingTop: '12px',
-                                    borderTop: '1px solid rgba(255,255,255,0.05)'
-                                }}>
-                                    <button
-                                        onClick={() => startEdit(book)}
-                                        style={{
-                                            flex: 1,
-                                            background: 'rgba(255,255,255,0.03)',
-                                            color: '#FCFBF8',
-                                            border: 'none',
-                                            padding: '12px',
-                                            borderRadius: '12px',
-                                            fontSize: '14px',
-                                            fontWeight: '600',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            gap: '8px',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s'
-                                        }}
-                                    >
-                                        <PencilSimple size={18} />
-                                        Editar
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(book.id)}
-                                        style={{
-                                            background: 'rgba(255, 68, 68, 0.1)',
-                                            color: '#ff4444',
-                                            border: 'none',
-                                            padding: '12px',
-                                            borderRadius: '12px',
-                                            fontSize: '14px',
-                                            fontWeight: '600',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            gap: '8px',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s'
-                                        }}
-                                    >
-                                        <Trash size={18} />
-                                    </button>
-                                </div>
-                            </motion.div>
-                        ))}
-                    </div>
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <SortableContext
+                            items={audiobooks.map(b => b.id)}
+                            strategy={rectSortingStrategy}
+                        >
+                            <div className="admin-grid" style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+                                gap: '24px'
+                            }}>
+                                {audiobooks.map((book) => (
+                                    <SortableBook
+                                        key={book.id}
+                                        book={book}
+                                        startEdit={startEdit}
+                                        handleDelete={handleDelete}
+                                    />
+                                ))}
+                            </div>
+                        </SortableContext>
+                    </DndContext>
                 )}
 
                 {/* Empty State */}

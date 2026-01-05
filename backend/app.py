@@ -53,9 +53,17 @@ def init_db():
             cover_url TEXT,
             duration_seconds REAL DEFAULT 0,
             author_email TEXT,
+            display_order INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    
+    # Migração: Adiciona display_order se não existir
+    try:
+        cursor.execute("ALTER TABLE audiobooks ADD COLUMN display_order INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass # Coluna já existe
+        
     conn.commit()
     conn.close()
     print("✅ Banco de dados SQLite inicializado!")
@@ -881,7 +889,8 @@ def list_audiobooks():
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute('SELECT * FROM audiobooks ORDER BY created_at DESC')
+        # Ordenamos por display_order (menores primeiro) e depois por data
+        cursor.execute('SELECT * FROM audiobooks ORDER BY display_order ASC, created_at DESC')
         rows = cursor.fetchall()
         audiobooks = [dict(row) for row in rows]
         conn.close()
@@ -889,6 +898,30 @@ def list_audiobooks():
     except Exception as e:
         print(f"Erro ao listar: {e}")
         return jsonify({'error': 'Erro ao carregar'}), 500
+
+@app.route('/api/audiobooks/reorder', methods=['POST'])
+@require_admin
+def reorder_audiobooks():
+    """Atualiza a ordem de exibição dos audiobooks"""
+    try:
+        data = request.get_json()
+        ordered_ids = data.get('ids', [])
+        
+        if not ordered_ids:
+            return jsonify({'error': 'Lista de IDs não fornecida'}), 400
+            
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        # Atualiza a ordem de cada item
+        for index, book_id in enumerate(ordered_ids):
+            cursor.execute('UPDATE audiobooks SET display_order = ? WHERE id = ?', (index, book_id))
+            
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/audiobooks', methods=['POST'])
 @require_admin
