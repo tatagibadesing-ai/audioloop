@@ -45,8 +45,9 @@ import {
     DotsSixVertical
 } from "@phosphor-icons/react"
 
-// Componente interno para item arrastável - Definido fora para evitar recriação e erros de hooks
-function SortableBook({ book, startEdit, handleDelete }) {
+// Componente interno para item arrastável
+function SortableBook({ book, startEdit, handleDelete, setManagingTracks }) {
+    const bookWithActions = { ...book, setManagingTracks };
     const {
         attributes,
         listeners,
@@ -140,57 +141,65 @@ function SortableBook({ book, startEdit, handleDelete }) {
                                 {book.category_name}
                             </span>
                         )}
+                        <span style={{ fontSize: '12px', color: '#666', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '6px' }}>
+                            {book.tracks?.length || 0} versões
+                        </span>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
+                        {book.tracks?.slice(0, 3).map(track => (
+                            <div key={track.id} style={{ fontSize: '12px', color: '#888', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <MusicNotes size={14} />
+                                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{track.label}</span>
+                                <span style={{ color: '#555', fontSize: '10px' }}>• {formatTime(track.duration_seconds)}</span>
+                            </div>
+                        ))}
+                        {book.tracks?.length > 3 && (
+                            <span style={{ fontSize: '10px', color: '#555', marginLeft: '20px' }}>+ {book.tracks.length - 3} mais...</span>
+                        )}
                     </div>
                 </div>
             </div>
 
             <div style={{
                 display: 'flex',
-                gap: '12px',
+                gap: '8px',
                 paddingTop: '12px',
                 borderTop: '1px solid rgba(255,255,255,0.05)'
             }}>
                 <button
                     onClick={() => startEdit(book)}
                     style={{
-                        flex: 1,
-                        background: 'rgba(255,255,255,0.03)',
-                        color: '#FCFBF8',
-                        border: 'none',
-                        padding: '12px',
-                        borderRadius: '12px',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s'
+                        flex: 1, background: 'rgba(255,255,255,0.03)', color: '#FCFBF8',
+                        border: 'none', padding: '10px', borderRadius: '10px',
+                        fontSize: '13px', fontWeight: '600', display: 'flex', alignItems: 'center',
+                        justifyContent: 'center', gap: '6px', cursor: 'pointer'
                     }}
                 >
-                    <PencilSimple size={18} />
+                    <PencilSimple size={16} />
                     Editar
+                </button>
+                <button
+                    onClick={() => setManagingTracks(book)}
+                    style={{
+                        flex: 1, background: 'rgba(255,255,255,0.03)', color: '#FCFBF8',
+                        border: 'none', padding: '10px', borderRadius: '10px',
+                        fontSize: '13px', fontWeight: '600', display: 'flex', alignItems: 'center',
+                        justifyContent: 'center', gap: '6px', cursor: 'pointer'
+                    }}
+                >
+                    <MusicNotes size={16} />
+                    Versões
                 </button>
                 <button
                     onClick={() => handleDelete(book.id)}
                     style={{
-                        background: 'rgba(255, 68, 68, 0.1)',
-                        color: '#ff4444',
-                        border: 'none',
-                        padding: '12px',
-                        borderRadius: '12px',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s'
+                        background: 'rgba(255, 68, 68, 0.1)', color: '#ff4444',
+                        border: 'none', padding: '10px', borderRadius: '10px',
+                        cursor: 'pointer'
                     }}
                 >
-                    <Trash size={18} />
+                    <Trash size={16} />
                 </button>
             </div>
         </div>
@@ -228,6 +237,7 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
     const [isFormVisible, setIsFormVisible] = useState(false)
     const [isPreviewPlaying, setIsPreviewPlaying] = useState(false)
     const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false)
+    const [managingTracks, setManagingTracks] = useState(null)
 
     // Form Categoria
     const [newCategoryName, setNewCategoryName] = useState('')
@@ -969,6 +979,7 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                                                 book={book}
                                                 startEdit={startEdit}
                                                 handleDelete={handleDelete}
+                                                setManagingTracks={setManagingTracks}
                                             />
                                         ))}
                                     </div>
@@ -1074,6 +1085,98 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                         <p style={{ color: '#91918E' }}>Comece criando seu primeiro conteúdo no botão acima.</p>
                     </div>
                 )}
+                {/* Modal de Gerenciamento de Versões */}
+                <AnimatePresence>
+                    {managingTracks && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            style={{
+                                position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000,
+                                backdropFilter: 'blur(10px)', padding: '20px'
+                            }}
+                            onClick={() => setManagingTracks(null)}
+                        >
+                            <motion.div
+                                initial={{ scale: 0.95, opacity: 0, y: 30 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.95, opacity: 0, y: 30 }}
+                                onClick={e => e.stopPropagation()}
+                                style={{
+                                    width: '100%', maxWidth: '600px', background: '#0a0a0a',
+                                    borderRadius: '32px', padding: '40px', border: '1px solid rgba(255,255,255,0.05)',
+                                    boxShadow: '0 50px 100px -20px rgba(0,0,0,0.7)',
+                                    maxHeight: '90vh', overflowY: 'auto'
+                                }}
+                            >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+                                    <div>
+                                        <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#FCFBF8', margin: 0 }}>Gerenciar Versões</h2>
+                                        <p style={{ color: '#666', fontSize: '14px', marginTop: '4px' }}>{managingTracks.title}</p>
+                                    </div>
+                                    <button onClick={() => setManagingTracks(null)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#666', cursor: 'pointer', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <X size={20} />
+                                    </button>
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    {managingTracks.tracks?.map(track => (
+                                        <div
+                                            key={track.id}
+                                            style={{
+                                                padding: '16px', borderRadius: '16px', background: 'rgba(255,255,255,0.02)',
+                                                border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+                                            }}
+                                        >
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    <MusicNotes size={20} color="#888" />
+                                                </div>
+                                                <div>
+                                                    <p style={{ margin: 0, fontWeight: '600', color: '#FCFBF8' }}>{track.label}</p>
+                                                    <p style={{ margin: 0, fontSize: '12px', color: '#555' }}>ID: {track.id} • {formatTime(track.duration_seconds)}</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={async () => {
+                                                    if (!confirm('Deletar esta versão específica?')) return;
+                                                    try {
+                                                        const session = await supabase.auth.getSession();
+                                                        const token = session.data.session?.access_token;
+                                                        const res = await fetch(`${API_URL}/api/audiobooks/track/${track.id}`, {
+                                                            method: 'DELETE',
+                                                            headers: { 'Authorization': `Bearer ${token}` }
+                                                        });
+                                                        if (res.ok) {
+                                                            showToast.success('Versão deletada');
+                                                            loadAudiobooks();
+                                                            setManagingTracks(prev => ({
+                                                                ...prev,
+                                                                tracks: prev.tracks.filter(t => t.id !== track.id)
+                                                            }));
+                                                        } else {
+                                                            showToast.error('Erro ao deletar versão');
+                                                        }
+                                                    } catch (e) {
+                                                        showToast.error('Erro de rede');
+                                                    }
+                                                }}
+                                                style={{ background: 'rgba(255, 68, 68, 0.1)', color: '#ff4444', border: 'none', padding: '8px', borderRadius: '8px', cursor: 'pointer' }}
+                                            >
+                                                <Trash size={18} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {(!managingTracks.tracks || managingTracks.tracks.length === 0) && (
+                                        <p style={{ textAlign: 'center', color: '#444', padding: '20px' }}>Nenhuma versão encontrada para este projeto.</p>
+                                    )}
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
 
             <style dangerouslySetInnerHTML={{

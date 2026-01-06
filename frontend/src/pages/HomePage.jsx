@@ -46,10 +46,13 @@ export default function HomePage({ user, isAdmin }) {
 
     // Estados para publicação
     const [isPublishModalOpen, setIsPublishModalOpen] = useState(false)
+    const [isPublishing, setIsPublishing] = useState(false)
     const [publishTitle, setPublishTitle] = useState('')
     const [publishDesc, setPublishDesc] = useState('')
     const [publishCover, setPublishCover] = useState(null)
     const [publishCategoryId, setPublishCategoryId] = useState('')
+    const [selectedProjectId, setSelectedProjectId] = useState(null)
+    const [trackLabel, setTrackLabel] = useState('Versão Original')
     const [isPlayerHovered, setIsPlayerHovered] = useState(false)
     const [playerProgress, setPlayerProgress] = useState(0)
     const [isReadingFile, setIsReadingFile] = useState(false)
@@ -58,6 +61,9 @@ export default function HomePage({ user, isAdmin }) {
 
     // Detalhes do Audiobook
     const [selectedBookModal, setSelectedBookModal] = useState(null)
+    const [selectedTrack, setSelectedTrack] = useState(null)
+    const [isVersionPickerOpen, setIsVersionPickerOpen] = useState(null) // Contém o projeto selecionado1
+
     const [currentPlayingBook, setCurrentPlayingBook] = useState(null)
 
     // Sincronização ultra-suave do player (60 FPS reais via RAF)
@@ -111,7 +117,7 @@ export default function HomePage({ user, isAdmin }) {
     })
 
     const handlePublish = async () => {
-        if (!publishTitle.trim()) return showToast.error('Digite um título')
+        if (!selectedProjectId && !publishTitle.trim()) return showToast.error('Digite um título ou selecione um projeto')
         if (!audioUrl) return showToast.error('Nenhum áudio para publicar')
 
         setIsPublishing(true)
@@ -145,7 +151,7 @@ export default function HomePage({ user, isAdmin }) {
             }
 
             let coverUrl = ''
-            if (publishCover) {
+            if (publishCover && !selectedProjectId) {
                 const coverFormData = new FormData()
                 coverFormData.append('file', publishCover)
                 const coverRes = await fetch(`${API_URL}/api/upload/cover`, {
@@ -169,23 +175,27 @@ export default function HomePage({ user, isAdmin }) {
                     'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
+                    project_id: selectedProjectId,
                     title: publishTitle,
                     description: publishDesc,
                     audio_url: finalAudioUrl,
                     cover_url: coverUrl,
                     category_id: publishCategoryId || null,
+                    track_label: trackLabel,
                     duration_seconds: playerRef.current?.audio?.current?.duration || 0
                 })
             })
 
             if (!createRes.ok) throw new Error('Falha ao criar registro')
 
-            showToast.success('Audiobook publicado!')
+            showToast.success('Publicado com sucesso!')
             setIsPublishModalOpen(false)
             setPublishTitle('')
             setPublishDesc('')
             setPublishCover(null)
             setPublishCategoryId('')
+            setSelectedProjectId(null)
+            setTrackLabel('Versão Original')
             loadAudiobooks()
 
         } catch (e) {
@@ -753,7 +763,7 @@ export default function HomePage({ user, isAdmin }) {
                     )}
                 </AnimatePresence>
 
-                {/* Modal de Publicação */}
+                {/* Modal de Publicação Re-imaginado */}
                 <AnimatePresence>
                     {isPublishModalOpen && (
                         <motion.div
@@ -763,224 +773,237 @@ export default function HomePage({ user, isAdmin }) {
                             style={{
                                 position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000,
-                                backdropFilter: 'blur(10px)'
+                                backdropFilter: 'blur(10px)', padding: '20px'
                             }}
                             onClick={() => setIsPublishModalOpen(false)}
                         >
                             <motion.div
-                                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                                initial={{ scale: 0.95, opacity: 0, y: 30 }}
                                 animate={{ scale: 1, opacity: 1, y: 0 }}
-                                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                                exit={{ scale: 0.95, opacity: 0, y: 30 }}
                                 onClick={e => e.stopPropagation()}
                                 style={{
-                                    width: '100%', maxWidth: '640px', background: '#0a0a0a',
-                                    borderRadius: '28px', padding: '40px', border: 'none',
-                                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)'
+                                    width: '100%', maxWidth: '700px', background: '#0a0a0a',
+                                    borderRadius: '32px', padding: '40px', border: '1px solid rgba(255,255,255,0.05)',
+                                    boxShadow: '0 50px 100px -20px rgba(0,0,0,0.7)',
+                                    maxHeight: '90vh', overflowY: 'auto'
                                 }}
                             >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
                                     <div>
-                                        <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#FCFBF8', margin: 0, letterSpacing: '-0.02em' }}>Publicar Audiobook</h2>
-                                        <p style={{ color: '#666', fontSize: '14px', marginTop: '4px' }}>Configure os detalhes do seu novo conteúdo</p>
+                                        <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#FCFBF8', margin: 0 }}>Vincular ao Projeto</h2>
+                                        <p style={{ color: '#666', fontSize: '14px', marginTop: '4px' }}>Escolha um projeto existente ou crie um novo para este áudio.</p>
                                     </div>
-                                    <button
-                                        onClick={() => setIsPublishModalOpen(false)}
-                                        style={{
-                                            background: 'rgba(255,255,255,0.05)', border: 'none', color: '#666',
-                                            cursor: 'pointer', width: '40px', height: '40px', borderRadius: '50%',
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            transition: 'all 0.2s'
-                                        }}
-                                    >
+                                    <button onClick={() => setIsPublishModalOpen(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#666', cursor: 'pointer', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                         <X size={20} />
                                     </button>
                                 </div>
 
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 200px', gap: '24px' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                            <label style={{ color: '#888', fontSize: '13px', fontWeight: '500', marginLeft: '4px' }}>Título</label>
-                                            <input
-                                                type="text" placeholder="Dê um nome ao seu audiobook"
-                                                value={publishTitle} onChange={e => setPublishTitle(e.target.value)}
-                                                style={{
-                                                    width: '100%', padding: '16px', background: 'rgba(255,255,255,0.03)',
-                                                    border: 'none', borderRadius: '16px', color: '#FCFBF8',
-                                                    fontSize: '15px', boxSizing: 'border-box', outline: 'none',
-                                                    transition: 'background 0.2s'
-                                                }}
-                                            />
-                                        </div>
-
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }} ref={publishCategoryDropdownRef}>
-                                            <label style={{ color: '#888', fontSize: '13px', fontWeight: '500', marginLeft: '4px' }}>Categoria</label>
-                                            <div
-                                                onClick={() => setIsPublishCategoryDropdownOpen(!isPublishCategoryDropdownOpen)}
-                                                style={{
-                                                    width: '100%', padding: '16px', background: 'rgba(255,255,255,0.03)',
-                                                    border: 'none', borderRadius: '16px', color: '#FCFBF8',
-                                                    fontSize: '15px', boxSizing: 'border-box', outline: 'none',
-                                                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
-                                                }}
-                                            >
-                                                <span>
-                                                    {categories.find(c => c.id === parseInt(publishCategoryId))?.name || 'Sem Categoria'}
-                                                </span>
-                                                <CaretDown size={14} weight="bold" style={{ transform: isPublishCategoryDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', color: '#666' }} />
-                                            </div>
-
-                                            <AnimatePresence>
-                                                {isPublishCategoryDropdownOpen && (
-                                                    <motion.div
-                                                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                                                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                                                        style={{
-                                                            position: 'absolute',
-                                                            top: '100%',
-                                                            left: 0,
-                                                            right: 0,
-                                                            marginTop: '8px',
-                                                            background: '#1a1a1a',
-                                                            border: '1px solid rgba(255,255,255,0.05)',
-                                                            borderRadius: '16px',
-                                                            boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-                                                            zIndex: 2100,
-                                                            overflow: 'hidden',
-                                                            padding: '8px'
-                                                        }}
-                                                    >
-                                                        <div
-                                                            onClick={() => { setPublishCategoryId(''); setIsPublishCategoryDropdownOpen(false); }}
-                                                            style={{
-                                                                padding: '12px 16px',
-                                                                borderRadius: '8px',
-                                                                cursor: 'pointer',
-                                                                background: publishCategoryId === '' ? 'rgba(255,255,255,0.05)' : 'transparent',
-                                                                color: publishCategoryId === '' ? '#FCFBF8' : '#91918E',
-                                                                transition: 'all 0.2s',
-                                                                fontSize: '14px'
-                                                            }}
-                                                        >
-                                                            Sem Categoria
-                                                        </div>
-                                                        {categories.map(cat => (
-                                                            <div
-                                                                key={cat.id}
-                                                                onClick={() => { setPublishCategoryId(cat.id.toString()); setIsPublishCategoryDropdownOpen(false); }}
-                                                                style={{
-                                                                    padding: '12px 16px',
-                                                                    borderRadius: '8px',
-                                                                    cursor: 'pointer',
-                                                                    background: parseInt(publishCategoryId) === cat.id ? 'rgba(255,255,255,0.05)' : 'transparent',
-                                                                    color: parseInt(publishCategoryId) === cat.id ? '#FCFBF8' : '#91918E',
-                                                                    transition: 'all 0.2s',
-                                                                    fontSize: '14px'
-                                                                }}
-                                                            >
-                                                                {cat.name}
-                                                            </div>
-                                                        ))}
-                                                    </motion.div>
-                                                )}
-                                            </AnimatePresence>
-                                        </div>
-
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                            <label style={{ color: '#888', fontSize: '13px', fontWeight: '500', marginLeft: '4px' }}>Descrição</label>
-                                            <textarea
-                                                placeholder="O que os ouvintes devem saber?" rows={4}
-                                                value={publishDesc} onChange={e => setPublishDesc(e.target.value)}
-                                                style={{
-                                                    width: '100%', padding: '16px', background: 'rgba(255,255,255,0.03)',
-                                                    border: 'none', borderRadius: '16px', color: '#FCFBF8',
-                                                    fontSize: '15px', resize: 'none', boxSizing: 'border-box', outline: 'none',
-                                                    transition: 'background 0.2s'
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                        <label style={{ color: '#888', fontSize: '13px', fontWeight: '500', marginLeft: '4px' }}>Capa</label>
-                                        <div
-                                            {...dropzonePublish.getRootProps()}
+                                <div style={{ marginBottom: '32px' }}>
+                                    <label style={{ color: '#888', fontSize: '13px', fontWeight: '500', display: 'block', marginBottom: '12px' }}>Projeto de Destino</label>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '12px' }}>
+                                        <motion.div
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            onClick={() => setSelectedProjectId(null)}
                                             style={{
-                                                width: '200px', height: '266px', background: 'rgba(255,255,255,0.03)',
-                                                borderRadius: '16px', border: dropzonePublish.isDragActive ? '2px dashed #FCFBF8' : '2px dashed rgba(255,255,255,0.1)',
-                                                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                                cursor: 'pointer', overflow: 'hidden', position: 'relative',
-                                                transition: 'all 0.2s'
+                                                padding: '16px', borderRadius: '16px', background: !selectedProjectId ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.02)',
+                                                border: !selectedProjectId ? '1px solid #FCFBF8' : '1px solid rgba(255,255,255,0.05)',
+                                                cursor: 'pointer', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px'
                                             }}
                                         >
-                                            <input {...dropzonePublish.getInputProps()} />
-                                            {publishCover ? (
-                                                <>
-                                                    <img
-                                                        src={URL.createObjectURL(publishCover)}
-                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                                        alt="Preview"
-                                                    />
-                                                    <div style={{
-                                                        position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)',
-                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                        opacity: 0, transition: 'opacity 0.2s'
-                                                    }}
-                                                        onMouseEnter={e => e.currentTarget.style.opacity = 1}
-                                                        onMouseLeave={e => e.currentTarget.style.opacity = 0}
-                                                    >
-                                                        <PencilSimple size={24} color="#fff" />
-                                                    </div>
-                                                </>
-                                            ) : (
-                                                <div style={{ textAlign: 'center', padding: '20px' }}>
-                                                    <Plus size={32} color="#444" style={{ marginBottom: '12px' }} />
-                                                    <p style={{ color: '#444', fontSize: '12px', margin: 0, lineHeight: '1.4' }}>Arraste aqui ou clique para selecionar</p>
-                                                </div>
-                                            )}
-                                        </div>
+                                            <Plus size={24} color={!selectedProjectId ? '#FCFBF8' : '#444'} />
+                                            <span style={{ fontSize: '12px', fontWeight: '600', color: !selectedProjectId ? '#FCFBF8' : '#666' }}>Novo Projeto</span>
+                                        </motion.div>
+
+                                        {audiobooks.map(proj => (
+                                            <motion.div
+                                                key={proj.id}
+                                                whileHover={{ scale: 1.02 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                onClick={() => setSelectedProjectId(proj.id)}
+                                                style={{
+                                                    padding: '12px', borderRadius: '16px', background: selectedProjectId === proj.id ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.02)',
+                                                    border: selectedProjectId === proj.id ? '1px solid #FCFBF8' : '1px solid rgba(255,255,255,0.05)',
+                                                    cursor: 'pointer', textAlign: 'center', display: 'flex', gap: '12px', alignItems: 'center'
+                                                }}
+                                            >
+                                                {proj.cover_url && <img src={proj.cover_url} style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }} alt="" />}
+                                                <span style={{ fontSize: '12px', fontWeight: '600', color: selectedProjectId === proj.id ? '#FCFBF8' : '#888', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                    {proj.title}
+                                                </span>
+                                            </motion.div>
+                                        ))}
                                     </div>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: selectedProjectId ? '1fr' : '1fr 200px', gap: '24px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                        {!selectedProjectId && (
+                                            <>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                    <label style={{ color: '#888', fontSize: '13px', fontWeight: '500' }}>Título do Projeto</label>
+                                                    <input
+                                                        type="text" placeholder="Ex: O Pequeno Príncipe"
+                                                        value={publishTitle} onChange={e => setPublishTitle(e.target.value)}
+                                                        style={{ width: '100%', padding: '16px', background: 'rgba(255,255,255,0.03)', border: 'none', borderRadius: '16px', color: '#FCFBF8', fontSize: '15px', outline: 'none' }}
+                                                    />
+                                                </div>
+
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }} ref={publishCategoryDropdownRef}>
+                                                    <label style={{ color: '#888', fontSize: '13px', fontWeight: '500' }}>Categoria</label>
+                                                    <div
+                                                        onClick={() => setIsPublishCategoryDropdownOpen(!isPublishCategoryDropdownOpen)}
+                                                        style={{ width: '100%', padding: '16px', background: 'rgba(255,255,255,0.03)', border: 'none', borderRadius: '16px', color: '#FCFBF8', fontSize: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                                                    >
+                                                        <span>{categories.find(c => c.id === parseInt(publishCategoryId))?.name || 'Sem Categoria'}</span>
+                                                        <CaretDown size={14} weight="bold" style={{ transform: isPublishCategoryDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', color: '#666' }} />
+                                                    </div>
+                                                    <AnimatePresence>
+                                                        {isPublishCategoryDropdownOpen && (
+                                                            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '8px', background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', zIndex: 2100, overflow: 'hidden', padding: '8px' }}>
+                                                                <div onClick={() => { setPublishCategoryId(''); setIsPublishCategoryDropdownOpen(false); }} style={{ padding: '12px 16px', borderRadius: '8px', cursor: 'pointer', color: '#91918E', fontSize: '14px' }}>Sem Categoria</div>
+                                                                {categories.map(cat => (<div key={cat.id} onClick={() => { setPublishCategoryId(cat.id.toString()); setIsPublishCategoryDropdownOpen(false); }} style={{ padding: '12px 16px', borderRadius: '8px', cursor: 'pointer', color: '#91918E', fontSize: '14px' }}>{cat.name}</div>))}
+                                                            </motion.div>
+                                                        )}
+                                                    </AnimatePresence>
+                                                </div>
+                                            </>
+                                        )}
+
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            <label style={{ color: '#888', fontSize: '13px', fontWeight: '500' }}>Nome desta Versão (Ex: Resumo, Completo...)</label>
+                                            <input
+                                                type="text" placeholder="Versão Original"
+                                                value={trackLabel} onChange={e => setTrackLabel(e.target.value)}
+                                                style={{ width: '100%', padding: '16px', background: 'rgba(255,255,255,0.03)', border: 'none', borderRadius: '16px', color: '#FCFBF8', fontSize: '15px', outline: 'none' }}
+                                            />
+                                        </div>
+
+                                        {!selectedProjectId && (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                <label style={{ color: '#888', fontSize: '13px', fontWeight: '500' }}>Descrição</label>
+                                                <textarea
+                                                    placeholder="Breve descrição do projeto..." rows={3}
+                                                    value={publishDesc} onChange={e => setPublishDesc(e.target.value)}
+                                                    style={{ width: '100%', padding: '16px', background: 'rgba(255,255,255,0.03)', border: 'none', borderRadius: '16px', color: '#FCFBF8', fontSize: '15px', resize: 'none', outline: 'none' }}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {!selectedProjectId && (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            <label style={{ color: '#888', fontSize: '13px', fontWeight: '500' }}>Capa</label>
+                                            <div {...dropzonePublish.getRootProps()} style={{ width: '200px', height: '266px', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '2px dashed rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', position: 'relative' }}>
+                                                <input {...dropzonePublish.getInputProps()} />
+                                                {publishCover ? (
+                                                    <img src={URL.createObjectURL(publishCover)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                                                ) : (
+                                                    <div style={{ textAlign: 'center', padding: '20px' }}>
+                                                        <Plus size={32} color="#444" />
+                                                        <p style={{ color: '#444', fontSize: '14px' }}>Adicionar Capa</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <button
                                     onClick={handlePublish} disabled={isPublishing}
                                     style={{
                                         width: '100%', padding: '18px', marginTop: '32px',
-                                        background: isPublishing ? '#333' : '#FCFBF8',
-                                        color: isPublishing ? '#999' : '#0a0a0a',
+                                        background: isPublishing ? '#1a1a1a' : '#FCFBF8',
+                                        color: isPublishing ? '#444' : '#0a0a0a',
                                         border: 'none', borderRadius: '18px', fontSize: '16px',
                                         fontWeight: '700', cursor: isPublishing ? 'not-allowed' : 'pointer',
-                                        transition: 'all 0.2s'
+                                        transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'
                                     }}
                                 >
-                                    {isPublishing ? (
-                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                                            <CircleNotch size={20} style={{ animation: 'spin 1s linear infinite' }} />
-                                            Publicando...
-                                        </div>
-                                    ) : 'Publicar Agora'}
+                                    {isPublishing ? <CircleNotch size={20} className="animate-spin" /> : 'Publicar Agora'}
                                 </button>
                             </motion.div>
                         </motion.div>
                     )}
                 </AnimatePresence>
 
-                {/* Modal de Detalhes do Audiobook */}
+                {/* Modal de Escolha de Versão */}
                 <AnimatePresence>
-                    {selectedBookModal && (
+                    {isVersionPickerOpen && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            style={{
+                                position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000,
+                                backdropFilter: 'blur(15px)', padding: '20px'
+                            }}
+                            onClick={() => setIsVersionPickerOpen(null)}
+                        >
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                                onClick={e => e.stopPropagation()}
+                                style={{
+                                    width: '100%', maxWidth: '450px', background: '#0a0a0a',
+                                    borderRadius: '32px', padding: '32px', border: '1px solid rgba(255,255,255,0.05)',
+                                    boxShadow: '0 50px 100px -20px rgba(0,0,0,0.7)', textAlign: 'center'
+                                }}
+                            >
+                                <img src={isVersionPickerOpen.cover_url} style={{ width: '140px', height: '140px', borderRadius: '24px', objectFit: 'cover', margin: '0 auto 24px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }} alt="" />
+                                <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#FCFBF8', marginBottom: '8px' }}>{isVersionPickerOpen.title}</h2>
+                                <p style={{ color: '#666', fontSize: '14px', marginBottom: '32px' }}>Selecione a versão que deseja ouvir:</p>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left' }}>
+                                    {isVersionPickerOpen.tracks?.map(track => (
+                                        <motion.div
+                                            key={track.id}
+                                            whileHover={{ x: 8, background: 'rgba(255,255,255,0.05)' }}
+                                            onClick={() => {
+                                                setSelectedBookModal(isVersionPickerOpen);
+                                                setSelectedTrack(track);
+                                                setIsVersionPickerOpen(null);
+                                            }}
+                                            style={{
+                                                padding: '18px 24px', borderRadius: '20px', background: 'rgba(255,255,255,0.02)',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                                cursor: 'pointer', transition: 'all 0.2s', border: '1px solid rgba(255,255,255,0.03)'
+                                            }}
+                                        >
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    <Play size={16} weight="fill" color="#FCFBF8" />
+                                                </div>
+                                                <span style={{ fontSize: '16px', fontWeight: '600', color: '#FCFBF8' }}>{track.label}</span>
+                                            </div>
+                                            <span style={{ fontSize: '13px', color: '#666', fontWeight: '500' }}>{formatTime(track.duration_seconds)}</span>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Modal de Detalhes da Versão Selecionada */}
+                <AnimatePresence>
+                    {selectedBookModal && selectedTrack && (
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             style={{
                                 position: 'fixed', inset: 0,
-                                background: 'rgba(0,0,0,0.85)',
+                                background: 'rgba(0,0,0,0.9)',
                                 backdropFilter: 'blur(10px)',
                                 zIndex: 2000,
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 padding: '24px'
                             }}
-                            onClick={() => setSelectedBookModal(null)}
+                            onClick={() => { setSelectedBookModal(null); setSelectedTrack(null); }}
                         >
                             <motion.div
                                 initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -989,40 +1012,37 @@ export default function HomePage({ user, isAdmin }) {
                                 onClick={e => e.stopPropagation()}
                                 style={{
                                     maxWidth: '500px', width: '100%',
-                                    background: '#1a1a1a', borderRadius: '32px',
+                                    background: '#0a0a0a', borderRadius: '32px',
                                     border: '1px solid rgba(255,255,255,0.05)',
                                     overflow: 'hidden',
                                     boxShadow: '0 50px 100px -20px rgba(0,0,0,0.7)'
                                 }}
                             >
-                                <div style={{ position: 'relative', height: '300px' }}>
-                                    {selectedBookModal.cover_url ? (
+                                <div style={{ position: 'relative', height: '320px' }}>
+                                    {selectedBookModal.cover_url && (
                                         <img src={selectedBookModal.cover_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
-                                    ) : (
-                                        <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #2546C7 0%, #1a3399 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <MusicNotes size={80} color="rgba(255,255,255,0.2)" />
-                                        </div>
                                     )}
                                     <button
-                                        onClick={() => setSelectedBookModal(null)}
+                                        onClick={() => { setSelectedBookModal(null); setSelectedTrack(null); }}
                                         style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff' }}
                                     >
                                         <X size={20} weight="bold" />
                                     </button>
                                 </div>
                                 <div style={{ padding: '32px' }}>
-                                    <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#FCFBF8', marginBottom: '12px' }}>{selectedBookModal.title}</h2>
-                                    <p style={{ color: '#91918E', fontSize: '16px', lineHeight: '1.6', marginBottom: '32px' }}>
-                                        {selectedBookModal.description || "Nenhuma descrição disponível para este audiobook."}
+                                    <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#FCFBF8', marginBottom: '4px' }}>{selectedBookModal.title}</h2>
+                                    <p style={{ color: '#FCFBF8', opacity: 0.5, fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '20px' }}>{selectedTrack.label}</p>
+                                    <p style={{ color: '#91918E', fontSize: '15px', lineHeight: '1.6', marginBottom: '32px' }}>
+                                        {selectedBookModal.description || "Nenhuma descrição disponível."}
                                     </p>
-                                    <div style={{ display: 'flex', gap: '16px' }}>
+                                    <div style={{ display: 'flex', gap: '12px' }}>
                                         <button
                                             onClick={() => {
-                                                setAudioUrl(selectedBookModal.audio_url);
-                                                setCurrentPlayingBook(selectedBookModal);
+                                                setAudioUrl(selectedTrack.audio_url);
+                                                setCurrentPlayingBook({ ...selectedBookModal, currentTrack: selectedTrack });
                                                 setSelectedBookModal(null);
+                                                setSelectedTrack(null);
                                                 setIsPlayerMinimized(false);
-                                                // Pequeno delay para garantir que o playerRef já pegou o novo SRC
                                                 setTimeout(() => {
                                                     if (playerRef.current?.audio?.current) {
                                                         playerRef.current.audio.current.play();
@@ -1040,8 +1060,8 @@ export default function HomePage({ user, isAdmin }) {
                                         </button>
                                         <button
                                             onClick={async () => {
-                                                const url = selectedBookModal.audio_url;
-                                                const title = selectedBookModal.title;
+                                                const url = selectedTrack.audio_url;
+                                                const title = `${selectedBookModal.title} - ${selectedTrack.label}`;
                                                 try {
                                                     const res = await fetch(url);
                                                     if (!res.ok) throw new Error("Fetch failed");
@@ -1339,9 +1359,9 @@ export default function HomePage({ user, isAdmin }) {
                                     overflow: 'hidden',
                                     boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
                                     transition: 'transform 0.2s, box-shadow 0.2s, background 0.2s',
-                                    cursor: book.audio_url ? 'pointer' : 'default'
+                                    cursor: 'pointer'
                                 }}
-                                    onClick={() => book.audio_url && setSelectedBookModal(book)}
+                                    onClick={() => setIsVersionPickerOpen(book)}
                                     onMouseEnter={e => {
                                         e.currentTarget.style.transform = 'translateY(-6px)'
                                         e.currentTarget.style.boxShadow = '0 12px 30px rgba(0,0,0,0.5)'
@@ -1382,7 +1402,7 @@ export default function HomePage({ user, isAdmin }) {
                         </div>
                     )}
                 </div>
-            </div>
+            </div >
         </>
     )
 }

@@ -44,6 +44,7 @@ def init_db():
     """Inicializa o banco de dados SQLite local"""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
+    
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS categories (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,27 +58,43 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
             description TEXT,
-            audio_url TEXT NOT NULL,
             cover_url TEXT,
-            duration_seconds REAL DEFAULT 0,
-            author_email TEXT,
-            display_order INTEGER DEFAULT 0,
             category_id INTEGER,
+            display_order INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (category_id) REFERENCES categories(id)
         )
     ''')
     
-    # Migrações
-    try:
-        cursor.execute("ALTER TABLE audiobooks ADD COLUMN display_order INTEGER DEFAULT 0")
-    except sqlite3.OperationalError:
-        pass
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS audiobook_tracks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            audiobook_id INTEGER NOT NULL,
+            label TEXT NOT NULL,
+            audio_url TEXT NOT NULL,
+            duration_seconds REAL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (audiobook_id) REFERENCES audiobooks(id) ON DELETE CASCADE
+        )
+    ''')
+    
+    # Migração: Se houver áudios na tabela principal, vamos movê-los para tracks
+    cursor.execute("PRAGMA table_info(audiobooks)")
+    cols = [c[1] for c in cursor.fetchall()]
+    if 'audio_url' in cols:
+        print("🔄 Migrando áudios existentes para audiobook_tracks...")
+        cursor.execute("SELECT id, audio_url, duration_seconds FROM audiobooks WHERE audio_url IS NOT NULL")
+        existing = cursor.fetchall()
+        for row in existing:
+            cursor.execute('''
+                INSERT INTO audiobook_tracks (audiobook_id, label, audio_url, duration_seconds)
+                VALUES (?, ?, ?, ?)
+            ''', (row[0], 'Versão Original', row[1], row[2]))
         
-    try:
-        cursor.execute("ALTER TABLE audiobooks ADD COLUMN category_id INTEGER")
-    except sqlite3.OperationalError:
-        pass
+        # Opcional: remover colunas antigas (Sqlite não suporta DROP COLUMN em versões velhas, 
+        # mas podemos apenas ignorar ou criar nova tabela)
+        # Por segurança no ambiente de produção do usuário, vamos apenas manter mas ignorar.
+        print(f"✅ Migrados {len(existing)} áudios!")
         
     conn.commit()
     conn.close()
@@ -956,12 +973,13 @@ def delete_category(category_id):
 
 @app.route('/api/audiobooks', methods=['GET'])
 def list_audiobooks():
-    """Lista todos os audiobooks do SQLite local com info de categoria"""
+    """Lista todos os projetos de audiobooks com suas faixas"""
     try:
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        # Join com categorias
+        
+        # 1. Busca os Projetos
         cursor.execute('''
             SELECT a.*, c.name as category_name 
             FROM audiobooks a 
@@ -969,9 +987,20 @@ def list_audiobooks():
             ORDER BY a.display_order ASC, a.created_at DESC
         ''')
         rows = cursor.fetchall()
-        audiobooks = [dict(row) for row in rows]
+        projects = [dict(row) for row in rows]
+        
+        # 2. Busca as Faixas para cada projeto
+        for p in projects:
+            cursor.execute('''
+                SELECT * FROM audiobook_tracks 
+                WHERE audiobook_id = ? 
+                ORDER BY created_at ASC
+            ''', (p['id'],))
+            tracks = cursor.fetchall()
+            p['tracks'] = [dict(t) for t in tracks]
+            
         conn.close()
-        return jsonify({'audiobooks': audiobooks})
+        return jsonify({'audiobooks': projects})
     except Exception as e:
         print(f"Erro ao listar: {e}")
         return jsonify({'error': 'Erro ao carregar'}), 500
@@ -1003,31 +1032,55 @@ def reorder_audiobooks():
 @app.route('/api/audiobooks', methods=['POST'])
 @require_admin
 def create_audiobook():
-    """Publica um novo audiobook no banco local"""
+    """Publica um novo audiobook ou uma nova track num projeto existente"""
     try:
         data = request.get_json()
+        project_id = data.get('project_id')
         title = data.get('title', '').strip()
         description = data.get('description', '').strip()
         audio_url = data.get('audio_url', '').strip()
         cover_url = data.get('cover_url', '')
         duration_seconds = data.get('duration_seconds', 0)
         category_id = data.get('category_id')
+        track_label = data.get('track_label', 'Versão Original').strip()
         
-        if not title or not audio_url:
-            return jsonify({'error': 'Título e Áudio obrigatórios'}), 400
+        if not audio_url:
+            return jsonify({'error': 'Áudio obrigatório'}), 400
         
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        cursor.execute('''
-            INSERT INTO audiobooks (title, description, audio_url, cover_url, duration_seconds, author_email, category_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (title, description, audio_url, cover_url, duration_seconds, request.user.get('email', 'admin'), category_id))
-        conn.commit()
-        last_id = cursor.lastrowid
-        conn.close()
         
-        return jsonify({'success': True, 'id': last_id}), 201
+        if project_id:
+            # Adicionar track a projeto existente
+            cursor.execute('''
+                INSERT INTO audiobook_tracks (audiobook_id, label, audio_url, duration_seconds)
+                VALUES (?, ?, ?, ?)
+            ''', (project_id, track_label, audio_url, duration_seconds))
+            conn.commit()
+            conn.close()
+            return jsonify({'success': True, 'project_id': project_id}), 201
+        else:
+            # Criar novo projeto + primeira track
+            if not title:
+                return jsonify({'error': 'Título obrigatório para novos projetos'}), 400
+                
+            cursor.execute('''
+                INSERT INTO audiobooks (title, description, cover_url, category_id)
+                VALUES (?, ?, ?, ?)
+            ''', (title, description, cover_url, category_id))
+            new_project_id = cursor.lastrowid
+            
+            cursor.execute('''
+                INSERT INTO audiobook_tracks (audiobook_id, label, audio_url, duration_seconds)
+                VALUES (?, ?, ?, ?)
+            ''', (new_project_id, track_label, audio_url, duration_seconds))
+            
+            conn.commit()
+            conn.close()
+            return jsonify({'success': True, 'id': new_project_id}), 201
+            
     except Exception as e:
+        print(f"Erro ao publicar: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/audiobooks/<int:audiobook_id>', methods=['DELETE'])
@@ -1036,7 +1089,24 @@ def delete_audiobook(audiobook_id):
     """Remove do SQLite"""
     try:
         conn = sqlite3.connect(DB_PATH)
-        conn.execute('DELETE FROM audiobooks WHERE id = ?', (audiobook_id,))
+        cursor = conn.cursor()
+        # Deleta as tracks primeiro
+        cursor.execute('DELETE FROM audiobook_tracks WHERE audiobook_id = ?', (audiobook_id,))
+        # Deleta o projeto
+        cursor.execute('DELETE FROM audiobooks WHERE id = ?', (audiobook_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/audiobooks/track/<int:track_id>', methods=['DELETE'])
+@require_admin
+def delete_audiobook_track(track_id):
+    """Remove uma track específica"""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.execute('DELETE FROM audiobook_tracks WHERE id = ?', (track_id,))
         conn.commit()
         conn.close()
         return jsonify({'success': True})
@@ -1051,7 +1121,7 @@ def update_audiobook(audiobook_id):
         data = request.get_json()
         fields = []
         values = []
-        for key in ['title', 'description', 'audio_url', 'cover_url', 'duration_seconds', 'category_id']:
+        for key in ['title', 'description', 'cover_url', 'category_id']:
             if key in data:
                 fields.append(f"{key} = ?")
                 values.append(data[key])
