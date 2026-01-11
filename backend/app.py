@@ -136,6 +136,19 @@ app = Flask(__name__)
 #     return response
 
 
+import traceback
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    """Retorna erro 500 com traceback para facilitar debug"""
+    print(f"ERRO GLOBAL: {e}")
+    traceback.print_exc()
+    return jsonify({
+        "error": "Erro Interno no Servidor",
+        "message": str(e),
+        "traceback": traceback.format_exc()
+    }), 500
+
 # Diretório para arquivos temporários
 TEMP_DIR = os.path.join(os.path.dirname(__file__), 'temp_audio')
 os.makedirs(TEMP_DIR, exist_ok=True)
