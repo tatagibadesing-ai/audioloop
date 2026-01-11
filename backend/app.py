@@ -1064,10 +1064,20 @@ def create_audiobook():
             if not title:
                 return jsonify({'error': 'Título obrigatório para novos projetos'}), 400
                 
-            cursor.execute('''
-                INSERT INTO audiobooks (title, description, cover_url, category_id)
-                VALUES (?, ?, ?, ?)
-            ''', (title, description, cover_url, category_id))
+            try:
+                cursor.execute('''
+                    INSERT INTO audiobooks (title, description, cover_url, category_id)
+                    VALUES (?, ?, ?, ?)
+                ''', (title, description, cover_url, category_id))
+            except sqlite3.IntegrityError as e:
+                # Fallback para bancos antigos onde audio_url/duration_seconds ainda são NOT NULL
+                if "audio_url" in str(e):
+                    cursor.execute('''
+                        INSERT INTO audiobooks (title, description, cover_url, category_id, audio_url, duration_seconds)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    ''', (title, description, cover_url, category_id, "", 0))
+                else:
+                    raise e
             new_project_id = cursor.lastrowid
             
             cursor.execute('''
