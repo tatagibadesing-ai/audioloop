@@ -5,10 +5,6 @@
     "installCommand": "npm install",
     "rewrites": [
         {
-            "source": "/api/:path*",
-            "destination": "https://api.audioloop.com.br/api/:path*"
-        },
-        {
             "source": "/(.*)",
             "destination": "/"
         }

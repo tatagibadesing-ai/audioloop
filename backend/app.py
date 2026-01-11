@@ -42,11 +42,8 @@ os.makedirs(AUDIO_UPLOADS_DIR, exist_ok=True)
 
 def init_db():
     """Inicializa o banco de dados SQLite local"""
-    conn = sqlite3.connect(DB_PATH, timeout=30)
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    
-    # Habilita modo WAL para melhor concorrência
-    cursor.execute('PRAGMA journal_mode=WAL')
     
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS categories (
@@ -135,19 +132,6 @@ app = Flask(__name__)
 # def after_request(response):
 #     return response
 
-
-import traceback
-
-@app.errorhandler(Exception)
-def handle_exception(e):
-    """Retorna erro 500 com traceback para facilitar debug"""
-    print(f"ERRO GLOBAL: {e}")
-    traceback.print_exc()
-    return jsonify({
-        "error": "Erro Interno no Servidor",
-        "message": str(e),
-        "traceback": traceback.format_exc()
-    }), 500
 
 # Diretório para arquivos temporários
 TEMP_DIR = os.path.join(os.path.dirname(__file__), 'temp_audio')
@@ -937,45 +921,39 @@ def verify_user():
 @app.route('/api/categories', methods=['GET'])
 def list_categories():
     """Lista todas as categorias"""
-    conn = None
     try:
-        conn = sqlite3.connect(DB_PATH, timeout=30)
+        conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM categories ORDER BY name ASC')
         rows = cursor.fetchall()
         categories = [dict(row) for row in rows]
+        conn.close()
         return jsonify({'categories': categories})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    finally:
-        if conn:
-            conn.close()
 
 @app.route('/api/categories', methods=['POST'])
 @require_admin
 def create_category():
     """Cria uma nova categoria"""
-    conn = None
     try:
         data = request.get_json()
         name = data.get('name', '').strip()
         if not name:
             return jsonify({'error': 'Nome da categoria é obrigatório'}), 400
         
-        conn = sqlite3.connect(DB_PATH, timeout=30)
+        conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute('INSERT INTO categories (name) VALUES (?)', (name,))
         conn.commit()
         last_id = cursor.lastrowid
+        conn.close()
         return jsonify({'success': True, 'id': last_id}), 201
     except sqlite3.IntegrityError:
         return jsonify({'error': 'Esta categoria já existe'}), 400
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    finally:
-        if conn:
-            conn.close()
 
 @app.route('/api/categories/<int:category_id>', methods=['DELETE'])
 @require_admin
@@ -996,9 +974,8 @@ def delete_category(category_id):
 @app.route('/api/audiobooks', methods=['GET'])
 def list_audiobooks():
     """Lista todos os projetos de audiobooks com suas faixas"""
-    conn = None
     try:
-        conn = sqlite3.connect(DB_PATH, timeout=30)
+        conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
@@ -1022,13 +999,11 @@ def list_audiobooks():
             tracks = cursor.fetchall()
             p['tracks'] = [dict(t) for t in tracks]
             
+        conn.close()
         return jsonify({'audiobooks': projects})
     except Exception as e:
         print(f"Erro ao listar: {e}")
         return jsonify({'error': 'Erro ao carregar'}), 500
-    finally:
-        if conn:
-            conn.close()
 
 @app.route('/api/audiobooks/reorder', methods=['POST'])
 @require_admin
@@ -1058,7 +1033,6 @@ def reorder_audiobooks():
 @require_admin
 def create_audiobook():
     """Publica um novo audiobook ou uma nova track num projeto existente"""
-    conn = None
     try:
         data = request.get_json()
         project_id = data.get('project_id')
@@ -1073,7 +1047,7 @@ def create_audiobook():
         if not audio_url:
             return jsonify({'error': 'Áudio obrigatório'}), 400
         
-        conn = sqlite3.connect(DB_PATH, timeout=30)
+        conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         
         if project_id:
@@ -1083,6 +1057,7 @@ def create_audiobook():
                 VALUES (?, ?, ?, ?)
             ''', (project_id, track_label, audio_url, duration_seconds))
             conn.commit()
+            conn.close()
             return jsonify({'success': True, 'project_id': project_id}), 201
         else:
             # Criar novo projeto + primeira track
@@ -1101,14 +1076,12 @@ def create_audiobook():
             ''', (new_project_id, track_label, audio_url, duration_seconds))
             
             conn.commit()
+            conn.close()
             return jsonify({'success': True, 'id': new_project_id}), 201
             
     except Exception as e:
         print(f"Erro ao publicar: {e}")
         return jsonify({'error': str(e)}), 500
-    finally:
-        if conn:
-            conn.close()
 
 @app.route('/api/audiobooks/<int:audiobook_id>', methods=['DELETE'])
 @require_admin
