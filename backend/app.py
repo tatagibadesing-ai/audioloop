@@ -82,19 +82,29 @@ def init_db():
     cursor.execute("PRAGMA table_info(audiobooks)")
     cols = [c[1] for c in cursor.fetchall()]
     if 'audio_url' in cols:
-        print("🔄 Migrando áudios existentes para audiobook_tracks...")
-        cursor.execute("SELECT id, audio_url, duration_seconds FROM audiobooks WHERE audio_url IS NOT NULL")
+        print("🔄 Verificando áudios existentes para migração...")
+        cursor.execute("SELECT id, audio_url, duration_seconds FROM audiobooks WHERE audio_url IS NOT NULL AND audio_url != ''")
         existing = cursor.fetchall()
+        migrated_count = 0
         for row in existing:
-            cursor.execute('''
-                INSERT INTO audiobook_tracks (audiobook_id, label, audio_url, duration_seconds)
-                VALUES (?, ?, ?, ?)
-            ''', (row[0], 'Versão Original', row[1], row[2]))
+            # Check if this format/audiobook track was already added
+            cursor.execute("SELECT id FROM audiobook_tracks WHERE audiobook_id = ? AND audio_url = ?", (row[0], row[1]))
+            if not cursor.fetchone():
+                cursor.execute('''
+                    INSERT INTO audiobook_tracks (audiobook_id, label, audio_url, duration_seconds)
+                    VALUES (?, ?, ?, ?)
+                ''', (row[0], 'Versão Original', row[1], row[2]))
+                migrated_count += 1
         
-        # Opcional: remover colunas antigas (Sqlite não suporta DROP COLUMN em versões velhas, 
-        # mas podemos apenas ignorar ou criar nova tabela)
-        # Por segurança no ambiente de produção do usuário, vamos apenas manter mas ignorar.
-        print(f"✅ Migrados {len(existing)} áudios!")
+        # Opcional: Esvaziar a coluna audio_url para evitar processamentos futuros e poupar DB
+        try:
+            cursor.execute("UPDATE audiobooks SET audio_url = NULL WHERE audio_url IS NOT NULL")
+        except Exception:
+            pass
+            
+        if migrated_count > 0:
+            print(f"✅ Migrados {migrated_count} áudios para a nova estrutura!")
+
         
     conn.commit()
     conn.close()
