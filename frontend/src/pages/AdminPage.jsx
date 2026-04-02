@@ -357,7 +357,19 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
             let coverUrl = existingCoverUrl
 
             // 1. Upload do áudio
+            let durationSeconds = 0;
             if (audioFile) {
+                // Captura a duração real do MP3 selecionado via browser API
+                durationSeconds = await new Promise(resolve => {
+                    const objectUrl = URL.createObjectURL(audioFile);
+                    const audio = new Audio(objectUrl);
+                    audio.addEventListener("loadedmetadata", () => {
+                        resolve(audio.duration);
+                        URL.revokeObjectURL(objectUrl);
+                    });
+                    audio.addEventListener("error", () => resolve(0));
+                });
+
                 const audioFormData = new FormData()
                 audioFormData.append('file', audioFile)
                 const audioRes = await fetch(`${API_URL}/api/upload/audio`, {
@@ -392,6 +404,7 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                 description,
                 audio_url: audioUrl,
                 cover_url: coverUrl,
+                duration_seconds: durationSeconds,
                 category_id: categoryId || null
             }
 
