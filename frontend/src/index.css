@@ -15,10 +15,26 @@
 body {
   font-family: 'Figtree', sans-serif;
   min-height: 100vh;
-  background-color: #ffffff;
-  color: #1a1a2e;
+  background-color: #090909;
+  color: #FCFBF8;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+}
+
+html {
+  background-color: #090909;
+}
+
+/* Remove o tap highlight azul/cinza padrão do mobile (Android/iOS) */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button, a, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .glass {
@@ -221,19 +237,9 @@ textarea::-webkit-scrollbar-thumb:hover {
   background-color: rgba(255, 255, 255, 0.25);
 }
 
-/* Responsive Layout Utilities */
+/* ===== LAYOUT ===== */
 .sidebar-desktop {
   display: flex !important;
-}
-
-.sidebar-mobile {
-  display: none !important;
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: 260px;
-  z-index: 1000;
 }
 
 .main-content {
@@ -241,14 +247,106 @@ textarea::-webkit-scrollbar-thumb:hover {
   width: calc(100% - 260px);
 }
 
-.mobile-nav-toggle {
-  display: none !important;
-}
-
 .audiobooks-grid {
   display: grid !important;
   grid-template-columns: repeat(4, 1fr) !important;
   gap: 24px !important;
+}
+
+/* ===== MOBILE HEADER ===== */
+.mobile-header {
+  display: none;
+}
+
+/* Componentes que aparecem só no desktop */
+@media (max-width: 1024px) {
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+/* Título acima do card — só mobile */
+.mobile-card-title {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .mobile-card-title {
+    display: block;
+    color: #FCFBF8;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 14px;
+    padding: 0 4px;
+    align-self: stretch;
+    max-width: 850px;
+    width: 100%;
+  }
+}
+
+/* No desktop volta a imagem de fundo da hero */
+@media (min-width: 1025px) {
+  .hero-container {
+    background-image: url('/background.jpg') !important;
+    background-size: cover !important;
+    background-position: bottom !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: calc(14px + env(safe-area-inset-top)) 20px 28px;
+    /* Degradê: cor sólida em cima, transparente em baixo */
+    background: linear-gradient(to bottom, #090909 0%, #090909 50%, rgba(9, 9, 9, 0) 100%);
+    position: sticky;
+    top: 0;
+    z-index: 1050;
+  }
+
+  .mobile-header-title {
+    font-size: 30px !important;
+    font-weight: 800 !important;
+    color: #FCFBF8;
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+
+  .mobile-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .mobile-header-avatar {
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #888;
+    flex-shrink: 0;
+  }
+
+  .mobile-header-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+/* ===== BOTTOM TAB BAR ===== */
+.bottom-tab-bar {
+  display: none;
 }
 
 @media (max-width: 1024px) {
@@ -259,17 +357,63 @@ textarea::-webkit-scrollbar-thumb:hover {
   .main-content {
     margin-left: 0 !important;
     width: 100% !important;
+    padding-bottom: 72px; /* espaço para a tab bar */
   }
 
-  .mobile-nav-toggle {
-    display: flex !important;
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    color: #444 !important;
-    padding: 0 !important;
-    width: 32px !important;
-    height: 32px !important;
+  /* Bottom Tab Bar */
+  .bottom-tab-bar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1100;
+    background: #090909;
+    border-top: none;
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+    gap: 4px;
+    justify-content: space-around;
+    align-items: center;
+  }
+
+  .bottom-tab-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #555;
+    cursor: pointer;
+    padding: 10px 4px;
+    border-radius: 12px;
+    transition: color 0.2s;
+  }
+
+  .bottom-tab-item span {
+    display: none;
+  }
+
+  .bottom-tab-item.active {
+    color: #FCFBF8;
+  }
+
+  .bottom-tab-item.gerar {
+    color: #FCFBF8;
+  }
+
+  .bottom-tab-gerar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #FCFBF8;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  /* Player sobe acima da tab bar */
+  .audio-player-fixed {
+    bottom: 72px !important;
   }
 
   h1 {
@@ -281,8 +425,9 @@ textarea::-webkit-scrollbar-thumb:hover {
   }
 
   .hero-container {
-    padding: 60px 20px 32px !important;
-    min-height: 78vh !important;
+    padding: 12px 16px 16px !important;
+    min-height: auto !important;
+    justify-content: flex-start !important;
     background-position: center top !important;
   }
 
@@ -299,7 +444,10 @@ textarea::-webkit-scrollbar-thumb:hover {
   }
 
   .section-title {
-    font-size: 22px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    color: #777 !important;
+    margin-bottom: 16px !important;
   }
 
   .generator-card {
@@ -326,35 +474,6 @@ textarea::-webkit-scrollbar-thumb:hover {
     height: 32px !important;
   }
 
-  .sidebar-mobile {
-    transform: translateX(-100%);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex !important;
-  }
-
-  .sidebar-mobile.open {
-    transform: translateX(0);
-  }
-
-  .overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(4px);
-    z-index: 999;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-  }
-
-  .overlay.show {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
   /* Compact Player for Mobile */
   .rhap_main-controls-button {
     width: 28px !important;
@@ -379,6 +498,37 @@ textarea::-webkit-scrollbar-thumb:hover {
   .audiobooks-grid {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 12px !important;
+  }
+
+  /* Overlay com texto sobre a capa */
+  .audiobook-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 32px 12px 12px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.85) 60%, rgba(0,0,0,0.95) 100%);
+    pointer-events: none;
+  }
+
+  .audiobook-overlay-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #FCFBF8;
+    margin: 0 0 2px;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .audiobook-overlay-cat {
+    font-size: 10px;
+    color: rgba(252, 251, 248, 0.6);
+    font-weight: 400;
   }
 
   .mobile-hide-text {
@@ -411,6 +561,7 @@ textarea::-webkit-scrollbar-thumb:hover {
 
   .audiobooks-section-mobile {
     padding-top: 4px !important;
+    padding-bottom: 20px !important;
   }
 
   .voice-item img {

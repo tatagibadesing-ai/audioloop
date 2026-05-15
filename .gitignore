@@ -25,3 +25,27 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# build artifacts
+frontend/dist/
+frontend/android/build/
+frontend/android/app/build/
+frontend/android/.gradle/
+frontend/android/local.properties
+frontend/android/app/release/
+frontend/android/capacitor-cordova-android-plugins/
+
+# database
+backend/*.db
+backend/audiobooks.db
+backend/uploads/
+
+# IDE
+.vscode/
+.idea/
+
+# python
+backend/venv/
+backend/__pycache__/
+**/__pycache__/
+*.pyc

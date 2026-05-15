@@ -73,11 +73,40 @@ def init_db():
             label TEXT NOT NULL,
             audio_url TEXT NOT NULL,
             duration_seconds REAL DEFAULT 0,
+            source_text TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (audiobook_id) REFERENCES audiobooks(id) ON DELETE CASCADE
         )
     ''')
-    
+
+    # Migração: adiciona colunas se não existirem
+    cursor.execute("PRAGMA table_info(audiobook_tracks)")
+    track_cols = [c[1] for c in cursor.fetchall()]
+    if 'source_text' not in track_cols:
+        try:
+            cursor.execute("ALTER TABLE audiobook_tracks ADD COLUMN source_text TEXT")
+        except Exception:
+            pass
+    if 'word_timings' not in track_cols:
+        try:
+            cursor.execute("ALTER TABLE audiobook_tracks ADD COLUMN word_timings TEXT")
+        except Exception:
+            pass
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS user_library (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL,
+            audiobook_id INTEGER NOT NULL,
+            track_id INTEGER,
+            progress_seconds REAL DEFAULT 0,
+            saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(user_id, audiobook_id),
+            FOREIGN KEY (audiobook_id) REFERENCES audiobooks(id) ON DELETE CASCADE,
+            FOREIGN KEY (track_id) REFERENCES audiobook_tracks(id) ON DELETE SET NULL
+        )
+    ''')
+
     # Migração: Se houver áudios na tabela principal, vamos movê-los para tracks
     cursor.execute("PRAGMA table_info(audiobooks)")
     cols = [c[1] for c in cursor.fetchall()]
@@ -133,14 +162,43 @@ except ImportError:
 
 
 app = Flask(__name__)
-# CORS desativado no Flask pois o Nginx já gerencia os headers (evita erro '*, *')
-# CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 
-# CORS já é tratado pela extensão flask_cors na linha 86
-# Removido o after_request manual para evitar duplicação de headers (erro de "multiple values '*, *'")
-# @app.after_request
-# def after_request(response):
-#     return response
+# CORS: Nginx já trata origens web normais.
+# Este handler adiciona suporte ao app Android (capacitor://localhost) e HTTP local.
+CAPACITOR_ORIGINS = {
+    'capacitor://localhost',
+    'http://localhost',
+    'http://localhost:3000',
+    'http://localhost:4004',
+    'http://localhost:4005',
+    'http://localhost:5173',
+}
+
+@app.after_request
+def handle_cors(response):
+    origin = request.headers.get('Origin', '')
+    if origin in CAPACITOR_ORIGINS:
+        # Se o Nginx já setou Access-Control-Allow-Origin, NÃO duplicar.
+        # Só adiciona se ninguém setou ainda (caso de localhost dev sem Nginx).
+        if 'Access-Control-Allow-Origin' not in response.headers:
+            response.headers['Access-Control-Allow-Origin'] = origin
+            response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+            response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+            response.headers['Access-Control-Allow-Credentials'] = 'true'
+    return response
+
+@app.before_request
+def handle_options():
+    if request.method == 'OPTIONS':
+        origin = request.headers.get('Origin', '')
+        if origin in CAPACITOR_ORIGINS:
+            from flask import Response
+            resp = Response(status=204)
+            resp.headers['Access-Control-Allow-Origin'] = origin
+            resp.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+            resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+            resp.headers['Access-Control-Allow-Credentials'] = 'true'
+            return resp
 
 
 # Diretório para arquivos temporários
@@ -191,13 +249,21 @@ PREVIEW_TEXTS = {
 
 # ==================== FUNÇÕES DE GERAÇÃO DE ÁUDIO ====================
 
-async def generate_audio_edge(text: str, voice: str, output_path: str):
-    """Gera áudio usando Edge-TTS (Microsoft)"""
+async def generate_audio_edge(text: str, voice: str, output_path: str, word_timings: list = None):
+    """Gera áudio usando Edge-TTS (Microsoft).
+    Se word_timings for passado (lista), preenche com [{'text': str, 'start': float}, ...]
+    capturando os WordBoundary events do Edge-TTS (timestamps em segundos).
+    """
     try:
-        # Simplificado para evitar erros de 'Invalid pitch'. 
-        # O edge-tts já gera áudio otimizado por padrão.
-        communicate = edge_tts.Communicate(text, voice)
-        await communicate.save(output_path)
+        communicate = edge_tts.Communicate(text, voice, boundary='WordBoundary')
+        with open(output_path, 'wb') as f:
+            async for chunk in communicate.stream():
+                if chunk['type'] == 'audio':
+                    f.write(chunk['data'])
+                elif chunk['type'] == 'WordBoundary' and word_timings is not None:
+                    # offset e duration vêm em "ticks" de 100 nanosegundos (10^-7s)
+                    start = chunk['offset'] / 10_000_000
+                    word_timings.append({'text': chunk['text'], 'start': start})
     except Exception as e:
         print(f"❌ Erro no edge-tts: {str(e)}")
         raise e
@@ -343,14 +409,21 @@ def generate_audio_google(text: str, voice_name: str, output_path: str, job_id: 
 
 
 def generate_audio(text: str, voice: str, output_path: str, job_id: str = None):
-    """Função principal que escolhe o provedor correto"""
+    """Função principal que escolhe o provedor correto.
+    Para Edge-TTS, captura timestamps por palavra e armazena em JOBS[job_id]['word_timings'].
+    """
     voice_config = AVAILABLE_VOICES.get(voice, {})
     provider = voice_config.get('provider', 'edge') if isinstance(voice_config, dict) else 'edge'
-    
+    print(f"🎤 Job {job_id}: voz={voice} provider={provider}", flush=True)
+
     if provider == 'google' and os.environ.get('GOOGLE_TTS_API_KEY'):
         generate_audio_google(text, voice, output_path, job_id)
     else:
-        run_async(generate_audio_edge(text, voice, output_path))
+        word_timings = []
+        run_async(generate_audio_edge(text, voice, output_path, word_timings))
+        print(f"🎯 Job {job_id}: capturados {len(word_timings)} word_timings", flush=True)
+        if job_id and job_id in JOBS:
+            JOBS[job_id]['word_timings'] = word_timings
 
 
 def run_async(coro):
@@ -498,6 +571,7 @@ def generate_audiobook():
         
         # Mudamos para MP3 para maior compatibilidade na concatenação
         ext = 'mp3'
+        file_id = str(uuid.uuid4())
         output_filename = f'audiobook_{file_id}.{ext}'
         output_path = os.path.join(TEMP_DIR, output_filename)
         
@@ -637,12 +711,9 @@ def start_generation_job():
 
 @app.route('/api/generate/status/<job_id>', methods=['GET'])
 def get_job_status(job_id):
-    """
-    Retorna o status atual de um job de geração.
-    """
+    """Retorna o status atual de um job de geração."""
     if job_id not in JOBS:
         return jsonify({'error': 'Job não encontrado'}), 404
-    
     job = JOBS[job_id]
     return jsonify({
         'job_id': job_id,
@@ -650,6 +721,14 @@ def get_job_status(job_id):
         'progress': job['progress'],
         'error': job['error']
     })
+
+
+@app.route('/api/generate/timings/<job_id>', methods=['GET'])
+def get_job_timings(job_id):
+    """Retorna word timings (Edge-TTS) capturados durante a geração."""
+    if job_id not in JOBS:
+        return jsonify({'error': 'Job não encontrado'}), 404
+    return jsonify({'word_timings': JOBS[job_id].get('word_timings', [])})
 
 
 @app.route('/api/generate/download/<job_id>', methods=['GET'])
@@ -1053,19 +1132,24 @@ def create_audiobook():
         duration_seconds = data.get('duration_seconds', 0)
         category_id = data.get('category_id')
         track_label = data.get('track_label', 'Versão Original').strip()
-        
+        source_text = data.get('source_text', '') or ''
+        word_timings = data.get('word_timings')
+        word_timings_str = None
+        if word_timings:
+            import json as _json
+            word_timings_str = _json.dumps(word_timings)
+
         if not audio_url:
             return jsonify({'error': 'Áudio obrigatório'}), 400
-        
+
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        
+
         if project_id:
-            # Adicionar track a projeto existente
             cursor.execute('''
-                INSERT INTO audiobook_tracks (audiobook_id, label, audio_url, duration_seconds)
-                VALUES (?, ?, ?, ?)
-            ''', (project_id, track_label, audio_url, duration_seconds))
+                INSERT INTO audiobook_tracks (audiobook_id, label, audio_url, duration_seconds, source_text, word_timings)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (project_id, track_label, audio_url, duration_seconds, source_text, word_timings_str))
             conn.commit()
             conn.close()
             return jsonify({'success': True, 'project_id': project_id}), 201
@@ -1073,7 +1157,7 @@ def create_audiobook():
             # Criar novo projeto + primeira track
             if not title:
                 return jsonify({'error': 'Título obrigatório para novos projetos'}), 400
-                
+
             try:
                 cursor.execute('''
                     INSERT INTO audiobooks (title, description, cover_url, category_id)
@@ -1089,11 +1173,11 @@ def create_audiobook():
                 else:
                     raise e
             new_project_id = cursor.lastrowid
-            
+
             cursor.execute('''
-                INSERT INTO audiobook_tracks (audiobook_id, label, audio_url, duration_seconds)
-                VALUES (?, ?, ?, ?)
-            ''', (new_project_id, track_label, audio_url, duration_seconds))
+                INSERT INTO audiobook_tracks (audiobook_id, label, audio_url, duration_seconds, source_text, word_timings)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (new_project_id, track_label, audio_url, duration_seconds, source_text, word_timings_str))
             
             conn.commit()
             conn.close()
@@ -1192,11 +1276,16 @@ def upload_audio_file():
 
 @app.route('/api/uploads/<folder>/<filename>')
 def serve_uploads(folder, filename):
-    """Serve arquivos da pasta uploads"""
+    """Serve arquivos da pasta uploads com cache forte (1 ano).
+    Os filenames já contêm UUID, então são imutáveis — cache eterno é seguro.
+    """
     folder_path = os.path.join(UPLOADS_DIR, folder)
-    # Se passar ?download=true, força o download no navegador
     download = request.args.get('download', '').lower() == 'true'
-    return send_from_directory(folder_path, filename, as_attachment=download, download_name=filename)
+    response = send_from_directory(folder_path, filename, as_attachment=download, download_name=filename)
+    if not download:
+        # Cache de 1 ano + immutable. O navegador nem pergunta de novo.
+        response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+    return response
 
 from flask import send_from_directory
 
@@ -1219,6 +1308,129 @@ def root():
         'supported_formats': ['PDF', 'DOCX', 'TXT']
     })
 
+
+
+# ==================== BIBLIOTECA PESSOAL DO USUÁRIO ====================
+
+@app.route('/api/library', methods=['GET'])
+@require_auth
+def get_user_library():
+    user_id = request.user.get('sub')
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT ul.id, ul.audiobook_id, ul.track_id, ul.progress_seconds, ul.saved_at,
+               ab.title, ab.description, ab.cover_url, ab.category_id,
+               cat.name as category_name,
+               t.label as track_label, t.audio_url, t.duration_seconds, t.source_text, t.word_timings
+        FROM user_library ul
+        JOIN audiobooks ab ON ul.audiobook_id = ab.id
+        LEFT JOIN categories cat ON ab.category_id = cat.id
+        LEFT JOIN audiobook_tracks t ON ul.track_id = t.id
+        WHERE ul.user_id = ?
+        ORDER BY ul.saved_at DESC
+    ''', (user_id,))
+    rows = cursor.fetchall()
+    conn.close()
+
+    items = []
+    for r in rows:
+        items.append({
+            'id': r['id'],
+            'audiobook_id': r['audiobook_id'],
+            'track_id': r['track_id'],
+            'progress_seconds': r['progress_seconds'],
+            'saved_at': r['saved_at'],
+            'title': r['title'],
+            'description': r['description'],
+            'cover_url': r['cover_url'],
+            'category_name': r['category_name'],
+            'track_label': r['track_label'],
+            'audio_url': r['audio_url'],
+            'duration_seconds': r['duration_seconds'],
+            'source_text': r['source_text'],
+            'word_timings': r['word_timings'],  # JSON string
+        })
+    return jsonify({'library': items})
+
+
+@app.route('/api/library', methods=['POST'])
+@require_auth
+def add_to_library():
+    user_id = request.user.get('sub')
+    data = request.json or {}
+    audiobook_id = data.get('audiobook_id')
+    track_id = data.get('track_id')
+
+    if not audiobook_id:
+        return jsonify({'error': 'audiobook_id obrigatório'}), 400
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    try:
+        cursor.execute('''
+            INSERT INTO user_library (user_id, audiobook_id, track_id, progress_seconds)
+            VALUES (?, ?, ?, 0)
+            ON CONFLICT(user_id, audiobook_id) DO UPDATE SET
+                track_id = excluded.track_id,
+                saved_at = CURRENT_TIMESTAMP
+        ''', (user_id, audiobook_id, track_id))
+        conn.commit()
+    finally:
+        conn.close()
+    return jsonify({'success': True})
+
+
+@app.route('/api/library/<int:audiobook_id>', methods=['DELETE'])
+@require_auth
+def remove_from_library(audiobook_id):
+    user_id = request.user.get('sub')
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM user_library WHERE user_id = ? AND audiobook_id = ?', (user_id, audiobook_id))
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
+
+
+@app.route('/api/library/<int:audiobook_id>/progress', methods=['PUT'])
+@require_auth
+def update_progress(audiobook_id):
+    user_id = request.user.get('sub')
+    data = request.json or {}
+    progress = data.get('progress_seconds', 0)
+    track_id = data.get('track_id')
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('''
+        UPDATE user_library SET progress_seconds = ?, track_id = ?
+        WHERE user_id = ? AND audiobook_id = ?
+    ''', (progress, track_id, user_id, audiobook_id))
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
+
+
+@app.route('/api/library/check', methods=['POST'])
+@require_auth
+def check_library():
+    user_id = request.user.get('sub')
+    data = request.json or {}
+    audiobook_ids = data.get('audiobook_ids', [])
+    if not audiobook_ids:
+        return jsonify({'saved': []})
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    placeholders = ','.join('?' * len(audiobook_ids))
+    cursor.execute(f'''
+        SELECT audiobook_id, track_id, progress_seconds
+        FROM user_library WHERE user_id = ? AND audiobook_id IN ({placeholders})
+    ''', [user_id] + audiobook_ids)
+    rows = cursor.fetchall()
+    conn.close()
+    return jsonify({'saved': [{'audiobook_id': r[0], 'track_id': r[1], 'progress_seconds': r[2]} for r in rows]})
 
 
 if __name__ == '__main__':

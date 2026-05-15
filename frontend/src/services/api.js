@@ -132,3 +132,44 @@ export async function getVoicePreview(voiceId) {
     if (!response.ok) return null
     return response.blob()
 }
+
+// ==================== BIBLIOTECA PESSOAL ====================
+
+export async function getLibrary(token) {
+    const response = await authFetch('/api/library', {}, token)
+    if (!response.ok) throw new Error('Erro ao carregar biblioteca')
+    return response.json()
+}
+
+export async function addToLibrary(audiobookId, trackId, token) {
+    const response = await authFetch('/api/library', {
+        method: 'POST',
+        body: JSON.stringify({ audiobook_id: audiobookId, track_id: trackId })
+    }, token)
+    if (!response.ok) throw new Error('Erro ao salvar')
+    return response.json()
+}
+
+export async function removeFromLibrary(audiobookId, token) {
+    const response = await authFetch(`/api/library/${audiobookId}`, { method: 'DELETE' }, token)
+    if (!response.ok) throw new Error('Erro ao remover')
+    return response.json()
+}
+
+export async function updateProgress(audiobookId, trackId, progressSeconds, token) {
+    const response = await authFetch(`/api/library/${audiobookId}/progress`, {
+        method: 'PUT',
+        body: JSON.stringify({ track_id: trackId, progress_seconds: progressSeconds })
+    }, token)
+    if (!response.ok) return null
+    return response.json()
+}
+
+export async function checkLibrary(audiobookIds, token) {
+    const response = await authFetch('/api/library/check', {
+        method: 'POST',
+        body: JSON.stringify({ audiobook_ids: audiobookIds })
+    }, token)
+    if (!response.ok) return { saved: [] }
+    return response.json()
+}

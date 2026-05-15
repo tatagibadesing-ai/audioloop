@@ -1,6 +1,12 @@
 // API URL - VPS Vultr com timeout ilimitado
+// No app Android (Capacitor), o protocolo é "http://" mas o hostname é "localhost"
+// — precisa apontar para o backend remoto, não para localhost:5000
+const isCapacitor = window.location.protocol === 'capacitor:' ||
+    window.location.protocol === 'https:' && window.location.hostname === 'localhost' ||
+    /Android|iPhone/.test(navigator.userAgent) && window.location.hostname === 'localhost'
+
 export const API_URL = import.meta.env.VITE_API_URL ||
-    (window.location.hostname === 'localhost' ? 'http://localhost:5000' :
+    (window.location.hostname === 'localhost' && !isCapacitor ? 'http://localhost:5000' :
         'https://api.audioloop.com.br')
 
 // Email do admin (hardcoded para segurança - verificação dupla no backend)

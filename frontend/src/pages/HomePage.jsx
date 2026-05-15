@@ -9,6 +9,7 @@ import { useDropzone } from 'react-dropzone'
 
 // Componentes
 import HoverActionButton from '../components/ui/HoverActionButton'
+import MobileHeader from '../components/layout/MobileHeader'
 
 // Serviços e constantes
 import { supabase } from '../services/supabase'
@@ -28,10 +29,14 @@ import {
     UploadSimple,
     CheckCircle,
     Plus,
-    CircleNotch
+    CircleNotch,
+    Star
 } from "@phosphor-icons/react"
+import { addToLibrary, removeFromLibrary } from '../services/api'
+import { useData } from '../contexts/DataContext'
 
-export default function HomePage({ user, isAdmin }) {
+export default function HomePage({ user, isAdmin, setShowLoginModal }) {
+    const { audiobooks, audiobooksLoaded, categories, savedBooks, markSaved, refetchAudiobooks } = useData()
     const [text, setText] = useState("")
     const [voice, setVoice] = useState("pt-BR-AntonioNeural")
     const [isLoading, setIsLoading] = useState(false)
@@ -56,7 +61,6 @@ export default function HomePage({ user, isAdmin }) {
     const [isPlayerHovered, setIsPlayerHovered] = useState(false)
     const [playerProgress, setPlayerProgress] = useState(0)
     const [isReadingFile, setIsReadingFile] = useState(false)
-    const [categories, setCategories] = useState([])
     const [isPublishCategoryDropdownOpen, setIsPublishCategoryDropdownOpen] = useState(false)
 
     // Detalhes do Audiobook
@@ -182,7 +186,9 @@ export default function HomePage({ user, isAdmin }) {
                     cover_url: coverUrl,
                     category_id: publishCategoryId || null,
                     track_label: trackLabel,
-                    duration_seconds: playerRef.current?.audio?.current?.duration || 0
+                    duration_seconds: playerRef.current?.audio?.current?.duration || 0,
+                    source_text: text || '',
+                    word_timings: generatedTimings || null
                 })
             })
 
@@ -274,36 +280,39 @@ export default function HomePage({ user, isAdmin }) {
         return () => document.removeEventListener("mousedown", handleClickOutside)
     }, [])
 
-    const [audiobooks, setAudiobooks] = useState([])
-    const [loadingBooks, setLoadingBooks] = useState(true)
+    const [savingBook, setSavingBook] = useState(null)
+    const [generatedTimings, setGeneratedTimings] = useState(null)
     const fileInputRef = useRef(null)
 
-    const loadCategories = async () => {
-        try {
-            const res = await fetch(`${API_URL}/api/categories`)
-            const data = await res.json()
-            setCategories(data.categories || [])
-        } catch (e) {
-            console.error("Erro ao carregar categorias:", e)
-        }
+    const loadingBooks = !audiobooksLoaded
+    const loadAudiobooks = refetchAudiobooks  // alias para callsites antigos
+
+    const getToken = async () => {
+        if (!supabase) return null
+        const s = await supabase.auth.getSession()
+        return s.data.session?.access_token || null
     }
 
-    const loadAudiobooks = async () => {
+    const handleToggleSave = async (book, trackId, e) => {
+        e?.stopPropagation()
+        if (!user) { setShowLoginModal(true); return }
+        const wasSaved = savedBooks[book.id]
+        markSaved(book.id, !wasSaved)  // otimista
+        setSavingBook(book.id)
         try {
-            const res = await fetch(`${API_URL}/api/audiobooks`)
-            const data = await res.json()
-            setAudiobooks(data.audiobooks || [])
+            const token = await getToken()
+            if (wasSaved) {
+                await removeFromLibrary(book.id, token)
+            } else {
+                await addToLibrary(book.id, trackId || book.tracks?.[0]?.id, token)
+            }
         } catch (e) {
-            console.error('Erro ao carregar audiobooks:', e)
+            markSaved(book.id, wasSaved)  // rollback
+            console.error(e)
         } finally {
-            setLoadingBooks(false)
+            setSavingBook(null)
         }
     }
-
-    useEffect(() => {
-        loadAudiobooks()
-        loadCategories()
-    }, [])
 
     const handleFileUpload = async (e) => {
         const file = e.target.files?.[0]
@@ -396,6 +405,23 @@ export default function HomePage({ user, isAdmin }) {
                         const audioBlob = await fetch(downloadUrl).then(r => r.blob())
                         const url = URL.createObjectURL(audioBlob)
                         setAudioUrl(url)
+
+                        // Busca word timings (Edge-TTS)
+                        try {
+                            const timingsRes = await fetch(`${API_URL.replace(/\/$/, '')}/api/generate/timings/${job_id}`)
+                            if (timingsRes.ok) {
+                                const tdata = await timingsRes.json()
+                                console.log('🎯 Word timings recebidos:', tdata.word_timings?.length || 0, 'palavras')
+                                if (tdata.word_timings?.length > 0) {
+                                    console.log('Primeira palavra:', tdata.word_timings[0])
+                                    showToast.success(`✅ ${tdata.word_timings.length} timings capturados`)
+                                } else {
+                                    showToast.error('⚠️ Nenhum timing capturado (voz Google?)')
+                                }
+                                setGeneratedTimings(tdata.word_timings || null)
+                            }
+                        } catch (e) { console.error('Erro timings:', e) }
+
                         setIsLoading(false)
                     } else if (statusData.status === 'error') {
                         clearInterval(pollInterval)
@@ -455,6 +481,7 @@ export default function HomePage({ user, isAdmin }) {
 
     return (
         <>
+            <MobileHeader title="Home" />
             <div
                 className="hero-container"
                 style={{
@@ -463,14 +490,12 @@ export default function HomePage({ user, isAdmin }) {
                     flexDirection: 'column',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    backgroundImage: "url('/background.jpg')",
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'bottom',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    background: '#090909'
                 }}
             >
-                {/* Título */}
-                <div className="hero-header" style={{ textAlign: 'center', marginBottom: '48px', maxWidth: '900px', width: '100%', margin: '0 auto 48px' }}>
+                {/* Título — só desktop */}
+                <div className="hero-header desktop-only" style={{ textAlign: 'center', marginBottom: '48px', maxWidth: '900px', width: '100%', margin: '0 auto 48px' }}>
                     <h1 className="hero-title">
                         Gerador de Audiobook Profissional
                     </h1>
@@ -478,6 +503,7 @@ export default function HomePage({ user, isAdmin }) {
                         Transforme qualquer texto em audiobook de forma ilimitada e gratuita.
                     </p>
                 </div>
+
 
                 {/* Card Gerador */}
                 <div
@@ -584,7 +610,7 @@ export default function HomePage({ user, isAdmin }) {
                                 className="generator-badge"
                                 style={{
                                     display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px',
-                                    background: 'transparent', border: '1px solid #333332',
+                                    background: 'transparent', border: 'none',
                                     borderRadius: '20px', color: '#91918E', cursor: 'pointer', fontSize: '14px', fontWeight: '600',
                                     fontFamily: "'Figtree', sans-serif", transition: 'all 0.2s'
                                 }}
@@ -601,7 +627,7 @@ export default function HomePage({ user, isAdmin }) {
                                     style={{
                                         display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px',
                                         background: 'transparent',
-                                        border: `1px solid ${isVoiceModalOpen ? '#40403F' : '#333332'} `,
+                                        border: 'none',
                                         borderRadius: '20px',
                                         color: isVoiceModalOpen ? '#FCFBF8' : '#91918E',
                                         fontSize: '14px', fontWeight: '600',
@@ -1059,6 +1085,19 @@ export default function HomePage({ user, isAdmin }) {
                                             Ouvir Agora
                                         </button>
                                         <button
+                                            onClick={(e) => handleToggleSave(selectedBookModal, selectedTrack?.id, e)}
+                                            style={{
+                                                padding: '18px', background: savedBooks[selectedBookModal?.id] ? 'rgba(252,251,248,0.1)' : 'rgba(255,255,255,0.05)',
+                                                color: savedBooks[selectedBookModal?.id] ? '#FCFBF8' : '#666',
+                                                border: 'none', borderRadius: '18px', cursor: 'pointer',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                            }}
+                                        >
+                                            {savedBooks[selectedBookModal?.id]
+                                                ? <Star size={24} weight="fill" />
+                                                : <Star size={24} />}
+                                        </button>
+                                        <button
                                             onClick={async () => {
                                                 const url = selectedTrack.audio_url;
                                                 const title = `${selectedBookModal.title} - ${selectedTrack.label}`;
@@ -1106,6 +1145,7 @@ export default function HomePage({ user, isAdmin }) {
                             onMouseEnter={() => isPlayerMinimized && !isLoading && setIsPlayerHovered(true)}
                             onMouseLeave={() => setIsPlayerHovered(false)}
                             onClick={isPlayerMinimized && !isLoading ? () => { setIsPlayerMinimized(false); setIsPlayerHovered(false) } : undefined}
+                            className="audio-player-fixed"
                             style={{
                                 position: 'fixed', bottom: 0, left: window.innerWidth < 1024 ? 0 : '260px', right: 0,
                                 background: '#0a0a0a', boxShadow: '0 -10px 40px rgba(0,0,0,0.6)',
@@ -1336,17 +1376,37 @@ export default function HomePage({ user, isAdmin }) {
                 className="section-container audiobooks-section-mobile"
                 style={{
                     width: '100%',
-                    background: '#03030D',
+                    background: '#090909',
                     padding: window.innerWidth < 768 ? '40px 16px' : '64px 24px'
                 }}
             >
                 <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
                     <h2 className="section-title">
-                        Audiobooks Disponíveis
+                        Livros disponíveis
                     </h2>
 
                     {loadingBooks ? (
-                        <p style={{ color: 'rgba(255,255,255,0.5)' }}>Carregando...</p>
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '120px 0 60px' }}>
+                            <motion.svg
+                                width="40"
+                                height="40"
+                                viewBox="0 0 40 40"
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                            >
+                                {/* Trilho */}
+                                <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(252,251,248,0.1)" strokeWidth="5" />
+                                {/* Arco com pontas arredondadas */}
+                                <circle
+                                    cx="20" cy="20" r="16"
+                                    fill="none"
+                                    stroke="#FCFBF8"
+                                    strokeWidth="5"
+                                    strokeLinecap="round"
+                                    strokeDasharray="30 100"
+                                />
+                            </motion.svg>
+                        </div>
                     ) : audiobooks.length === 0 ? (
                         <p style={{ color: 'rgba(255,255,255,0.5)' }}>Nenhum audiobook publicado ainda.</p>
                     ) : (
@@ -1359,7 +1419,8 @@ export default function HomePage({ user, isAdmin }) {
                                     overflow: 'hidden',
                                     boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
                                     transition: 'transform 0.2s, box-shadow 0.2s, background 0.2s',
-                                    cursor: 'pointer'
+                                    cursor: 'pointer',
+                                    position: 'relative'
                                 }}
                                     onClick={() => setIsVersionPickerOpen(book)}
                                     onMouseEnter={e => {
@@ -1372,30 +1433,50 @@ export default function HomePage({ user, isAdmin }) {
                                         e.currentTarget.style.background = '#0a0a0a'
                                     }}
                                 >
-                                    {book.cover_url ? (
-                                        <img src={book.cover_url} alt={book.title} style={{ width: '100%', height: 'auto', display: 'block' }} />
-                                    ) : (
-                                        <div style={{ width: '100%', height: '200px', background: 'linear-gradient(135deg, #2546C7 0%, #1a3399 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <span style={{ fontSize: '48px' }}>🎧</span>
+                                    {/* Botão salvar */}
+                                    <button
+                                        onClick={(e) => handleToggleSave(book, book.tracks?.[0]?.id, e)}
+                                        style={{
+                                            position: 'absolute', top: '6px', right: '6px',
+                                            width: '24px', height: '24px', borderRadius: '50%',
+                                            background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)',
+                                            border: 'none', display: 'flex', alignItems: 'center',
+                                            justifyContent: 'center', cursor: 'pointer', zIndex: 2,
+                                            color: savedBooks[book.id] ? '#FCFBF8' : '#888'
+                                        }}
+                                    >
+                                        {savedBooks[book.id]
+                                            ? <Star size={11} weight="fill" />
+                                            : <Star size={11} />}
+                                    </button>
+
+                                    <div className="audiobook-cover-wrapper" style={{ position: 'relative' }}>
+                                        {book.cover_url ? (
+                                            <img src={book.cover_url} alt={book.title} style={{ width: '100%', height: 'auto', display: 'block' }} />
+                                        ) : (
+                                            <div style={{ width: '100%', height: '200px', background: 'linear-gradient(135deg, #2546C7 0%, #1a3399 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <span style={{ fontSize: '48px' }}>🎧</span>
+                                            </div>
+                                        )}
+                                        {/* Overlay degradê + texto — só mobile */}
+                                        <div className="audiobook-overlay">
+                                            <h3 className="audiobook-overlay-title">{book.title}</h3>
+                                            {book.category_name && (
+                                                <div className="audiobook-overlay-cat">{book.category_name}</div>
+                                            )}
                                         </div>
-                                    )}
-                                    <div className="audiobook-card-content" style={{ padding: '24px' }}>
+                                    </div>
+                                    {/* Conteúdo abaixo do card — só desktop */}
+                                    <div className="audiobook-card-content desktop-only" style={{ padding: '24px' }}>
                                         <h3 className="audiobook-card-title" style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px', color: '#ffffff' }}>{book.title}</h3>
                                         {book.category_name && (
                                             <div style={{
-                                                fontSize: '11px',
-                                                color: '#7f7f7f',
-                                                fontWeight: '700',
-                                                textTransform: 'uppercase',
-                                                letterSpacing: '0.05em',
+                                                fontSize: '11px', color: '#666', fontWeight: '400',
                                                 marginBottom: '12px'
                                             }}>
                                                 {book.category_name}
                                             </div>
                                         )}
-                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                            <span />
-                                        </div>
                                     </div>
                                 </div>
                             ))}

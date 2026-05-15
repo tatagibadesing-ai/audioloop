@@ -6,7 +6,12 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    port: 3000,
-    host: true, // Expõe na rede local
+    port: 4004,
+    host: true,
   },
+  build: {
+    // Garante caminhos relativos — necessário para Capacitor (file://)
+    outDir: 'dist',
+  },
+  base: './',
 })
