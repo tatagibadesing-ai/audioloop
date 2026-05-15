@@ -93,6 +93,22 @@ def init_db():
         except Exception:
             pass
 
+    # Jobs de geração TTS persistidos (sobrevivem a restart do servidor)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS tts_jobs (
+            id TEXT PRIMARY KEY,
+            status TEXT NOT NULL,
+            progress INTEGER DEFAULT 0,
+            file_path TEXT,
+            error TEXT,
+            word_timings TEXT,
+            text_length INTEGER DEFAULT 0,
+            voice TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS user_library (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -209,6 +225,9 @@ os.makedirs(TEMP_DIR, exist_ok=True)
 # Armazena o status dos jobs de geração de áudio
 # Formato: { job_id: { 'status': 'pending'|'processing'|'done'|'error', 'progress': 0-100, 'file_path': str, 'error': str } }
 JOBS = {}
+# IDs dos jobs atualmente em execução (threads vivas) — usado pra detectar
+# jobs que ficaram 'processing' no banco depois de um restart do servidor.
+JOBS_RUNNING = set()
 
 
 # ==================== VOZES DISPONÍVEIS ====================
@@ -628,36 +647,107 @@ def generate_audiobook():
 
 # ==================== SISTEMA DE JOBS EM BACKGROUND ====================
 
-def process_audio_job(job_id: str, text: str, voice: str):
-    """Processa o áudio em background e atualiza o status do job"""
+def db_save_job(job_id: str, fields: dict):
+    """Persiste/atualiza um job no SQLite. fields = dict com colunas a setar."""
+    if not fields:
+        return
     try:
-        JOBS[job_id]['status'] = 'processing'
-        JOBS[job_id]['progress'] = 5
-        
-        # Determina extensão
+        conn = sqlite3.connect(DB_PATH)
+        cur = conn.cursor()
+        # UPSERT: tenta INSERT, se conflito, faz UPDATE
+        cur.execute('SELECT 1 FROM tts_jobs WHERE id = ?', (job_id,))
+        exists = cur.fetchone() is not None
+        if exists:
+            sets = ', '.join(f'{k} = ?' for k in fields)
+            values = list(fields.values()) + [job_id]
+            cur.execute(f'UPDATE tts_jobs SET {sets}, updated_at = CURRENT_TIMESTAMP WHERE id = ?', values)
+        else:
+            cols = ['id'] + list(fields.keys())
+            placeholders = ', '.join('?' * len(cols))
+            cur.execute(f'INSERT INTO tts_jobs ({", ".join(cols)}) VALUES ({placeholders})',
+                        [job_id] + list(fields.values()))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f'⚠️ Erro persistindo job {job_id}: {e}', flush=True)
+
+
+def db_load_job(job_id: str):
+    """Carrega job do SQLite. Retorna dict ou None."""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute('SELECT * FROM tts_jobs WHERE id = ?', (job_id,))
+        row = cur.fetchone()
+        conn.close()
+        if not row:
+            return None
+        d = dict(row)
+        # Parseia word_timings (JSON string -> list)
+        if d.get('word_timings'):
+            try:
+                import json as _json
+                d['word_timings'] = _json.loads(d['word_timings'])
+            except Exception:
+                d['word_timings'] = []
+        return d
+    except Exception as e:
+        print(f'⚠️ Erro lendo job {job_id}: {e}', flush=True)
+        return None
+
+
+def get_job(job_id: str):
+    """Retorna o job — primeiro do cache em memória, senão do banco."""
+    if job_id in JOBS:
+        return JOBS[job_id]
+    db = db_load_job(job_id)
+    if db:
+        JOBS[job_id] = db  # cache
+    return db
+
+
+def update_job(job_id: str, **kwargs):
+    """Atualiza um job em memória + persiste mudanças no banco."""
+    if job_id not in JOBS:
+        JOBS[job_id] = {}
+    JOBS[job_id].update(kwargs)
+    # Só persiste campos que existem na tabela
+    persistable = {k: v for k, v in kwargs.items()
+                   if k in ('status', 'progress', 'file_path', 'error', 'word_timings', 'text_length', 'voice')}
+    if 'word_timings' in persistable and isinstance(persistable['word_timings'], list):
+        import json as _json
+        persistable['word_timings'] = _json.dumps(persistable['word_timings'])
+    db_save_job(job_id, persistable)
+
+
+def process_audio_job(job_id: str, text: str, voice: str):
+    """Processa o áudio em background, atualiza status e persiste no banco"""
+    JOBS_RUNNING.add(job_id)
+    try:
+        update_job(job_id, status='processing', progress=5, voice=voice, text_length=len(text))
+
         ext = 'mp3'
         output_filename = f'job_{job_id}.{ext}'
         output_path = os.path.join(TEMP_DIR, output_filename)
-        
+
         print(f"🚀 Job {job_id}: Iniciando geração de áudio ({len(text)} caracteres)")
-        
-        # Gera o áudio
+
         generate_audio(text, voice, output_path, job_id)
-        
-        # Verifica se foi criado
+
         if os.path.exists(output_path):
-            JOBS[job_id]['status'] = 'done'
-            JOBS[job_id]['progress'] = 100
-            JOBS[job_id]['file_path'] = output_path
+            # generate_audio já populou JOBS[job_id]['word_timings'] se foi Edge
+            timings = JOBS.get(job_id, {}).get('word_timings', [])
+            update_job(job_id, status='done', progress=100, file_path=output_path, word_timings=timings)
             print(f"✅ Job {job_id}: Áudio gerado com sucesso!")
         else:
-            JOBS[job_id]['status'] = 'error'
-            JOBS[job_id]['error'] = 'Falha ao gerar arquivo de áudio'
-            
+            update_job(job_id, status='error', error='Falha ao gerar arquivo de áudio')
+
     except Exception as e:
         print(f"❌ Job {job_id}: Erro - {str(e)}")
-        JOBS[job_id]['status'] = 'error'
-        JOBS[job_id]['error'] = str(e)
+        update_job(job_id, status='error', error=str(e))
+    finally:
+        JOBS_RUNNING.discard(job_id)
 
 
 @app.route('/api/generate/start', methods=['POST'])
@@ -681,7 +771,7 @@ def start_generation_job():
         if voice not in AVAILABLE_VOICES:
             return jsonify({'error': f'Voz {voice} não suportada'}), 400
         
-        # Cria o job
+        # Cria o job (memória + banco)
         job_id = str(uuid.uuid4())
         JOBS[job_id] = {
             'status': 'pending',
@@ -690,7 +780,8 @@ def start_generation_job():
             'error': None,
             'created_at': time.time()
         }
-        
+        update_job(job_id, status='pending', progress=0, voice=voice, text_length=len(text))
+
         print(f"📝 Job {job_id}: Criado para {len(text)} caracteres")
         
         # Inicia o processamento em background
@@ -711,24 +802,31 @@ def start_generation_job():
 
 @app.route('/api/generate/status/<job_id>', methods=['GET'])
 def get_job_status(job_id):
-    """Retorna o status atual de um job de geração."""
-    if job_id not in JOBS:
+    """Retorna o status atual de um job (memória ou banco)."""
+    job = get_job(job_id)
+    if not job:
         return jsonify({'error': 'Job não encontrado'}), 404
-    job = JOBS[job_id]
+    # Se o job estava 'processing' antes do servidor reiniciar, marcamos como erro
+    # (o backend perdeu a thread). Frontend pode reiniciar a geração.
+    status = job.get('status')
+    if status == 'processing' and job_id not in JOBS_RUNNING:
+        update_job(job_id, status='error', error='Servidor reiniciou durante a geração. Tente novamente.')
+        status = 'error'
     return jsonify({
         'job_id': job_id,
-        'status': job['status'],
-        'progress': job['progress'],
-        'error': job['error']
+        'status': status,
+        'progress': job.get('progress', 0),
+        'error': job.get('error')
     })
 
 
 @app.route('/api/generate/timings/<job_id>', methods=['GET'])
 def get_job_timings(job_id):
     """Retorna word timings (Edge-TTS) capturados durante a geração."""
-    if job_id not in JOBS:
+    job = get_job(job_id)
+    if not job:
         return jsonify({'error': 'Job não encontrado'}), 404
-    return jsonify({'word_timings': JOBS[job_id].get('word_timings', [])})
+    return jsonify({'word_timings': job.get('word_timings', [])})
 
 
 @app.route('/api/generate/download/<job_id>', methods=['GET'])
@@ -736,15 +834,14 @@ def download_job_result(job_id):
     """
     Baixa o áudio gerado por um job concluído.
     """
-    if job_id not in JOBS:
+    job = get_job(job_id)
+    if not job:
         return jsonify({'error': 'Job não encontrado'}), 404
-    
-    job = JOBS[job_id]
-    
-    if job['status'] != 'done':
-        return jsonify({'error': 'Áudio ainda não está pronto', 'status': job['status']}), 400
-    
-    if not job['file_path'] or not os.path.exists(job['file_path']):
+
+    if job.get('status') != 'done':
+        return jsonify({'error': 'Áudio ainda não está pronto', 'status': job.get('status')}), 400
+
+    if not job.get('file_path') or not os.path.exists(job['file_path']):
         return jsonify({'error': 'Arquivo não encontrado'}), 404
     
     # Limpa o job da memória após 1 hora

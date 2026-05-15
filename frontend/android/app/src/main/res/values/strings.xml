@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">AudioLoop</string>
+    <string name="title_activity_main">AudioLoop</string>
+    <string name="package_name">com.audioloop.app</string>
+    <string name="custom_url_scheme">com.audioloop.app</string>
+</resources>
