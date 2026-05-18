@@ -389,6 +389,7 @@ export default function HomePage({ user, isAdmin, setShowLoginModal }) {
                         clearInterval(pollInterval)
                         clearInterval(visualTimer)
                         setIsLoading(false)
+                        showToast.error("A conexão com o servidor foi perdida. Tente gerar o áudio em partes menores.")
                         return
                     }
 

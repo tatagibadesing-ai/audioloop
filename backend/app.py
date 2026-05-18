@@ -268,21 +268,42 @@ PREVIEW_TEXTS = {
 
 # ==================== FUNÇÕES DE GERAÇÃO DE ÁUDIO ====================
 
-async def generate_audio_edge(text: str, voice: str, output_path: str, word_timings: list = None):
-    """Gera áudio usando Edge-TTS (Microsoft).
-    Se word_timings for passado (lista), preenche com [{'text': str, 'start': float}, ...]
-    capturando os WordBoundary events do Edge-TTS (timestamps em segundos).
-    """
+async def generate_audio_edge(text: str, voice: str, output_path: str, word_timings: list = None, job_id: str = None):
+    """Gera áudio usando Edge-TTS (Microsoft) dividindo em pedaços para evitar timeouts."""
+    def update_progress(p):
+        if job_id and job_id in JOBS:
+            JOBS[job_id]['progress'] = p
+
     try:
-        communicate = edge_tts.Communicate(text, voice, boundary='WordBoundary')
+        # Divide o texto para evitar timeouts (limite ~8000 caracteres)
+        chunks = split_text_for_google(text, limit=8000)
+        print(f"🔄 Processando {len(chunks)} partes com Edge TTS...", flush=True)
+        
+        current_offset = 0.0
         with open(output_path, 'wb') as f:
-            async for chunk in communicate.stream():
-                if chunk['type'] == 'audio':
-                    f.write(chunk['data'])
-                elif chunk['type'] == 'WordBoundary' and word_timings is not None:
-                    # offset e duration vêm em "ticks" de 100 nanosegundos (10^-7s)
-                    start = chunk['offset'] / 10_000_000
-                    word_timings.append({'text': chunk['text'], 'start': start})
+            for i, chunk_text in enumerate(chunks):
+                if not chunk_text.strip():
+                    continue
+                
+                real_progress = 5 + int((i / len(chunks)) * 90)
+                update_progress(real_progress)
+                
+                communicate = edge_tts.Communicate(chunk_text, voice, boundary='WordBoundary')
+                chunk_duration = 0.0
+                
+                async for chunk_data in communicate.stream():
+                    if chunk_data['type'] == 'audio':
+                        f.write(chunk_data['data'])
+                    elif chunk_data['type'] == 'WordBoundary' and word_timings is not None:
+                        start = chunk_data['offset'] / 10_000_000
+                        word_timings.append({'text': chunk_data['text'], 'start': current_offset + start})
+                        if start > chunk_duration:
+                            chunk_duration = start
+                
+                # Adiciona duração do chunk atual + uma folga pequena ao offset global
+                current_offset += chunk_duration + 0.3
+                print(f"✅ Chunk {i+1}/{len(chunks)} processado (Edge TTS)", flush=True)
+                
     except Exception as e:
         print(f"❌ Erro no edge-tts: {str(e)}")
         raise e
@@ -439,7 +460,7 @@ def generate_audio(text: str, voice: str, output_path: str, job_id: str = None):
         generate_audio_google(text, voice, output_path, job_id)
     else:
         word_timings = []
-        run_async(generate_audio_edge(text, voice, output_path, word_timings))
+        run_async(generate_audio_edge(text, voice, output_path, word_timings, job_id))
         print(f"🎯 Job {job_id}: capturados {len(word_timings)} word_timings", flush=True)
         if job_id and job_id in JOBS:
             JOBS[job_id]['word_timings'] = word_timings
@@ -809,9 +830,6 @@ def get_job_status(job_id):
     # Se o job estava 'processing' antes do servidor reiniciar, marcamos como erro
     # (o backend perdeu a thread). Frontend pode reiniciar a geração.
     status = job.get('status')
-    if status == 'processing' and job_id not in JOBS_RUNNING:
-        update_job(job_id, status='error', error='Servidor reiniciou durante a geração. Tente novamente.')
-        status = 'error'
     return jsonify({
         'job_id': job_id,
         'status': status,
