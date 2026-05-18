@@ -180,8 +180,8 @@ export default function MyBooksPage({ setShowLoginModal }) {
                             return (
                                 <motion.div
                                     key={item.audiobook_id}
-                                    initial={{ opacity: 0, y: 8 }}
-                                    animate={{ opacity: 1, y: 0 }}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
                                     style={{
                                         background: isActive ? '#161616' : 'transparent',
                                         borderRadius: '16px',

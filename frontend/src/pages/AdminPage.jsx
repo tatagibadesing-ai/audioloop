@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom"
 import { toast } from "react-hot-toast"
 import { showToast } from "../components/ui/PremiumToast"
 import { motion, AnimatePresence } from "framer-motion"
+import MobileHeader from '../components/layout/MobileHeader'
+import { useData } from '../contexts/DataContext'
 import {
     DndContext,
     closestCenter,
@@ -69,10 +71,10 @@ function SortableBook({ book, startEdit, handleDelete, setManagingTracks }) {
             ref={setNodeRef}
             style={{
                 ...style,
-                background: '#1a1a1a',
+                background: '#161616',
                 borderRadius: '24px',
                 padding: '20px',
-                border: '1px solid rgba(255,255,255,0.05)',
+                border: 'none',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '20px',
@@ -165,7 +167,7 @@ function SortableBook({ book, startEdit, handleDelete, setManagingTracks }) {
                 display: 'flex',
                 gap: '8px',
                 paddingTop: '12px',
-                borderTop: '1px solid rgba(255,255,255,0.05)'
+                borderTop: 'none'
             }}>
                 <button
                     onClick={() => startEdit(book)}
@@ -219,10 +221,23 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
         })
     )
 
-    const [audiobooks, setAudiobooks] = useState([])
-    const [categories, setCategories] = useState([])
-    const [loading, setLoading] = useState(true)
+    const { 
+        audiobooks: globalAudiobooks, audiobooksLoaded, refetchAudiobooks,
+        categories: globalCategories, refetchCategories 
+    } = useData()
+
+    const [audiobooks, setAudiobooks] = useState(globalAudiobooks || [])
+    const [categories, setCategories] = useState(globalCategories || [])
+    const loading = !audiobooksLoaded
     const [activeTab, setActiveTab] = useState('audiobooks') // 'audiobooks' | 'categories'
+
+    useEffect(() => {
+        setAudiobooks(globalAudiobooks)
+    }, [globalAudiobooks])
+
+    useEffect(() => {
+        setCategories(globalCategories)
+    }, [globalCategories])
 
     // Form Audiobook
     const [title, setTitle] = useState('')
@@ -258,33 +273,16 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
     }, [])
 
     useEffect(() => {
-        if (isAdmin) {
-            loadAudiobooks()
-            loadCategories()
-        }
+        // Os dados já são cacheados e carregados globalmente no DataContext.
+        // Não é necessário forçar um reload aqui, o que evita o spinner ao voltar da Home.
     }, [isAdmin])
 
     const loadCategories = async () => {
-        try {
-            const res = await fetch(`${API_URL}/api/categories`)
-            const data = await res.json()
-            setCategories(data.categories || [])
-        } catch (e) {
-            console.error(e)
-        }
+        await refetchCategories()
     }
 
     const loadAudiobooks = async () => {
-        setLoading(true)
-        try {
-            const res = await fetch(`${API_URL}/api/audiobooks`)
-            const data = await res.json()
-            setAudiobooks(data.audiobooks || [])
-        } catch (e) {
-            console.error(e)
-        } finally {
-            setLoading(false)
-        }
+        await refetchAudiobooks()
     }
 
     const handleCategorySubmit = async (e) => {
@@ -470,8 +468,6 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
         return (
             <div style={{ minHeight: '100vh', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
                     style={{ textAlign: 'center', maxWidth: '400px' }}
                 >
                     <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
@@ -539,8 +535,6 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
         return (
             <div style={{ minHeight: '100vh', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
                     style={{ textAlign: 'center' }}
                 >
                     <h1 style={{ fontSize: '32px', color: '#FCFBF8', marginBottom: '16px' }}>Sem Permissão</h1>
@@ -556,84 +550,86 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
     return (
         <div style={{
             minHeight: '100vh',
-            background: '#0a0a0a',
+            background: '#090909',
             color: '#FCFBF8',
-            padding: '120px 24px 60px',
+            paddingBottom: '80px',
             fontFamily: "'Figtree', sans-serif"
         }}>
-            <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            <MobileHeader title="Painel de Controle" />
 
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '48px',
-                    flexWrap: 'wrap',
-                    gap: '24px'
-                }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <motion.h1
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            style={{ fontSize: '40px', fontWeight: '700', letterSpacing: '-0.02em', margin: 0 }}
-                        >
-                            Painel de Controle
-                        </motion.h1>
-                        <div style={{ display: 'flex', gap: '32px', marginTop: '12px' }}>
-                            <button
-                                onClick={() => setActiveTab('audiobooks')}
-                                style={{
-                                    background: 'none', border: 'none',
-                                    color: activeTab === 'audiobooks' ? '#FCFBF8' : '#91918E',
-                                    fontSize: '18px', fontWeight: '600', cursor: 'pointer',
-                                    padding: '8px 0', borderBottom: `2px solid ${activeTab === 'audiobooks' ? '#FCFBF8' : 'transparent'}`,
-                                    transition: 'all 0.2s'
-                                }}
+            <div style={{ padding: '8px 20px 0' }}>
+                <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        marginBottom: '24px',
+                        gap: '20px'
+                    }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <motion.h1
+                                className="desktop-only"
+                                style={{ fontSize: '28px', fontWeight: '700', letterSpacing: '-0.02em', margin: 0, color: '#FCFBF8' }}
                             >
-                                Audiobooks
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('categories')}
-                                style={{
-                                    background: 'none', border: 'none',
-                                    color: activeTab === 'categories' ? '#FCFBF8' : '#91918E',
-                                    fontSize: '18px', fontWeight: '600', cursor: 'pointer',
-                                    padding: '8px 0', borderBottom: `2px solid ${activeTab === 'categories' ? '#FCFBF8' : 'transparent'}`,
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                Categorias
-                            </button>
+                                Painel de Controle
+                            </motion.h1>
+                            <div style={{ display: 'flex', gap: '24px', marginTop: '4px' }}>
+                                <button
+                                    onClick={() => setActiveTab('audiobooks')}
+                                    style={{
+                                        background: 'none', border: 'none',
+                                        color: activeTab === 'audiobooks' ? '#FCFBF8' : '#666',
+                                        fontSize: '15px', fontWeight: '600', cursor: 'pointer',
+                                        padding: '4px 0', borderBottom: `2px solid ${activeTab === 'audiobooks' ? '#FCFBF8' : 'transparent'}`,
+                                        transition: 'all 0.2s', fontFamily: "'Figtree', sans-serif"
+                                    }}
+                                >
+                                    Audiobooks
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('categories')}
+                                    style={{
+                                        background: 'none', border: 'none',
+                                        color: activeTab === 'categories' ? '#FCFBF8' : '#666',
+                                        fontSize: '15px', fontWeight: '600', cursor: 'pointer',
+                                        padding: '4px 0', borderBottom: `2px solid ${activeTab === 'categories' ? '#FCFBF8' : 'transparent'}`,
+                                        transition: 'all 0.2s', fontFamily: "'Figtree', sans-serif"
+                                    }}
+                                >
+                                    Categorias
+                                </button>
+                            </div>
                         </div>
-                    </div>
 
-                    <motion.button
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => {
-                            resetForm()
-                            setIsFormVisible(!isFormVisible)
-                        }}
-                        style={{
-                            background: isFormVisible ? 'rgba(255,255,255,0.05)' : '#FCFBF8',
-                            color: isFormVisible ? '#FCFBF8' : '#0a0a0a',
-                            padding: '16px 28px',
-                            borderRadius: '16px',
-                            border: 'none',
-                            fontWeight: '600',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        {isFormVisible ? <X size={20} weight="bold" /> : <Plus size={20} weight="bold" />}
-                        {isFormVisible ? 'Fechar Formulário' : 'Novo Audiobook'}
-                    </motion.button>
-                </div>
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => {
+                                resetForm()
+                                setIsFormVisible(!isFormVisible)
+                            }}
+                            style={{
+                                background: isFormVisible ? '#161616' : '#FCFBF8',
+                                color: isFormVisible ? '#FCFBF8' : '#0a0a0a',
+                                padding: '14px 24px',
+                                borderRadius: '16px',
+                                border: 'none',
+                                fontWeight: '700',
+                                fontSize: '15px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '10px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                fontFamily: "'Figtree', sans-serif",
+                                width: '100%'
+                            }}
+                        >
+                            {isFormVisible ? <X size={18} weight="bold" /> : <Plus size={18} weight="bold" />}
+                            {isFormVisible ? 'Fechar Formulário' : 'Novo Audiobook'}
+                        </motion.button>
+                    </div>
 
                 {/* Formulário Expansível */}
                 <AnimatePresence>
@@ -645,17 +641,17 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                             style={{ overflow: 'hidden' }}
                         >
                             <div style={{
-                                background: '#1a1a1a',
-                                borderRadius: '32px',
-                                padding: '40px',
-                                border: '1px solid rgba(255,255,255,0.05)',
+                                background: '#161616',
+                                borderRadius: '24px',
+                                padding: '24px',
+                                border: 'none',
                                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
                             }}>
                                 <h2 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '32px' }}>
                                     {editingId ? 'Editar Detalhes' : 'Cadastrar Audiobook'}
                                 </h2>
 
-                                <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+                                <form onSubmit={handleSubmit} className="admin-form" style={{ display: 'grid', gap: '32px' }}>
                                     {/* Esquerda: Textos */}
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -667,7 +663,7 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                                                 placeholder="Ex: O Poder da Mente"
                                                 style={{
                                                     background: 'rgba(255,255,255,0.03)',
-                                                    border: '1px solid rgba(255,255,255,0.05)',
+                                                    border: 'none',
                                                     borderRadius: '16px',
                                                     padding: '16px',
                                                     color: '#FCFBF8',
@@ -683,7 +679,7 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                                                 onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
                                                 style={{
                                                     background: 'rgba(255,255,255,0.03)',
-                                                    border: '1px solid rgba(255,255,255,0.05)',
+                                                    border: 'none',
                                                     borderRadius: '16px',
                                                     padding: '16px',
                                                     color: '#FCFBF8',
@@ -713,7 +709,7 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                                                             right: 0,
                                                             marginTop: '8px',
                                                             background: '#1a1a1a',
-                                                            border: '1px solid rgba(255,255,255,0.05)',
+                                                            border: 'none',
                                                             borderRadius: '16px',
                                                             boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
                                                             zIndex: 100,
@@ -764,7 +760,7 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                                                 rows={4}
                                                 style={{
                                                     background: 'rgba(255,255,255,0.03)',
-                                                    border: '1px solid rgba(255,255,255,0.05)',
+                                                    border: 'none',
                                                     borderRadius: '16px',
                                                     padding: '16px',
                                                     color: '#FCFBF8',
@@ -785,8 +781,8 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                                                     onClick={() => audioInputRef.current.click()}
                                                     style={{
                                                         height: '100px',
-                                                        background: audioFile ? 'rgba(252, 251, 248, 0.05)' : 'rgba(255,255,255,0.02)',
-                                                        border: `1px dashed ${audioFile ? '#FCFBF8' : 'rgba(255,255,255,0.1)'}`,
+                                                        background: audioFile ? 'rgba(252, 251, 248, 0.05)' : 'rgba(255,255,255,0.03)',
+                                                        border: 'none',
                                                         borderRadius: '16px',
                                                         display: 'flex',
                                                         flexDirection: 'column',
@@ -847,8 +843,8 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                                                     onClick={() => coverInputRef.current.click()}
                                                     style={{
                                                         height: '100px',
-                                                        background: coverFile ? 'rgba(252, 251, 248, 0.05)' : 'rgba(255,255,255,0.02)',
-                                                        border: `1px dashed ${coverFile ? '#FCFBF8' : 'rgba(255,255,255,0.1)'}`,
+                                                        background: coverFile ? 'rgba(252, 251, 248, 0.05)' : 'rgba(255,255,255,0.03)',
+                                                        border: 'none',
                                                         borderRadius: '16px',
                                                         display: 'flex',
                                                         flexDirection: 'column',
@@ -968,8 +964,15 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                         </div>
 
                         {loading ? (
-                            <div style={{ display: 'flex', justifyContent: 'center', padding: '100px 0' }}>
-                                <CircleNotch size={48} className="animate-spin" color="#FCFBF8" />
+                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '120px 0 60px' }}>
+                                <motion.svg
+                                    width="40" height="40" viewBox="0 0 40 40"
+                                    animate={{ rotate: 360 }}
+                                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                                >
+                                    <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(252,251,248,0.1)" strokeWidth="5" />
+                                    <circle cx="20" cy="20" r="16" fill="none" stroke="#FCFBF8" strokeWidth="5" strokeLinecap="round" strokeDasharray="30 100" />
+                                </motion.svg>
                             </div>
                         ) : (
                             <DndContext
@@ -1002,15 +1005,12 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                     </>
                 ) : (
                     /* ABA DE CATEGORIAS */
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                    >
+                    <motion.div>
                         <div style={{
-                            background: '#1a1a1a',
-                            borderRadius: '32px',
-                            padding: '40px',
-                            border: '1px solid rgba(255,255,255,0.05)',
+                            background: '#161616',
+                            borderRadius: '24px',
+                            padding: '24px',
+                            border: 'none',
                             marginBottom: '48px'
                         }}>
                             <h2 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '24px' }}>Nova Categoria</h2>
@@ -1023,7 +1023,7 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                                     style={{
                                         flex: 1,
                                         background: 'rgba(255,255,255,0.03)',
-                                        border: '1px solid rgba(255,255,255,0.05)',
+                                        border: 'none',
                                         borderRadius: '16px',
                                         padding: '16px',
                                         color: '#FCFBF8',
@@ -1062,7 +1062,7 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                                     display: 'flex',
                                     justifyContent: 'space-between',
                                     alignItems: 'center',
-                                    border: '1px solid rgba(255,255,255,0.05)'
+                                    border: 'none'
                                 }}>
                                     <span style={{ fontSize: '18px', fontWeight: '500' }}>{cat.name}</span>
                                     <button
@@ -1089,9 +1089,9 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                     <div style={{
                         padding: '120px 0',
                         textAlign: 'center',
-                        background: 'rgba(255,255,255,0.01)',
-                        borderRadius: '32px',
-                        border: '1px dashed rgba(255,255,255,0.1)'
+                        background: 'rgba(255,255,255,0.03)',
+                        borderRadius: '24px',
+                        border: 'none'
                     }}>
                         <MusicNotes size={64} color="rgba(255,255,255,0.05)" style={{ marginBottom: '24px' }} />
                         <h3 style={{ fontSize: '20px', color: '#FCFBF8', marginBottom: '8px' }}>Nenhum audiobook encontrado</h3>
@@ -1118,8 +1118,8 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                                 exit={{ scale: 0.95, opacity: 0, y: 30 }}
                                 onClick={e => e.stopPropagation()}
                                 style={{
-                                    width: '100%', maxWidth: '600px', background: '#0a0a0a',
-                                    borderRadius: '32px', padding: '40px', border: '1px solid rgba(255,255,255,0.05)',
+                                    width: '100%', maxWidth: '600px', background: '#161616',
+                                    borderRadius: '24px', padding: '24px', border: 'none',
                                     boxShadow: '0 50px 100px -20px rgba(0,0,0,0.7)',
                                     maxHeight: '90vh', overflowY: 'auto'
                                 }}
@@ -1139,8 +1139,8 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                                         <div
                                             key={track.id}
                                             style={{
-                                                padding: '16px', borderRadius: '16px', background: 'rgba(255,255,255,0.02)',
-                                                border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+                                                padding: '16px', borderRadius: '16px', background: 'rgba(255,255,255,0.03)',
+                                                border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
                                             }}
                                         >
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -1190,6 +1190,7 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                         </motion.div>
                     )}
                 </AnimatePresence>
+                </div>
             </div>
 
             <style dangerouslySetInnerHTML={{
@@ -1201,15 +1202,21 @@ export default function AdminPage({ user, isAdmin, setShowLoginModal }) {
                 .animate-spin {
                     animation: spin 1s linear infinite;
                 }
+                .admin-form {
+                    grid-template-columns: 1fr 1fr;
+                }
                 @media (max-width: 768px) {
                     .admin-grid {
                         grid-template-columns: 1fr !important;
                     }
-                    form {
+                    .admin-form {
                         grid-template-columns: 1fr !important;
                     }
                     h1 {
                         font-size: 32px !important;
+                    }
+                    .desktop-only {
+                        display: none !important;
                     }
                 }
             `}} />

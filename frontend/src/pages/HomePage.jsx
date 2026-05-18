@@ -550,8 +550,8 @@ export default function HomePage({ user, isAdmin, setShowLoginModal }) {
                         {!text && (
                             <div style={{
                                 position: 'absolute',
-                                top: '16px',
-                                left: '20px',
+                                top: window.innerWidth < 1024 ? '10px' : '16px',
+                                left: window.innerWidth < 1024 ? '12px' : '20px',
                                 pointerEvents: 'none',
                                 fontSize: window.innerWidth < 1024 ? '14px' : '18px',
                                 lineHeight: '1.6',
