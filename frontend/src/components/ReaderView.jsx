@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState, memo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X, Play, Pause, SkipBack, SkipForward } from "@phosphor-icons/react"
 
@@ -6,6 +6,70 @@ import { X, Play, Pause, SkipBack, SkipForward } from "@phosphor-icons/react"
  * ReaderView — leitura sincronizada com áudio (palavra por palavra).
  * Estima o timing de cada palavra proporcional ao tamanho (chars).
  */
+
+const Paragraph = memo(({ p, currentWordIdx, useReal, jumpToWord, wordRefs }) => {
+    return (
+        <div style={{ minHeight: p.isEmpty ? '1.8em' : 'auto' }}>
+            {p.words.map((w) => {
+                const isActive = w.wIdx === currentWordIdx;
+                const isPast = w.wIdx < currentWordIdx;
+                const style = useReal ? {
+                    color: isActive ? '#0a0a0a' : isPast ? '#666' : '#aaa',
+                    background: isActive ? '#FCFBF8' : 'transparent',
+                    padding: '2px 4px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    transition: 'background 0.12s, color 0.12s',
+                    fontWeight: isActive ? 600 : 400,
+                    display: 'inline-block',
+                    marginRight: '4px',
+                    marginBottom: '2px',
+                } : {
+                    color: isPast ? '#3a3a3a' : '#FCFBF8',
+                    cursor: 'pointer',
+                    transition: 'color 0.4s ease',
+                    padding: '2px 4px',
+                    display: 'inline-block',
+                    marginRight: '4px',
+                    marginBottom: '2px',
+                }
+                return (
+                    <span
+                        key={w.wIdx}
+                        ref={el => { if (wordRefs && wordRefs.current) wordRefs.current[w.wIdx] = el }}
+                        onClick={() => jumpToWord(w.wIdx)}
+                        style={style}
+                    >
+                        {w.text}
+                    </span>
+                )
+            })}
+        </div>
+    )
+}, (prev, next) => {
+    if (prev.useReal !== next.useReal) return false;
+    const p = prev.p;
+    if (p.isEmpty) return true;
+    
+    const startIdx = p.words[0].wIdx;
+    const endIdx = p.words[p.words.length - 1].wIdx;
+    
+    const wasActive = prev.currentWordIdx >= startIdx && prev.currentWordIdx <= endIdx;
+    const isActive = next.currentWordIdx >= startIdx && next.currentWordIdx <= endIdx;
+    if (wasActive || isActive) return false;
+    
+    const wasPast = prev.currentWordIdx > endIdx;
+    const isPast = next.currentWordIdx > endIdx;
+    if (wasPast && isPast) return true;
+    
+    const wasFuture = prev.currentWordIdx < startIdx;
+    const isFuture = next.currentWordIdx < startIdx;
+    if (wasFuture && isFuture) return true;
+    
+    return false;
+});
+
+
 export default function ReaderView({
     open,
     onClose,
@@ -21,23 +85,27 @@ export default function ReaderView({
     const wordRefs = useRef([])
     const lastScrollIdx = useRef(-1)
 
-    // Quebra em "tokens" preservando quebras de linha. Cada token = palavra ou \n.
-    const tokens = useMemo(() => {
+    // Quebra em "paragraphs". Cada paragraph contém array de words.
+    const paragraphs = useMemo(() => {
         if (!text) return []
-        const result = []
+        const paras = []
+        let wIdx = 0
         const lines = text.replace(/\r\n/g, '\n').split('\n')
-        lines.forEach((line, lineIdx) => {
+        lines.forEach((line) => {
             const words = line.trim().split(/\s+/).filter(Boolean)
-            words.forEach(w => result.push({ type: 'word', text: w }))
-            if (lineIdx < lines.length - 1) result.push({ type: 'br' })
+            paras.push({
+                words: words.map(w => ({ text: w, wIdx: wIdx++ })),
+                isEmpty: words.length === 0
+            })
         })
-        return result
+        return paras
     }, [text])
 
     // Offsets de cada palavra. Usa timings reais (Edge-TTS) se disponíveis,
     // senão estima por proporção de chars.
     const wordOffsets = useMemo(() => {
-        const wordsOnly = tokens.filter(t => t.type === 'word')
+        const wordsOnly = []
+        paragraphs.forEach(p => wordsOnly.push(...p.words))
 
         // Se temos timings reais, mapeia 1:1 (Edge-TTS retorna 1 por palavra)
         if (wordTimings && wordTimings.length > 0) {
@@ -55,18 +123,7 @@ export default function ReaderView({
             acc += Math.max(w.text.length, 1)
             return { startRatio, endRatio: acc / total, useRealTimings: false }
         })
-    }, [tokens, wordTimings])
-
-    // Mapeia índice no array `tokens` para índice no array `wordOffsets`
-    const tokenToWordIdx = useMemo(() => {
-        const map = []
-        let wIdx = 0
-        tokens.forEach(t => {
-            if (t.type === 'word') { map.push(wIdx); wIdx++ }
-            else { map.push(-1) }
-        })
-        return map
-    }, [tokens])
+    }, [paragraphs, wordTimings])
 
     // Acompanha o tempo do áudio
     useEffect(() => {
@@ -201,7 +258,7 @@ export default function ReaderView({
 
                 {/* Texto */}
                 <div className="reader-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '40px 24px 60vh', maxWidth: '720px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
-                    {tokens.length === 0 ? (
+                    {paragraphs.length === 0 ? (
                         <div style={{ color: '#555', fontSize: '15px', textAlign: 'center', padding: '40px 0' }}>
                             Texto indisponível para este audiobook.
                         </div>
@@ -209,44 +266,16 @@ export default function ReaderView({
                         <div style={{ fontSize: `${fontSize}px`, lineHeight: 1.8, fontFamily: "'Figtree', sans-serif" }}>
                             {(() => {
                                 const useReal = wordOffsets[0]?.useRealTimings
-                                return tokens.map((tok, i) => {
-                                if (tok.type === 'br') return <br key={i} />
-                                const wIdx = tokenToWordIdx[i]
-                                const isActive = wIdx === currentWordIdx
-                                const isPast = wIdx < currentWordIdx
-                                // Edge (timing real) → destaque palavra-por-palavra com fundo branco
-                                // Google (estimado) → dimming (passado apaga, futuro claro)
-                                const style = useReal ? {
-                                    color: isActive ? '#0a0a0a' : isPast ? '#666' : '#aaa',
-                                    background: isActive ? '#FCFBF8' : 'transparent',
-                                    padding: '2px 4px',
-                                    borderRadius: '6px',
-                                    cursor: 'pointer',
-                                    transition: 'background 0.12s, color 0.12s',
-                                    fontWeight: isActive ? 600 : 400,
-                                    display: 'inline-block',
-                                    marginRight: '4px',
-                                    marginBottom: '2px',
-                                } : {
-                                    color: isPast ? '#3a3a3a' : '#FCFBF8',
-                                    cursor: 'pointer',
-                                    transition: 'color 0.4s ease',
-                                    padding: '2px 4px',
-                                    display: 'inline-block',
-                                    marginRight: '4px',
-                                    marginBottom: '2px',
-                                }
-                                return (
-                                    <span
-                                        key={i}
-                                        ref={el => (wordRefs.current[wIdx] = el)}
-                                        onClick={() => jumpToWord(wIdx)}
-                                        style={style}
-                                    >
-                                        {tok.text}
-                                    </span>
-                                )
-                                })
+                                return paragraphs.map((p, i) => (
+                                    <Paragraph 
+                                        key={i} 
+                                        p={p} 
+                                        currentWordIdx={currentWordIdx} 
+                                        useReal={useReal} 
+                                        jumpToWord={jumpToWord} 
+                                        wordRefs={wordRefs} 
+                                    />
+                                ))
                             })()}
                         </div>
                     )}
