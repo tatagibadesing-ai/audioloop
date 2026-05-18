@@ -287,6 +287,7 @@ async def generate_audio_edge(text: str, voice: str, output_path: str, word_timi
                 
                 real_progress = 5 + int((i / len(chunks)) * 90)
                 update_progress(real_progress)
+                print(f"⏳ Processando Chunk {i+1}/{len(chunks)} (Tamanho: {len(chunk_text)} caracteres, Progresso: {real_progress}%)...", flush=True)
                 
                 communicate = edge_tts.Communicate(chunk_text, voice, boundary='WordBoundary')
                 chunk_duration = 0.0
