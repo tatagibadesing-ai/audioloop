@@ -6,7 +6,7 @@ import 'react-h5-audio-player/lib/styles.css'
 import { removeFromLibrary, updateProgress } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
 import { useData } from '../contexts/DataContext'
-import { formatTime } from '../constants'
+import { formatTime, resolveImageUrl } from '../constants'
 import ReaderView from '../components/ReaderView'
 import MobileHeader from '../components/layout/MobileHeader'
 
@@ -195,7 +195,7 @@ export default function MyBooksPage({ setShowLoginModal }) {
                                         <div style={{ position: 'relative', flexShrink: 0 }}>
                                             {item.cover_url ? (
                                                 <img
-                                                    src={item.cover_url} alt={item.title}
+                                                    src={resolveImageUrl(item.cover_url)} alt={item.title}
                                                     style={{ width: '56px', height: '56px', borderRadius: '10px', objectFit: 'cover' }}
                                                 />
                                             ) : (
@@ -284,7 +284,7 @@ export default function MyBooksPage({ setShowLoginModal }) {
                     >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             {selectedItem.cover_url && (
-                                <img src={selectedItem.cover_url} alt="" style={{ width: '36px', height: '36px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
+                                <img src={resolveImageUrl(selectedItem.cover_url)} alt="" style={{ width: '36px', height: '36px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
                             )}
                             <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ color: '#FCFBF8', fontSize: '13px', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>

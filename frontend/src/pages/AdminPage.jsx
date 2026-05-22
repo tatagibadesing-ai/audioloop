@@ -25,7 +25,7 @@ import { CSS } from '@dnd-kit/utilities'
 
 // Serviços e constantes
 import { supabase } from '../services/supabase'
-import { API_URL, formatTime } from '../constants'
+import { API_URL, formatTime, resolveImageUrl } from '../constants'
 
 // Ícones
 import {
@@ -110,7 +110,7 @@ function SortableBook({ book, startEdit, handleDelete, setManagingTracks }) {
                     overflow: 'hidden'
                 }}>
                     {book.cover_url ? (
-                        <img src={book.cover_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={resolveImageUrl(book.cover_url)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
                         <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <FileAudio size={40} color="rgba(255,255,255,0.1)" />

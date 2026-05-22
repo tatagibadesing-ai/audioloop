@@ -13,7 +13,7 @@ import MobileHeader from '../components/layout/MobileHeader'
 
 // Serviços e constantes
 import { supabase } from '../services/supabase'
-import { API_URL, VOICES, formatTime, estimateAudioDuration } from '../constants'
+import { API_URL, VOICES, formatTime, estimateAudioDuration, resolveImageUrl } from '../constants'
 
 // Ícones
 import {
@@ -855,7 +855,7 @@ export default function HomePage({ user, isAdmin, setShowLoginModal }) {
                                                     cursor: 'pointer', textAlign: 'center', display: 'flex', gap: '12px', alignItems: 'center'
                                                 }}
                                             >
-                                                {proj.cover_url && <img src={proj.cover_url} style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }} alt="" />}
+                                                {proj.cover_url && <img src={resolveImageUrl(proj.cover_url)} style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }} alt="" />}
                                                 <span style={{ fontSize: '12px', fontWeight: '600', color: selectedProjectId === proj.id ? '#FCFBF8' : '#888', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                                     {proj.title}
                                                 </span>
@@ -980,7 +980,7 @@ export default function HomePage({ user, isAdmin, setShowLoginModal }) {
                                     boxShadow: '0 50px 100px -20px rgba(0,0,0,0.7)', textAlign: 'center'
                                 }}
                             >
-                                <img src={isVersionPickerOpen.cover_url} style={{ width: '140px', height: '140px', borderRadius: '24px', objectFit: 'cover', margin: '0 auto 24px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }} alt="" />
+                                <img src={resolveImageUrl(isVersionPickerOpen.cover_url)} style={{ width: '140px', height: '140px', borderRadius: '24px', objectFit: 'cover', margin: '0 auto 24px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }} alt="" />
                                 <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#FCFBF8', marginBottom: '8px' }}>{isVersionPickerOpen.title}</h2>
                                 <p style={{ color: '#666', fontSize: '14px', marginBottom: '32px' }}>Selecione a versão que deseja ouvir:</p>
 
@@ -1047,7 +1047,7 @@ export default function HomePage({ user, isAdmin, setShowLoginModal }) {
                             >
                                 <div style={{ position: 'relative', height: '320px' }}>
                                     {selectedBookModal.cover_url && (
-                                        <img src={selectedBookModal.cover_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                                        <img src={resolveImageUrl(selectedBookModal.cover_url)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
                                     )}
                                     <button
                                         onClick={() => { setSelectedBookModal(null); setSelectedTrack(null); }}
@@ -1259,7 +1259,7 @@ export default function HomePage({ user, isAdmin, setShowLoginModal }) {
                                                 <>
                                                     {currentPlayingBook.cover_url ? (
                                                         <img
-                                                            src={currentPlayingBook.cover_url} alt=""
+                                                            src={resolveImageUrl(currentPlayingBook.cover_url)} alt=""
                                                             style={{
                                                                 width: window.innerWidth < 768 ? '32px' : '38px',
                                                                 height: window.innerWidth < 768 ? '32px' : '38px',
@@ -1453,7 +1453,7 @@ export default function HomePage({ user, isAdmin, setShowLoginModal }) {
 
                                     <div className="audiobook-cover-wrapper" style={{ position: 'relative' }}>
                                         {book.cover_url ? (
-                                            <img src={book.cover_url} alt={book.title} style={{ width: '100%', height: 'auto', display: 'block' }} />
+                                            <img src={resolveImageUrl(book.cover_url)} alt={book.title} style={{ width: '100%', height: 'auto', display: 'block' }} />
                                         ) : (
                                             <div style={{ width: '100%', height: '200px', background: 'linear-gradient(135deg, #2546C7 0%, #1a3399 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                 <span style={{ fontSize: '48px' }}>🎧</span>

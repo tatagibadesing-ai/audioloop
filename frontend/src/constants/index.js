@@ -40,3 +40,32 @@ export const estimateAudioDuration = (text) => {
     const seconds = Math.ceil(words / 150 * 60)
     return formatTime(seconds)
 }
+
+export const resolveImageUrl = (url) => {
+    if (!url || typeof url !== 'string') return ''
+    // Se for URL absoluta segura do Google/OAuth, retorna como está
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+        if (url.includes('localhost:5000')) {
+            return url.replace('http://localhost:5000', API_URL)
+        }
+        return url
+    }
+    if (url.startsWith('/api/')) {
+        return `${API_URL}${url}`
+    }
+    if (url.startsWith('api/')) {
+        return `${API_URL}/${url}`
+    }
+    if (url.startsWith('/')) {
+        return url
+    }
+    // Tratamento para caminhos relativos de upload no Capacitor
+    if (url.startsWith('uploads/')) {
+        return `${API_URL}/api/${url}`
+    }
+    if (url.startsWith('/uploads/')) {
+        return `${API_URL}/api${url}`
+    }
+    return url
+}
+

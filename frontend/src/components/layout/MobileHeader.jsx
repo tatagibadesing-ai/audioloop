@@ -1,5 +1,6 @@
 import { UserCircle } from "@phosphor-icons/react"
 import { useAuth } from "../../hooks/useAuth"
+import { resolveImageUrl } from "../../constants"
 
 /**
  * Header compartilhado entre páginas no mobile.
@@ -8,7 +9,8 @@ import { useAuth } from "../../hooks/useAuth"
  */
 export default function MobileHeader({ title, onAvatarClick }) {
     const { user } = useAuth()
-    const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture
+    const rawAvatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture
+    const avatarUrl = resolveImageUrl(rawAvatarUrl) || rawAvatarUrl
 
     return (
         <header className="mobile-header">

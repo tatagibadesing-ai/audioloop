@@ -290,20 +290,24 @@ async def generate_audio_edge(text: str, voice: str, output_path: str, word_timi
                 print(f"⏳ Processando Chunk {i+1}/{len(chunks)} (Tamanho: {len(chunk_text)} caracteres, Progresso: {real_progress}%)...", flush=True)
                 
                 communicate = edge_tts.Communicate(chunk_text, voice, boundary='WordBoundary')
-                chunk_duration = 0.0
+                # Rastreia o fim real do último WordBoundary (offset + duration)
+                last_word_end = 0.0
                 
                 async for chunk_data in communicate.stream():
                     if chunk_data['type'] == 'audio':
                         f.write(chunk_data['data'])
                     elif chunk_data['type'] == 'WordBoundary' and word_timings is not None:
-                        start = chunk_data['offset'] / 10_000_000
-                        word_timings.append({'text': chunk_data['text'], 'start': current_offset + start})
-                        if start > chunk_duration:
-                            chunk_duration = start
+                        wb_offset = chunk_data['offset'] / 10_000_000  # ticks -> seconds
+                        wb_duration = chunk_data.get('duration', 0) / 10_000_000
+                        word_timings.append({'text': chunk_data['text'], 'start': current_offset + wb_offset})
+                        word_end = wb_offset + wb_duration
+                        if word_end > last_word_end:
+                            last_word_end = word_end
                 
-                # Adiciona duração do chunk atual + uma folga pequena ao offset global
-                current_offset += chunk_duration + 0.3
-                print(f"✅ Chunk {i+1}/{len(chunks)} processado (Edge TTS)", flush=True)
+                # Usa o fim real da última palavra + pequena folga para silêncio trailing
+                # Em vez do antigo "chunk_duration + 0.3" que acumulava drift
+                current_offset += last_word_end + 0.05
+                print(f"✅ Chunk {i+1}/{len(chunks)} processado (Edge TTS) — offset acumulado: {current_offset:.2f}s", flush=True)
                 
     except Exception as e:
         print(f"❌ Erro no edge-tts: {str(e)}")
