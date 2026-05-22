@@ -8,42 +8,79 @@ import { X, Play, Pause, SkipBack, SkipForward } from "@phosphor-icons/react"
  */
 
 const Paragraph = memo(({ p, currentWordIdx, useReal, jumpToWord, wordRefs }) => {
+    if (p.isEmpty || !p.words.length) {
+        return <div style={{ minHeight: '1.8em' }} />
+    }
+
+    const startIdx = p.words[0].wIdx;
+    const endIdx = p.words[p.words.length - 1].wIdx;
+    const isParagraphActive = currentWordIdx >= startIdx && currentWordIdx <= endIdx;
+
+    if (isParagraphActive) {
+        return (
+            <div style={{ minHeight: 'auto' }}>
+                {p.words.map((w) => {
+                    const isActive = w.wIdx === currentWordIdx;
+                    const isPast = w.wIdx < currentWordIdx;
+                    const style = useReal ? {
+                        color: isActive ? '#0a0a0a' : isPast ? '#666' : '#aaa',
+                        background: isActive ? '#FCFBF8' : 'transparent',
+                        padding: '2px 4px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        transition: 'background 0.12s, color 0.12s',
+                        fontWeight: isActive ? 600 : 400,
+                        display: 'inline-block',
+                        marginRight: '4px',
+                        marginBottom: '2px',
+                    } : {
+                        color: isPast ? '#3a3a3a' : '#FCFBF8',
+                        cursor: 'pointer',
+                        transition: 'color 0.4s ease',
+                        padding: '2px 4px',
+                        display: 'inline-block',
+                        marginRight: '4px',
+                        marginBottom: '2px',
+                    }
+                    return (
+                        <span
+                            key={w.wIdx}
+                            ref={el => { if (wordRefs && wordRefs.current) wordRefs.current[w.wIdx] = el }}
+                            onClick={() => jumpToWord(w.wIdx)}
+                            style={style}
+                        >
+                            {w.text}
+                        </span>
+                    )
+                })}
+            </div>
+        )
+    }
+
+    // Render non-active paragraph as a single block for massive performance boost
+    const isPast = currentWordIdx > endIdx;
+    const color = useReal 
+        ? (isPast ? '#666' : '#aaa') 
+        : (isPast ? '#3a3a3a' : '#FCFBF8');
+
+    const style = {
+        color,
+        cursor: 'pointer',
+        padding: '2px 4px',
+        display: 'block',
+        minHeight: 'auto',
+        transition: 'color 0.2s ease',
+        marginBottom: '2px',
+    }
+
+    const textContent = p.words.map(w => w.text).join(' ');
+
     return (
-        <div style={{ minHeight: p.isEmpty ? '1.8em' : 'auto' }}>
-            {p.words.map((w) => {
-                const isActive = w.wIdx === currentWordIdx;
-                const isPast = w.wIdx < currentWordIdx;
-                const style = useReal ? {
-                    color: isActive ? '#0a0a0a' : isPast ? '#666' : '#aaa',
-                    background: isActive ? '#FCFBF8' : 'transparent',
-                    padding: '2px 4px',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    transition: 'background 0.12s, color 0.12s',
-                    fontWeight: isActive ? 600 : 400,
-                    display: 'inline-block',
-                    marginRight: '4px',
-                    marginBottom: '2px',
-                } : {
-                    color: isPast ? '#3a3a3a' : '#FCFBF8',
-                    cursor: 'pointer',
-                    transition: 'color 0.4s ease',
-                    padding: '2px 4px',
-                    display: 'inline-block',
-                    marginRight: '4px',
-                    marginBottom: '2px',
-                }
-                return (
-                    <span
-                        key={w.wIdx}
-                        ref={el => { if (wordRefs && wordRefs.current) wordRefs.current[w.wIdx] = el }}
-                        onClick={() => jumpToWord(w.wIdx)}
-                        style={style}
-                    >
-                        {w.text}
-                    </span>
-                )
-            })}
+        <div 
+            style={style} 
+            onClick={() => jumpToWord(startIdx)}
+        >
+            {textContent}
         </div>
     )
 }, (prev, next) => {
@@ -125,83 +162,117 @@ export default function ReaderView({
         })
     }, [paragraphs, wordTimings])
 
-    // Acompanha o tempo do áudio
+    // Sync active word index based on audio current time with high efficiency
     useEffect(() => {
-        if (!open) return
-        let rafId
-        const useReal = wordOffsets[0]?.useRealTimings
-        const tick = () => {
-            const audio = audioRef?.current
-            if (audio && wordOffsets.length > 0) {
-                let found = 0
-                if (useReal) {
-                    // Antecipa 300ms pra destacar a palavra um pouco antes de ser falada
-                    const t = audio.currentTime + 0.3
-                    let lo = 0, hi = wordOffsets.length - 1
-                    while (lo <= hi) {
-                        const mid = (lo + hi) >> 1
-                        if (wordOffsets[mid].startSec <= t) {
-                            found = mid; lo = mid + 1
-                        } else {
-                            hi = mid - 1
-                        }
-                    }
-                } else if (audio.duration) {
-                    // Google (estimado): atrasa 700ms pra não marcar como passado o que ainda está sendo dito
-                    const adjusted = Math.max(0, audio.currentTime - 0.7)
-                    const ratio = adjusted / audio.duration
-                    let lo = 0, hi = wordOffsets.length - 1
-                    while (lo <= hi) {
-                        const mid = (lo + hi) >> 1
-                        if (ratio >= wordOffsets[mid].startRatio && ratio < wordOffsets[mid].endRatio) {
-                            found = mid; break
-                        } else if (ratio < wordOffsets[mid].startRatio) {
-                            hi = mid - 1
-                        } else {
-                            found = mid; lo = mid + 1
-                        }
+        if (!open || wordOffsets.length === 0) return
+
+        const audio = audioRef?.current
+        if (!audio) return
+
+        const updateWordHighlight = () => {
+            const useReal = wordOffsets[0]?.useRealTimings
+            let found = 0
+            if (useReal) {
+                // Antecipa 300ms pra destacar a palavra um pouco antes de ser falada
+                const t = audio.currentTime + 0.3
+                let lo = 0, hi = wordOffsets.length - 1
+                while (lo <= hi) {
+                    const mid = (lo + hi) >> 1
+                    if (wordOffsets[mid].startSec <= t) {
+                        found = mid; lo = mid + 1
+                    } else {
+                        hi = mid - 1
                     }
                 }
-                setCurrentWordIdx(found)
-                setIsPlaying(!audio.paused)
+            } else if (audio.duration) {
+                // Google (estimado): atrasa 700ms pra não marcar como passado o que ainda está sendo dito
+                const adjusted = Math.max(0, audio.currentTime - 0.7)
+                const ratio = adjusted / audio.duration
+                let lo = 0, hi = wordOffsets.length - 1
+                while (lo <= hi) {
+                    const mid = (lo + hi) >> 1
+                    if (ratio >= wordOffsets[mid].startRatio && ratio < wordOffsets[mid].endRatio) {
+                        found = mid; break
+                    } else if (ratio < wordOffsets[mid].startRatio) {
+                        hi = mid - 1
+                    } else {
+                        found = mid; lo = mid + 1
+                    }
+                }
             }
-            rafId = requestAnimationFrame(tick)
+            setCurrentWordIdx(found)
         }
-        rafId = requestAnimationFrame(tick)
-        return () => cancelAnimationFrame(rafId)
+
+        // Run immediately
+        updateWordHighlight()
+
+        // Listen to timeupdate for seeking and general sync
+        audio.addEventListener('timeupdate', updateWordHighlight)
+
+        // If playing, run a 100ms interval for extra smooth updates
+        let intervalId
+        const handlePlayState = () => {
+            setIsPlaying(!audio.paused)
+            if (!audio.paused && !intervalId) {
+                intervalId = setInterval(updateWordHighlight, 100)
+            } else if (audio.paused && intervalId) {
+                clearInterval(intervalId)
+                intervalId = null
+            }
+        }
+
+        handlePlayState()
+        audio.addEventListener('play', handlePlayState)
+        audio.addEventListener('pause', handlePlayState)
+        audio.addEventListener('ended', handlePlayState)
+
+        return () => {
+            audio.removeEventListener('timeupdate', updateWordHighlight)
+            audio.removeEventListener('play', handlePlayState)
+            audio.removeEventListener('pause', handlePlayState)
+            audio.removeEventListener('ended', handlePlayState)
+            if (intervalId) clearInterval(intervalId)
+        }
     }, [open, wordOffsets, audioRef])
 
-    // Auto-scroll linear contínuo: a cada frame, move o scroll
-    // gradualmente em direção ao alvo (palavra ativa a 35% do topo).
-    // Sem scrollTo({behavior:'smooth'}) — o easing manual evita os "tilts".
+    // Auto-scroll linear: moves the scroll position smoothly to center the active word (at 35% height).
+    // Calculates offsets using offsetTop to avoid layout thrashing (O(1) frame budget) and stops when close.
     useEffect(() => {
         if (!open) return
+        const el = wordRefs.current[currentWordIdx]
+        const container = el?.closest('.reader-scroll')
+        if (!el || !container) return
+
+        // Calculate target offset relative to container using fast offsetTop traversal
+        let offsetTop = el.offsetTop
+        let parent = el.offsetParent
+        while (parent && parent !== container) {
+            offsetTop += parent.offsetTop
+            parent = parent.offsetParent
+        }
+        const target = offsetTop - (container.clientHeight * 0.35)
+
         let rafId
         const animate = () => {
-            const el = wordRefs.current[currentWordIdx]
-            const container = el?.closest('.reader-scroll')
-            if (el && container) {
-                const elRect = el.getBoundingClientRect()
-                const cRect = container.getBoundingClientRect()
-                const elTopInContainer = elRect.top - cRect.top + container.scrollTop
-                const target = elTopInContainer - (cRect.height * 0.35)
-                const current = container.scrollTop
-                const diff = target - current
-                // Easing linear leve: move 4% da distância por frame (~60fps)
-                if (Math.abs(diff) > 0.5) {
-                    container.scrollTop = current + diff * 0.04
-                }
+            const current = container.scrollTop
+            const diff = target - current
+            // Move 10% of the remaining distance per frame for quick but smooth convergence
+            if (Math.abs(diff) > 1) {
+                container.scrollTop = current + diff * 0.1
+                rafId = requestAnimationFrame(animate)
             }
-            rafId = requestAnimationFrame(animate)
         }
         rafId = requestAnimationFrame(animate)
-        return () => cancelAnimationFrame(rafId)
+        return () => {
+            if (rafId) cancelAnimationFrame(rafId)
+        }
     }, [open, currentWordIdx])
 
     const jumpToWord = (wIdx) => {
         const audio = audioRef?.current
         if (!audio) return
         const w = wordOffsets[wIdx]
+        if (!w) return
         if (w.useRealTimings) {
             audio.currentTime = Math.max(0, w.startSec - 0.05)
         } else if (audio.duration) {
