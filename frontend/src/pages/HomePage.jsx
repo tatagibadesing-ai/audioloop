@@ -340,18 +340,46 @@ export default function HomePage({ user, isAdmin, setShowLoginModal }) {
         setAudioUrl(null)
         setCurrentPlayingBook(null)
         setGenerationProgress(0)
+        setGeneratedTimings(null)
+
+        const apiBaseUrl = API_URL.replace(/\/$/, '')
+        const readErrorMessage = async (response, fallback) => {
+            try {
+                const data = await response.json()
+                return data.error || fallback
+            } catch {
+                return fallback
+            }
+        }
+
+        let visualTimer = null
+        let pollTimeout = null
+        let isSettled = false
+
+        const clearGenerationTimers = () => {
+            if (visualTimer) clearInterval(visualTimer)
+            if (pollTimeout) clearTimeout(pollTimeout)
+        }
+
+        const finishWithError = (message) => {
+            if (isSettled) return
+            isSettled = true
+            clearGenerationTimers()
+            setIsLoading(false)
+            setTimeLeft(0)
+            showToast.error(message)
+        }
 
         try {
             // 1. Inicia o Job
-            const startRes = await fetch(`${API_URL}/api/generate/start`, {
+            const startRes = await fetch(`${apiBaseUrl}/api/generate/start`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text, voice })
             })
 
             if (!startRes.ok) {
-                const err = await startRes.json()
-                throw new Error(err.error || 'Erro ao iniciar geração')
+                throw new Error(await readErrorMessage(startRes, 'Erro ao iniciar geracao'))
             }
 
             const { job_id } = await startRes.json()
@@ -365,7 +393,7 @@ export default function HomePage({ user, isAdmin, setShowLoginModal }) {
             let estimatedTotalSeconds = initialEstimation
 
             // Timer visual ultra-suave (100 FPS) - Atualiza a cada 10ms
-            const visualTimer = setInterval(() => {
+            visualTimer = setInterval(() => {
                 const elapsedSeconds = (Date.now() - startTime) / 1000
 
                 // Calcula o tempo restante baseado no total estimado que temos
@@ -381,54 +409,60 @@ export default function HomePage({ user, isAdmin, setShowLoginModal }) {
                 })
             }, 10)
 
-            const pollInterval = setInterval(async () => {
+            let pollFailures = 0
+
+            const pollStatus = async () => {
+                if (isSettled) return
+
                 try {
-                    const statusRes = await fetch(`${API_URL.replace(/\/$/, '')}/api/generate/status/${job_id}`)
+                    const statusRes = await fetch(`${apiBaseUrl}/api/generate/status/${job_id}`)
 
                     if (statusRes.status === 404) {
-                        clearInterval(pollInterval)
-                        clearInterval(visualTimer)
-                        setIsLoading(false)
-                        showToast.error("A conexão com o servidor foi perdida. Tente gerar o áudio em partes menores.")
+                        finishWithError("A conexao com o servidor foi perdida. Tente gerar o audio em partes menores.")
                         return
                     }
 
+                    if (!statusRes.ok) {
+                        const message = await readErrorMessage(statusRes, `Erro ao consultar status (${statusRes.status})`)
+                        throw new Error(message)
+                    }
+
                     const statusData = await statusRes.json()
+                    pollFailures = 0
                     const backendProgress = statusData.progress || 0
 
                     if (statusData.status === 'done') {
-                        clearInterval(pollInterval)
-                        clearInterval(visualTimer)
+                        isSettled = true
+                        clearGenerationTimers()
                         setGenerationProgress(100)
                         setTimeLeft(0)
 
                         try {
-                            const downloadUrl = `${API_URL.replace(/\/$/, '')}/api/generate/download/${job_id}`
+                            const downloadUrl = `${apiBaseUrl}/api/generate/download/${job_id}`
                             const downloadRes = await fetch(downloadUrl)
-                            if (!downloadRes.ok) throw new Error(`Erro ao baixar áudio (${downloadRes.status})`)
+                            if (!downloadRes.ok) {
+                                throw new Error(await readErrorMessage(downloadRes, `Erro ao baixar audio (${downloadRes.status})`))
+                            }
                             const audioBlob = await downloadRes.blob()
                             const url = URL.createObjectURL(audioBlob)
                             setAudioUrl(url)
 
                             // Busca word timings (Edge-TTS)
                             try {
-                                const timingsRes = await fetch(`${API_URL.replace(/\/$/, '')}/api/generate/timings/${job_id}`)
+                                const timingsRes = await fetch(`${apiBaseUrl}/api/generate/timings/${job_id}`)
                                 if (timingsRes.ok) {
                                     const tdata = await timingsRes.json()
                                     setGeneratedTimings(tdata.word_timings || null)
                                 }
                             } catch (e) { console.error('Erro timings:', e) }
                         } catch (downloadErr) {
-                            console.error('Erro ao baixar áudio gerado:', downloadErr)
-                            showToast.error(`Erro ao baixar o áudio: ${downloadErr.message}`)
+                            console.error('Erro ao baixar audio gerado:', downloadErr)
+                            showToast.error(`Erro ao baixar o audio: ${downloadErr.message}`)
                         } finally {
                             setIsLoading(false)
                         }
                     } else if (statusData.status === 'error') {
-                        clearInterval(pollInterval)
-                        clearInterval(visualTimer)
-                        setIsLoading(false)
-                        showToast.error(`Erro na geração: ${statusData.error}`)
+                        finishWithError(`Erro na geracao: ${statusData.error || 'erro desconhecido'}`)
                     } else if (backendProgress > 5) {
                         // RECALCULA A ESTIMATIVA REAL BASEADA NA VELOCIDADE DO BACKEND
                         const elapsedMs = Date.now() - startTime
@@ -438,11 +472,25 @@ export default function HomePage({ user, isAdmin, setShowLoginModal }) {
                         estimatedTotalSeconds = currentEstimatedTotalMs / 1000
                     }
                 } catch (e) {
+                    pollFailures += 1
                     console.error("Erro no polling:", e)
+
+                    if (pollFailures >= 3) {
+                        finishWithError(`Nao foi possivel acompanhar a geracao: ${e.message}`)
+                        return
+                    }
                 }
-            }, 3000)
+
+                if (!isSettled) {
+                    pollTimeout = setTimeout(pollStatus, 3000)
+                }
+            }
+
+            pollTimeout = setTimeout(pollStatus, 3000)
 
         } catch (e) {
+            isSettled = true
+            clearGenerationTimers()
             setIsLoading(false)
             showToast.error(e.message)
         }

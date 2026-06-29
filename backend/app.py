@@ -188,6 +188,11 @@ CAPACITOR_ORIGINS = {
     'http://localhost:4004',
     'http://localhost:4005',
     'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:5174',
+    'http://127.0.0.1:5175',
 }
 
 @app.after_request
@@ -505,7 +510,7 @@ def estimate_time():
     Retorna estimativa em segundos
     """
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True)
         if not data:
             return jsonify({'error': 'Dados não fornecidos'}), 400
         
@@ -539,7 +544,7 @@ def generate_preview():
     Gera um preview de áudio curto para o usuário ouvir a voz
     """
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True)
         if not data:
             return jsonify({'error': 'Dados não fornecidos'}), 400
         
@@ -600,7 +605,7 @@ def generate_audiobook():
     Retorna: arquivo OGG/MP3 para download
     """
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True)
         
         if not data:
             return jsonify({'error': 'Dados não fornecidos'}), 400
@@ -785,7 +790,7 @@ def start_generation_job():
     Retorna imediatamente com o ID do job.
     """
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True)
         
         if not data:
             return jsonify({'error': 'Dados não fornecidos'}), 400
