@@ -402,28 +402,28 @@ export default function HomePage({ user, isAdmin, setShowLoginModal }) {
                         setGenerationProgress(100)
                         setTimeLeft(0)
 
-                        const downloadUrl = `${API_URL.replace(/\/$/, '')}/api/generate/download/${job_id}`
-                        const audioBlob = await fetch(downloadUrl).then(r => r.blob())
-                        const url = URL.createObjectURL(audioBlob)
-                        setAudioUrl(url)
-
-                        // Busca word timings (Edge-TTS)
                         try {
-                            const timingsRes = await fetch(`${API_URL.replace(/\/$/, '')}/api/generate/timings/${job_id}`)
-                            if (timingsRes.ok) {
-                                const tdata = await timingsRes.json()
-                                console.log('🎯 Word timings recebidos:', tdata.word_timings?.length || 0, 'palavras')
-                                if (tdata.word_timings?.length > 0) {
-                                    console.log('Primeira palavra:', tdata.word_timings[0])
-                                    showToast.success(`✅ ${tdata.word_timings.length} timings capturados`)
-                                } else {
-                                    showToast.error('⚠️ Nenhum timing capturado (voz Google?)')
-                                }
-                                setGeneratedTimings(tdata.word_timings || null)
-                            }
-                        } catch (e) { console.error('Erro timings:', e) }
+                            const downloadUrl = `${API_URL.replace(/\/$/, '')}/api/generate/download/${job_id}`
+                            const downloadRes = await fetch(downloadUrl)
+                            if (!downloadRes.ok) throw new Error(`Erro ao baixar áudio (${downloadRes.status})`)
+                            const audioBlob = await downloadRes.blob()
+                            const url = URL.createObjectURL(audioBlob)
+                            setAudioUrl(url)
 
-                        setIsLoading(false)
+                            // Busca word timings (Edge-TTS)
+                            try {
+                                const timingsRes = await fetch(`${API_URL.replace(/\/$/, '')}/api/generate/timings/${job_id}`)
+                                if (timingsRes.ok) {
+                                    const tdata = await timingsRes.json()
+                                    setGeneratedTimings(tdata.word_timings || null)
+                                }
+                            } catch (e) { console.error('Erro timings:', e) }
+                        } catch (downloadErr) {
+                            console.error('Erro ao baixar áudio gerado:', downloadErr)
+                            showToast.error(`Erro ao baixar o áudio: ${downloadErr.message}`)
+                        } finally {
+                            setIsLoading(false)
+                        }
                     } else if (statusData.status === 'error') {
                         clearInterval(pollInterval)
                         clearInterval(visualTimer)

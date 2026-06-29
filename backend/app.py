@@ -471,6 +471,10 @@ def generate_audio(text: str, voice: str, output_path: str, job_id: str = None):
 
 def run_async(coro):
     """Helper para executar função assíncrona"""
+    # No Windows, threads secundárias precisam do SelectorEventLoop (ProactorEventLoop
+    # é exclusivo da thread principal e causa falhas com edge-tts/websockets em threads).
+    if os.name == 'nt':
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     try:
